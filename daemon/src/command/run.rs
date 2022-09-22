@@ -29,6 +29,7 @@ pub async fn run_task(task: Task) -> Result<u32, Box<dyn Error>> {
     let t = task.clone();
     register(t).await?;
     // 声明指向文件的 stdout
+    // TODO: 重定向到指定的文件
     let path = Path::new("/tmp/watchmen/tmp.log");
     // let file = std::fs::File::create(path)?;
     // 创建或追加文件
