@@ -1,0 +1,21 @@
+[package]
+name = "watchmen"
+version = "0.1.0"
+authors = ["ahriknow <ahriknow@ahriknow.com>"]
+edition = "2021"
+description = "Watchmen is a daemon process manager that for you manage and keep your application online 24/7"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "watchmen"
+path = "src/lib.rs"
+
+[[bin]]
+name = "watchmen"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1.20.1", features = ["full"] }
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
