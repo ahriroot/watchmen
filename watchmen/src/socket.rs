@@ -23,7 +23,7 @@ pub async fn request(request: &entity::Request) -> Result<entity::Response, Box<
 
     let socket_path: &Path = &path.join("watchmen.sock");
     if !socket_path.exists() {
-        return Err("socket file not found".into());
+        return Err("Daemon not started".into());
     }
     let mut stream = UnixStream::connect(socket_path).await?;
     // Send request

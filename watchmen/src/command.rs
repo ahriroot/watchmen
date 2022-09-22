@@ -3,6 +3,7 @@ pub mod run;
 pub mod stop;
 
 use std::error::Error;
+use std::fs::remove_file;
 use std::io::Write;
 use std::process::Stdio;
 
@@ -63,32 +64,35 @@ pub async fn exec(args: Vec<String>) -> Result<ExitCode, Box<dyn Error>> {
     Ok(exit_code)
 }
 
-async fn start_daemon(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
-    if args.len() < 1 {
-        eprintln!("watchmen: missing command");
-        return Ok(ExitCode::ERROR);
+async fn start_daemon(_args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
+    let watchmen_path_str =
+        std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
+
+    let watchmen_path = std::path::Path::new(&watchmen_path_str);
+
+    if !watchmen_path.exists() {
+        std::fs::create_dir_all(watchmen_path)?;
     }
+
+    let watchmen_path = watchmen_path.join("watchmen.sock");
 
     let path = std::env::current_dir()?.join("daemon");
     // 子进程
     let child = std::process::Command::new(path)
-        .arg(args[0].as_str())
+        .arg(watchmen_path)
         .stdout(Stdio::null())
         .spawn()?;
 
     // 保存 pid
     let pid = child.id();
-
-    let watchmen_path =
-        std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
-    let path = std::path::Path::new(&watchmen_path);
+    let path = std::path::Path::new(&watchmen_path_str);
     let path = path.join("watchmen.pid");
     // 创建文件
     let mut file = std::fs::File::create(path)?;
     // 写入 pid
     file.write_all(pid.to_string().as_bytes())?;
 
-    println!("Start daemon: {}", child.id());
+    println!("Start daemon pid: {}", child.id());
     Ok(ExitCode::SUCCESS)
 }
 extern "C" {
@@ -112,16 +116,22 @@ async fn terminated_daemon(args: &[String]) -> Result<ExitCode, Box<dyn Error>> 
         std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
     let path = std::path::Path::new(&watchmen_path);
     let path = path.join("watchmen.pid");
-    let pid = std::fs::read_to_string(path)?;
+    if !path.exists() {
+        eprintln!("Pid file not exists: {}", path.display());
+        return Ok(ExitCode::ERROR);
+    }
+    let pid = std::fs::read_to_string(path.clone())?;
     let pid = pid.parse::<i32>()?;
     let res = unsafe { kill(pid, signal) };
     if res == 0 {
-        println!("Terminated daemon of pid: {}", pid);
+        // 删除文件
+        remove_file(path).unwrap_or_default();
+        println!("Terminated daemon pid: {}", pid);
     } else if res == -1 {
-        println!("Daemon process not exists: {}", pid);
+        eprintln!("Daemon process not exists: {}", pid);
         return Ok(ExitCode::ERROR);
     } else {
-        println!("Terminated daemon error with code: {}", res);
+        eprintln!("Terminated daemon error code: {}", res);
         return Ok(ExitCode::ERROR);
     }
     Ok(ExitCode::SUCCESS)
