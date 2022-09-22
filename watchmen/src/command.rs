@@ -3,6 +3,7 @@ pub mod run;
 pub mod stop;
 
 use std::error::Error;
+use std::process::Stdio;
 
 use crate::command;
 use crate::const_exit_code::ExitCode;
@@ -50,6 +51,7 @@ pub async fn exec(args: Vec<String>) -> Result<ExitCode, Box<dyn Error>> {
         "run" => command::run::run(&args[2..]).await?,
         "stop" => command::stop::run(&args[2..]).await?,
         "list" => command::list::run(&args[2..]).await?,
+        "-d" | "--daemon" => start_daemon(&args[2..]).await?,
         _ => {
             let err: String = format!("watchmen: invalid command '{}'", args[1]);
             return Err(err.into());
@@ -57,4 +59,20 @@ pub async fn exec(args: Vec<String>) -> Result<ExitCode, Box<dyn Error>> {
     };
 
     Ok(exit_code)
+}
+
+async fn start_daemon(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
+    if args.len() < 1 {
+        eprintln!("watchmen: missing command");
+        return Ok(ExitCode::ERROR);
+    }
+
+    let path = std::env::current_dir()?.join("daemon");
+    // 子进程
+    let child = std::process::Command::new(path)
+        .arg(args[0].as_str())
+        .stdout(Stdio::null())
+        .spawn()?;
+    println!("child pid: {}", child.id());
+    Ok(ExitCode::SUCCESS)
 }
