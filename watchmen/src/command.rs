@@ -1,5 +1,7 @@
+pub mod exit;
 pub mod list;
 pub mod run;
+pub mod start;
 pub mod stop;
 
 use std::error::Error;
@@ -51,6 +53,8 @@ pub async fn exec(args: Vec<String>) -> Result<ExitCode, Box<dyn Error>> {
             ExitCode::SUCCESS
         }
         "run" => command::run::run(&args[2..]).await?,
+        "exit" | "rm" => command::exit::run(&args[2..]).await?,
+        "start" => command::start::run(&args[2..]).await?,
         "stop" => command::stop::run(&args[2..]).await?,
         "list" => command::list::run(&args[2..]).await?,
         "-d" | "--daemon" => start_daemon(&args[2..]).await?,

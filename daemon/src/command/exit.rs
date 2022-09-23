@@ -2,14 +2,14 @@ use std::error::Error;
 
 use crate::{
     entity,
-    global::{get_task_by_name, get_task_by_pid, update_status_by_name},
+    global::{get_task_by_name, get_task_by_pid, remove_task_by_name},
 };
 
 extern "C" {
     pub fn kill(pid: i32, sig: i32) -> i32;
 }
 
-pub async fn stop_task(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>> {
+pub async fn exit_task(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();
     let task;
     if len == 1 {
@@ -47,7 +47,7 @@ pub async fn stop_task(args: Vec<String>) -> Result<entity::Response, Box<dyn Er
     let pid = task.pid;
     let res = unsafe { kill(pid as i32, 15) };
     if res == 0 {
-        update_status_by_name(task.name, "stopped".to_string()).await?;
+        remove_task_by_name(task.name).await?;
         let res = entity::Response {
             code: 10000,
             msg: "success".to_string(),

@@ -2,16 +2,11 @@ use std::{env, error::Error, path::Path, process::Stdio};
 use tokio::process::{Child, Command};
 
 use crate::entity::Task;
-use crate::global::{add_task, remove_task_by_name, update_pid_by_name, update_status_by_name};
+use crate::global::{add_task, update_pid_by_name, update_status_by_name};
 
 async fn register(task: Task) -> Result<(), Box<dyn Error>> {
     add_task(task).await?;
     Ok(())
-}
-
-async fn unregister(name: String) -> Result<Option<Task>, Box<dyn Error>> {
-    let task = remove_task_by_name(name).await?;
-    Ok(task)
 }
 
 async fn update_pid(name: String, pid: u32) -> Result<(), Box<dyn Error>> {
@@ -51,13 +46,13 @@ pub async fn run_task(task: Task) -> Result<u32, Box<dyn Error>> {
 
     let code = match result {
         Some(pid) => {
-            // 注册任务
+            // 更改 task pid
             update_pid(task.name.clone(), pid).await?;
+            // 更改 task status
             update_status(task.name.clone(), "running".to_string()).await?;
-            // 异步等待子进程退出并注销任务
+            // 异步等待子进程结束并更改 task status
             tokio::spawn(async move {
                 child.wait().await.unwrap();
-                unregister(task.name).await.unwrap();
             });
             10000
         }

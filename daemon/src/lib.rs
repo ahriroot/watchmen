@@ -17,6 +17,28 @@ pub mod global {
         static ref TASKS: Mutex<Vec<Task>> = Mutex::new(Vec::new());
     }
 
+    pub async fn get_task_by_name(name: String) -> Result<Task, Box<dyn Error>> {
+        let tasks = TASKS.lock().await;
+        for task in tasks.iter() {
+            if task.name == name {
+                return Ok(task.clone());
+            }
+        }
+        let err = format!("Task named '{}' not found", name);
+        return Err(err.into());
+    }
+
+    pub async fn get_task_by_pid(pid: u32) -> Result<Task, Box<dyn Error>> {
+        let tasks = TASKS.lock().await;
+        for task in tasks.iter() {
+            if task.pid == pid {
+                return Ok(task.clone());
+            }
+        }
+        let err = format!("Task pid is '{}' not found", pid);
+        return Err(err.into());
+    }
+
     pub async fn get_all_tasks() -> Result<Vec<Task>, Box<dyn Error>> {
         let tasks = TASKS.lock().await;
         Ok(tasks.to_vec())
@@ -25,6 +47,16 @@ pub mod global {
     pub async fn remove_task_by_name(name: String) -> Result<Option<Task>, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
         let pos = tasks.iter().position(|task| task.name == name);
+        if let Some(pos) = pos {
+            let res = tasks.remove(pos);
+            return Ok(Some(res));
+        }
+        Ok(None)
+    }
+
+    pub async fn remove_task_by_pid(pid: u32) -> Result<Option<Task>, Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        let pos = tasks.iter().position(|task| task.pid == pid);
         if let Some(pos) = pos {
             let res = tasks.remove(pos);
             return Ok(Some(res));

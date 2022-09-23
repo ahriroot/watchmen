@@ -38,10 +38,10 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
 
 async fn print_format(res: Vec<Task>) {
     let sum_all = res.len();
-    let len_id = res.iter().map(|x| x.id.to_string().len()).max().unwrap();
-    let len_name = res.iter().map(|x| x.name.len()).max().unwrap();
-    let len_status = res.iter().map(|x| x.status.len()).max().unwrap();
-    let len_pid = res.iter().map(|x| x.pid.to_string().len()).max().unwrap();
+    let len_id = res.iter().map(|x| x.id.to_string().len()).max().unwrap_or_else(|| 0);
+    let len_name = res.iter().map(|x| x.name.len()).max().unwrap_or_else(|| 0);
+    let len_status = res.iter().map(|x| x.status.len()).max().unwrap_or_else(|| 0);
+    let len_pid = res.iter().map(|x| x.pid.to_string().len()).max().unwrap_or_else(|| 0);
     let len_created_at = 19;
     let len_started_at = 19;
     let len_exited_at = 19;
