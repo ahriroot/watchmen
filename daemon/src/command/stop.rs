@@ -2,7 +2,7 @@ use std::error::Error;
 
 use crate::{
     entity,
-    global::{get_task_by_name, get_task_by_pid, update_status_by_name},
+    global::{get_task_by_name, get_task_by_pid, update_pid_by_name, update_status_by_name},
 };
 
 extern "C" {
@@ -48,7 +48,8 @@ pub async fn stop_task(command: entity::Command) -> Result<entity::Response, Box
     let pid = task.pid;
     let res = unsafe { kill(pid as i32, 15) };
     if res == 0 {
-        update_status_by_name(task.name, "stopped".to_string()).await?;
+        update_status_by_name(task.name.clone(), "stopped".to_string()).await?;
+        update_pid_by_name(task.name, 0).await?;
         let res = entity::Response {
             code: 10000,
             msg: "success".to_string(),

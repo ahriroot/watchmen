@@ -34,23 +34,6 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                             value: entity::Opt::Str(args[1].clone()),
                         },
                     );
-                } else if args[0] == "-p" || args[0] == "--pid" {
-                    let pid = args[1].parse::<u32>();
-                    match pid {
-                        Ok(p) => {
-                            options.insert(
-                                "pid".to_string(),
-                                Options {
-                                    key: "pid".to_string(),
-                                    value: entity::Opt::U32(p),
-                                },
-                            );
-                        }
-                        Err(_) => {
-                            eprintln!("Arg '{}' must be a number", args[0]);
-                            return Ok(ExitCode::ERROR);
-                        }
-                    }
                 } else {
                     break;
                 }

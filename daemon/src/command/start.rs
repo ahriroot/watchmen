@@ -2,7 +2,9 @@ use std::{env, error::Error, path::Path, process::Stdio};
 use tokio::process::{Child, Command};
 
 use crate::entity;
-use crate::global::{get_task_by_name, get_task_by_pid, update_pid_by_name, update_status_by_name};
+use crate::global::{
+    get_task_by_name, update_exit_code_by_name, update_pid_by_name, update_status_by_name,
+};
 
 async fn update_pid(name: String, pid: u32) -> Result<(), Box<dyn Error>> {
     update_pid_by_name(name, pid).await?;
@@ -27,22 +29,11 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
                 data: None,
             });
         }
-    } else if command.options.contains_key("pid") {
-        let name = command.options.get("pid").unwrap();
-        if let entity::Opt::U32(ref s) = name.value {
-            task = get_task_by_pid(*s).await?;
-        } else {
-            return Ok(entity::Response {
-                code: 1,
-                msg: "Arg 'pid' must be a number".to_string(),
-                data: None,
-            });
-        }
     } else {
         if command.args.len() == 0 {
             return Ok(entity::Response {
                 code: 1,
-                msg: "Arg 'name' or 'pid' is required".to_string(),
+                msg: "Arg 'name' is required".to_string(),
                 data: None,
             });
         } else {
@@ -65,7 +56,9 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
     let mut child: Child = Command::new(&task.command)
         .args(&task.args)
         .env("PATH", env_path)
+        .stdin(Stdio::null())
         .stdout(stdout)
+        .stderr(Stdio::null())
         .spawn()?;
 
     let result = child.id();
@@ -78,10 +71,16 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
             update_status(task.name.clone(), "running".to_string()).await?;
             // 异步等待子进程结束并更改 task status
             tokio::spawn(async move {
-                child.wait().await.unwrap();
-                update_status(task.name, "stopped".to_string())
+                let s = child.wait().await.unwrap();
+                update_status(task.name.clone(), "stopped".to_string())
                     .await
                     .unwrap();
+                update_pid(task.name.clone(), 0).await.unwrap();
+                if let Some(code) = s.code() {
+                    update_exit_code_by_name(task.name.clone(), code as u32)
+                        .await
+                        .unwrap();
+                }
             });
             Ok(entity::Response {
                 code: 10000,

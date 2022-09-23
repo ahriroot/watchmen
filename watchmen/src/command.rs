@@ -9,6 +9,7 @@ use std::error::Error;
 use std::fs::remove_file;
 use std::io::Write;
 use std::process::Stdio;
+use tokio::process::Command;
 
 use crate::command;
 use crate::const_exit_code::ExitCode;
@@ -93,26 +94,52 @@ async fn start_daemon(_args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
         std::fs::create_dir_all(watchmen_path)?;
     }
 
+    let stdout_path = watchmen_path.join("stdout/").clone();
+    if !stdout_path.exists() {
+        std::fs::create_dir(stdout_path.clone()).unwrap();
+    }
+
+    let daemon_stdout = watchmen_path.join("daemon.log").clone();
+    let file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(daemon_stdout)?;
+    let stdout = Stdio::from(file);
+
     let watchmen_path = watchmen_path.join("watchmen.sock");
 
     let path = std::env::current_dir()?.join("daemon");
     // 子进程
-    let child = std::process::Command::new(path)
+    let mut child = Command::new(path)
         .arg(watchmen_path)
-        .stdout(Stdio::null())
+        .arg(stdout_path)
+        .stdout(stdout)
         .spawn()?;
 
-    // 保存 pid
-    let pid = child.id();
-    let path = std::path::Path::new(&watchmen_path_str);
-    let path = path.join("watchmen.pid");
-    // 创建文件
-    let mut file = std::fs::File::create(path)?;
-    // 写入 pid
-    file.write_all(pid.to_string().as_bytes())?;
+    let result = child.id();
 
-    println!("Start daemon pid: {}", child.id());
-    Ok(ExitCode::SUCCESS)
+    match result {
+        Some(pid) => {
+            // 保存 pid
+            let path = std::path::Path::new(&watchmen_path_str);
+            let path = path.join("watchmen.pid");
+            // 创建文件
+            let mut file = std::fs::File::create(path.clone())?;
+            // 写入 pid
+            file.write_all(pid.to_string().as_bytes())?;
+
+            println!("Start daemon pid: {}", pid);
+            tokio::spawn(async move {
+                child.wait().await.unwrap();
+                remove_file(path).unwrap_or_default();
+            });
+            Ok(ExitCode::SUCCESS)
+        }
+        None => {
+            eprintln!("watchmen: failed to start daemon");
+            Ok(ExitCode::ERROR)
+        }
+    }
 }
 extern "C" {
     pub fn kill(pid: i32, sig: i32) -> i32;

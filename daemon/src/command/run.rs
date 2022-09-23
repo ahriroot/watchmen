@@ -1,8 +1,10 @@
 use std::{env, error::Error, path::Path, process::Stdio};
 use tokio::process::{Child, Command};
 
-use crate::entity::Task;
-use crate::global::{add_task, update_pid_by_name, update_status_by_name};
+use crate::entity::{self, Task};
+use crate::global::{
+    add_task, check_exists, update_exit_code_by_name, update_pid_by_name, update_status_by_name,
+};
 
 async fn register(task: Task) -> Result<(), Box<dyn Error>> {
     add_task(task).await?;
@@ -19,13 +21,31 @@ async fn update_status(name: String, status: String) -> Result<(), Box<dyn Error
     Ok(())
 }
 
-pub async fn run_task(task: Task) -> Result<u32, Box<dyn Error>> {
+pub async fn run_task(task: Task) -> Result<entity::Response, Box<dyn Error>> {
+    let args_cmdline: Vec<String> = std::env::args().collect();
+    if args_cmdline.len() < 3 {
+        return Ok(entity::Response {
+            code: 50000,
+            msg: "Miss stdout path".to_string(),
+            data: None,
+        });
+    }
+
+    let exists = check_exists(task.name.clone()).await?;
+    if exists {
+        return Ok(entity::Response {
+            code: 10000,
+            msg: "Task already exists".to_string(),
+            data: None,
+        });
+    }
     println!("task {} is running, pid is ", task.name);
     let t = task.clone();
     register(t).await?;
     // 声明指向文件的 stdout
     // TODO: 重定向到指定的文件
-    let path = Path::new("/tmp/watchmen/tmp.log");
+    let path = Path::new(&args_cmdline[2]);
+    let path = path.join(format!("{}.log", task.name));
     // let file = std::fs::File::create(path)?;
     // 创建或追加文件
     let file = std::fs::OpenOptions::new()
@@ -39,7 +59,9 @@ pub async fn run_task(task: Task) -> Result<u32, Box<dyn Error>> {
     let mut child: Child = Command::new(&task.command)
         .args(&task.args)
         .env("PATH", env_path)
+        .stdin(Stdio::null())
         .stdout(stdout)
+        .stderr(Stdio::null())
         .spawn()?;
 
     let result = child.id();
@@ -52,12 +74,32 @@ pub async fn run_task(task: Task) -> Result<u32, Box<dyn Error>> {
             update_status(task.name.clone(), "running".to_string()).await?;
             // 异步等待子进程结束并更改 task status
             tokio::spawn(async move {
-                child.wait().await.unwrap();
+                let s = child.wait().await.unwrap();
+                update_status(task.name.clone(), "stopped".to_string())
+                    .await
+                    .unwrap();
+                update_pid(task.name.clone(), 0).await.unwrap();
+                if let Some(code) = s.code() {
+                    update_exit_code_by_name(task.name.clone(), code as u32)
+                        .await
+                        .unwrap();
+                }
             });
             10000
         }
         None => 40000,
     };
-
-    Ok(code)
+    if code > 0 {
+        return Ok(entity::Response {
+            code: 10000,
+            msg: "success".to_string(),
+            data: None,
+        });
+    } else {
+        return Ok(entity::Response {
+            code: 40000,
+            msg: "failed".to_string(),
+            data: None,
+        });
+    }
 }

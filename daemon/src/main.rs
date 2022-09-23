@@ -6,7 +6,8 @@ use daemon::socket::run_socket;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() <= 1 {
+    println!("{:?}", args);
+    if args.len() < 3 {
         println!("Missing path argument.");
         exit(1);
     }

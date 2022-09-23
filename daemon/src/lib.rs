@@ -1,6 +1,7 @@
 pub mod command;
 pub mod entity;
 pub mod socket;
+pub mod utils;
 
 pub mod global {
     use std::{
@@ -15,6 +16,16 @@ pub mod global {
 
     lazy_static! {
         static ref TASKS: Mutex<Vec<Task>> = Mutex::new(Vec::new());
+    }
+
+    pub async fn check_exists(name: String) -> Result<bool, Box<dyn Error>> {
+        let tasks = get_all_tasks().await?;
+        for task in tasks.iter() {
+            if task.name == name {
+                return Ok(true);
+            }
+        }
+        Ok(false)
     }
 
     pub async fn get_task_by_name(name: String) -> Result<Task, Box<dyn Error>> {
@@ -92,6 +103,18 @@ pub mod global {
         let pos = tasks.iter().position(|task| task.name == name);
         if let Some(pos) = pos {
             tasks[pos].status = status;
+        }
+        Ok(())
+    }
+
+    pub async fn update_exit_code_by_name(
+        name: String,
+        exit_code: u32,
+    ) -> Result<(), Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        let pos = tasks.iter().position(|task| task.name == name);
+        if let Some(pos) = pos {
+            tasks[pos].exit_code = exit_code;
         }
         Ok(())
     }
