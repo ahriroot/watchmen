@@ -6,23 +6,23 @@ use crate::{
     socket,
 };
 
-const START_HELP: &str = r#"Usage: watchmen start [OPTION...] ...
-  -h, --help     display this help of 'start' command
+const RESTART_HELP: &str = r#"Usage: watchmen restart [OPTION...] ...
+  -h, --help     display this help of 'restart' command
 
-  -i, --id       start a task with the specified id
-  -n, --name     start a task with the specified name
+  -i, --id       restart a task with the specified id
+  -n, --name     restart a task with the specified name
 
 Report bugs to ahriknow@ahriknow.com.""#;
 
 pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
     let len = args.len();
     if len < 1 {
-        println!("{}", START_HELP);
+        println!("{}", RESTART_HELP);
         return Ok(ExitCode::SUCCESS);
     }
     let code = match args[0].as_str() {
         "-h" | "--help" => {
-            println!("{}", START_HELP);
+            println!("{}", RESTART_HELP);
             ExitCode::SUCCESS
         }
         _ => {
@@ -63,15 +63,15 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
             }
 
             let req = entity::Request {
-                name: "start".to_string(),
+                name: "restart".to_string(),
                 command: entity::Command {
-                    name: "start".to_string(),
+                    name: "restart".to_string(),
                     options: options,
                     args: args,
                 },
             };
             let res = socket::request(&req).await?;
-            println!("start command: {:?}", res);
+            println!("restart command: {:?}", res);
             ExitCode::SUCCESS
         }
     };

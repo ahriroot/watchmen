@@ -1,5 +1,6 @@
 pub mod exit;
 pub mod list;
+pub mod restart;
 pub mod run;
 pub mod start;
 pub mod stop;
@@ -116,6 +117,22 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
         }
         "start" => {
             let result = command::start::start_task(command).await;
+            match result {
+                Ok(res) => {
+                    return Ok(res);
+                }
+                Err(e) => {
+                    let res = entity::Response {
+                        code: 40000,
+                        msg: e.to_string(),
+                        data: None,
+                    };
+                    return Ok(res);
+                }
+            }
+        }
+        "restart" => {
+            let result = command::restart::restart_task(command).await;
             match result {
                 Ok(res) => {
                     return Ok(res);

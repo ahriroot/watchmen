@@ -7,7 +7,7 @@ use crate::{
     socket,
 };
 
-const RUN_HELP: &str = r#"Usage: watchmen run [OPTION...] [SECTION] PAGE...
+const RUN_HELP: &str = r#"Usage: watchmen run [OPTION...] ...
   -h, --help     display this help of 'run' command
 
   -n, --name     create and start a task with the specified name

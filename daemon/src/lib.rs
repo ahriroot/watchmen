@@ -28,6 +28,17 @@ pub mod global {
         Ok(false)
     }
 
+    pub async fn get_task_by_id(id: u128) -> Result<Task, Box<dyn Error>> {
+        let tasks = get_all_tasks().await?;
+        for task in tasks.iter() {
+            if task.id == id {
+                return Ok(task.clone());
+            }
+        }
+        let err = format!("Task id '{}' not found", id);
+        return Err(err.into());
+    }
+
     pub async fn get_task_by_name(name: String) -> Result<Task, Box<dyn Error>> {
         let tasks = TASKS.lock().await;
         for task in tasks.iter() {

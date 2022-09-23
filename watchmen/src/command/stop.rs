@@ -6,9 +6,10 @@ use crate::{
     socket,
 };
 
-const STOP_HELP: &str = r#"Usage: watchmen stop [OPTION...] [SECTION] PAGE...
+const STOP_HELP: &str = r#"Usage: watchmen stop [OPTION...] ...
   -h, --help     display this help of 'start' command
 
+  -i, --id       stop a task with the specified id
   -n, --name     stop a task with the specified name
   -p, --pid      stop a task with the specified pid
 
@@ -47,6 +48,23 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                                 Options {
                                     key: "pid".to_string(),
                                     value: entity::Opt::U32(p),
+                                },
+                            );
+                        }
+                        Err(_) => {
+                            eprintln!("Arg '{}' must be a number", args[0]);
+                            return Ok(ExitCode::ERROR);
+                        }
+                    }
+                } else if args[0] == "-i" || args[0] == "--id" {
+                    let id = args[1].parse::<u128>();
+                    match id {
+                        Ok(i) => {
+                            options.insert(
+                                "id".to_string(),
+                                Options {
+                                    key: "id".to_string(),
+                                    value: entity::Opt::U128(i),
                                 },
                             );
                         }

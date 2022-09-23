@@ -2,7 +2,7 @@ use std::error::Error;
 
 use crate::{
     entity,
-    global::{get_task_by_name, get_task_by_pid, remove_task_by_name},
+    global::{get_task_by_id, get_task_by_name, get_task_by_pid, remove_task_by_name},
 };
 
 extern "C" {
@@ -11,7 +11,18 @@ extern "C" {
 
 pub async fn exit_task(command: entity::Command) -> Result<entity::Response, Box<dyn Error>> {
     let task;
-    if command.options.contains_key("name") {
+    if command.options.contains_key("id") {
+        let id = command.options.get("id").unwrap();
+        if let entity::Opt::U128(ref i) = id.value {
+            task = get_task_by_id(*i).await?;
+        } else {
+            return Ok(entity::Response {
+                code: 50000,
+                msg: "Arg 'id' must be a usize".to_string(),
+                data: None,
+            });
+        }
+    } else if command.options.contains_key("name") {
         let name = command.options.get("name").unwrap();
         if let entity::Opt::Str(ref s) = name.value {
             task = get_task_by_name(s.clone()).await?;

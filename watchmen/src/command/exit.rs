@@ -6,11 +6,12 @@ use crate::{
     socket,
 };
 
-const EXIT_HELP: &str = r#"Usage: watchmen [exit|rm] [OPTION...] [SECTION] PAGE...
-  -h, --help     display this help of 'run' command
+const EXIT_HELP: &str = r#"Usage: watchmen [exit|rm|drop] [OPTION...] ...
+  -h, --help     display this help of 'exit' | 'rm' | 'drop' command
 
-  -n, --name     stop and drop a task by name
-  -p, --pid      stop and drop a task by pid
+  -i, --id       stop and drop a task with the specified id
+  -n, --name     stop and drop a task with the specified name
+  -p, --pid      stop and drop a task with the specified pid
 
 Report bugs to ahriknow@ahriknow.com.""#;
 
@@ -47,6 +48,23 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                                 Options {
                                     key: "pid".to_string(),
                                     value: entity::Opt::U32(p),
+                                },
+                            );
+                        }
+                        Err(_) => {
+                            eprintln!("Arg '{}' must be a number", args[0]);
+                            return Ok(ExitCode::ERROR);
+                        }
+                    }
+                } else if args[0] == "-i" || args[0] == "--id" {
+                    let id = args[1].parse::<u128>();
+                    match id {
+                        Ok(i) => {
+                            options.insert(
+                                "id".to_string(),
+                                Options {
+                                    key: "id".to_string(),
+                                    value: entity::Opt::U128(i),
                                 },
                             );
                         }

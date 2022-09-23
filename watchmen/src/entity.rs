@@ -19,7 +19,7 @@ pub struct Task {
     pub origin: u128,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Opt {
     U128(u128),
     U32(u32),
@@ -27,13 +27,13 @@ pub enum Opt {
     None,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Options {
     pub key: String,
     pub value: Opt,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Command {
     pub name: String,
     pub options: HashMap<String, Options>,
