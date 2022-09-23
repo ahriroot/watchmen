@@ -34,7 +34,7 @@ pub async fn run_task(task: Task) -> Result<entity::Response, Box<dyn Error>> {
     let exists = check_exists(task.name.clone()).await?;
     if exists {
         return Ok(entity::Response {
-            code: 10000,
+            code: 40000,
             msg: "Task already exists".to_string(),
             data: None,
         });

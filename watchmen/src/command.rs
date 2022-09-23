@@ -1,3 +1,4 @@
+pub mod add;
 pub mod exit;
 pub mod list;
 pub mod restart;
@@ -26,6 +27,10 @@ const HTLP: &str = r#"Usage: watchmen [OPTION|SUBCOMMAND] ...
   run
     create a task and run it
     run `watchmen run -h` for more information
+
+  add
+    create a task but not run it
+    run `watchmen add -h` for more information
 
   drop | exit | rm
     drop a task and stop if it is running
@@ -73,6 +78,7 @@ pub async fn exec(args: Vec<String>) -> Result<ExitCode, Box<dyn Error>> {
             ExitCode::SUCCESS
         }
         "run" => command::run::run(&args[2..]).await?,
+        "add" => command::add::run(&args[2..]).await?,
         "exit" | "rm" | "drop" => command::exit::run(&args[2..]).await?,
         "start" => command::start::run(&args[2..]).await?,
         "restart" => command::restart::run(&args[2..]).await?,

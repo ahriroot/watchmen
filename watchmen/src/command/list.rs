@@ -21,12 +21,16 @@ Report bugs to ahriknow@ahriknow.com.""#;
 
 pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
     let len = args.len();
-    if len == 1 && (args[0] == "-h" || args[0] == "--help") {
-        println!("{}", LIST_HELP);
-        return Ok(ExitCode::SUCCESS);
+    let mut more = false;
+    if len == 1 {
+        if args[0] == "-h" || args[0] == "--help" {
+            println!("{}", LIST_HELP);
+            return Ok(ExitCode::SUCCESS);
+        } else if args[0] == "-m" || args[0] == "--more" {
+            more = true;
+        }
     }
     let mut options: HashMap<String, Opt> = HashMap::new();
-    let mut more = false;
 
     let mut args: Vec<String> = args.to_vec();
     while args.len() > 1 {
@@ -177,6 +181,7 @@ async fn print_format(res: Vec<Task>, more: bool) {
         let mut sum_running = 0;
         let mut sum_stopped = 0;
         let mut sum_waiting = 0;
+        let mut sum_added = 0;
         println!("{:-<len_sum$}", "", len_sum = len_sum);
         for task in res {
             let mut status = task.status;
@@ -189,6 +194,8 @@ async fn print_format(res: Vec<Task>, more: bool) {
             } else if status == "waiting" {
                 status = status.blue().to_string();
                 sum_waiting += 1;
+            } else if status == "added  " {
+                sum_added += 1;
             }
             let created_at = if task.created_at > 0 {
                 Local
@@ -235,11 +242,12 @@ async fn print_format(res: Vec<Task>, more: bool) {
             println!("{:-<len_sum$}", "", len_sum = len_sum);
         }
         println!(
-            "{} Total: {} running, {} stopped, {} waiting",
+            "{} Total: {} running, {} stopped, {} waiting, {} added",
             sum_all,
             sum_running.to_string().green().to_string(),
             sum_stopped.to_string().red().to_string(),
-            sum_waiting.to_string().blue().to_string()
+            sum_waiting.to_string().blue().to_string(),
+            sum_added.to_string().to_string()
         );
     } else {
         let len_sum = len_id
@@ -260,6 +268,7 @@ async fn print_format(res: Vec<Task>, more: bool) {
         let mut sum_running = 0;
         let mut sum_stopped = 0;
         let mut sum_waiting = 0;
+        let mut sum_added = 0;
         println!("{:-<len_sum$}", "", len_sum = len_sum);
         for task in res {
             let mut status = task.status;
@@ -272,6 +281,8 @@ async fn print_format(res: Vec<Task>, more: bool) {
             } else if status == "waiting" {
                 status = status.blue().to_string();
                 sum_waiting += 1;
+            } else if status == "added  " {
+                sum_added += 1;
             }
             let started_at = if task.started_at > 0 {
                 Local
@@ -302,11 +313,12 @@ async fn print_format(res: Vec<Task>, more: bool) {
             println!("{:-<len_sum$}", "", len_sum = len_sum);
         }
         println!(
-            "{} Total: {} running, {} stopped, {} waiting",
+            "{} Total: {} running, {} stopped, {} waiting, {} added",
             sum_all,
             sum_running.to_string().green().to_string(),
             sum_stopped.to_string().red().to_string(),
-            sum_waiting.to_string().blue().to_string()
+            sum_waiting.to_string().blue().to_string(),
+            sum_added.to_string().to_string()
         );
     }
 }
