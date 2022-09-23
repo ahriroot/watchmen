@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -18,8 +20,22 @@ pub struct Task {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub enum Opt {
+    Usize(u128),
+    Str(String),
+    None,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Options {
+    pub key: String,
+    pub value: Opt,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Command {
     pub name: String,
+    pub options: HashMap<String, Options>,
     pub args: Vec<String>,
 }
 

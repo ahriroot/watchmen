@@ -1,10 +1,10 @@
 use chrono::{Local, TimeZone};
 use colored::Colorize;
-use std::error::Error;
+use std::{error::Error, collections::HashMap};
 
 use crate::{
     const_exit_code::ExitCode,
-    entity::{self, Task},
+    entity::{self, Task, Options},
     socket,
 };
 
@@ -15,6 +15,8 @@ const LIST_HELP: &str = r#"Usage: watchmen list [OPTION...] [SECTION] PAGE...
   -s, --status   list tasks by status
   -p, --pid      list tasks by pid
 
+  -m, --more     list tasks with more details
+
 Report bugs to ahriknow@ahriknow.com.""#;
 
 pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
@@ -23,29 +25,78 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
         println!("{}", LIST_HELP);
         return Ok(ExitCode::SUCCESS);
     }
+    let mut options: HashMap<String, Options> = HashMap::new();
+
+    let mut args: Vec<String> = args.to_vec();
+    while args.len() > 1 {
+        if args[0] == "-n" || args[0] == "--name" {
+            options.insert(
+                "name".to_string(),
+                Options {
+                    key: "name".to_string(),
+                    value: entity::Opt::Str(args[1].clone()),
+                },
+            );
+        } else if args[0] == "-p" || args[0] == "--pid" {
+            let pid = args[1].parse::<u128>();
+            match pid {
+                Ok(p) => {
+                    options.insert(
+                        "pid".to_string(),
+                        Options {
+                            key: "pid".to_string(),
+                            value: entity::Opt::Usize(p),
+                        },
+                    );
+                }
+                Err(_) => {
+                    eprintln!("Arg '{}' must be a number", args[0]);
+                    return Ok(ExitCode::ERROR);
+                }
+            }
+        } else {
+            break;
+        }
+        args.remove(0);
+        args.remove(0);
+    }
+
     let req = entity::Request {
         name: "list".to_string(),
         command: entity::Command {
             name: "list".to_string(),
-            args: args.to_vec(),
+            options:  options,
+            args: args,
         },
     };
     let res = socket::request(&req).await?;
     if let Some(data) = res.data {
         match data {
-            entity::Data::TaskList(tasks) => print_format(tasks).await,
+            entity::Data::TaskList(tasks) => print_format(tasks, true).await,
             _ => {}
         }
     }
     Ok(ExitCode::SUCCESS)
 }
 
-async fn print_format(res: Vec<Task>) {
+async fn print_format(res: Vec<Task>, more: bool) {
     let sum_all = res.len();
-    let len_id = res.iter().map(|x| x.id.to_string().len()).max().unwrap_or_else(|| 0);
+    let len_id = res
+        .iter()
+        .map(|x| x.id.to_string().len())
+        .max()
+        .unwrap_or_else(|| 0);
     let len_name = res.iter().map(|x| x.name.len()).max().unwrap_or_else(|| 0);
-    let len_status = res.iter().map(|x| x.status.len()).max().unwrap_or_else(|| 0);
-    let len_pid = res.iter().map(|x| x.pid.to_string().len()).max().unwrap_or_else(|| 0);
+    let len_status = res
+        .iter()
+        .map(|x| x.status.len())
+        .max()
+        .unwrap_or_else(|| 0);
+    let len_pid = res
+        .iter()
+        .map(|x| x.pid.to_string().len())
+        .max()
+        .unwrap_or_else(|| 0);
     let len_created_at = 19;
     let len_started_at = 19;
     let len_exited_at = 19;
