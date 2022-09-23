@@ -56,7 +56,7 @@ pub async fn run_task(task: Task) -> Result<u32, Box<dyn Error>> {
             });
             10000
         }
-        None => 50000,
+        None => 40000,
     };
 
     Ok(code)

@@ -21,7 +21,7 @@ pub async fn exit_task(args: Vec<String>) -> Result<entity::Response, Box<dyn Er
             let pid = args[1].parse::<u32>();
             if pid.is_err() {
                 let res = entity::Response {
-                    code: 50000,
+                    code: 40000,
                     msg: format!("Invalid pid: '{}'", args[1]),
                     data: None,
                 };
@@ -30,7 +30,7 @@ pub async fn exit_task(args: Vec<String>) -> Result<entity::Response, Box<dyn Er
             task = get_task_by_pid(pid.unwrap()).await?;
         } else {
             let res = entity::Response {
-                code: 50000,
+                code: 40000,
                 msg: format!("Invalid args"),
                 data: None,
             };
@@ -38,7 +38,7 @@ pub async fn exit_task(args: Vec<String>) -> Result<entity::Response, Box<dyn Er
         }
     } else {
         let res = entity::Response {
-            code: 50000,
+            code: 40000,
             msg: format!("Invalid args"),
             data: None,
         };
@@ -56,7 +56,7 @@ pub async fn exit_task(args: Vec<String>) -> Result<entity::Response, Box<dyn Er
         return Ok(res);
     }
     let res = entity::Response {
-        code: 50000,
+        code: 40000,
         msg: "failed".to_string(),
         data: None,
     };

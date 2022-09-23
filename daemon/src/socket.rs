@@ -21,7 +21,7 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_millis();
-            let task: Task = Task {
+            let mut task: Task = Task {
                 id: id,
                 name: command.name,
                 command: command.args[0].clone(),
@@ -33,7 +33,46 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
                 exited_at: 0,
                 stopped_at: 0,
                 exit_code: 100,
+                interval: id,
+                cycle: 0,
             };
+
+            let mut args = command.args.clone();
+            while args.len() > 1 {
+                if args[0] == "-n" || args[0] == "--name" {
+                    task.name = args[1].clone();
+                } else if args[0] == "-c" || args[0] == "--cycle" {
+                    let cycle = args[1].parse::<u128>();
+                    match cycle {
+                        Ok(c) => task.cycle = c,
+                        Err(e) => {
+                            return Ok(entity::Response {
+                                code: 50000,
+                                msg: format!("cycle must be a number, {}", e),
+                                data: None,
+                            })
+                        }
+                    }
+                } else if args[0] == "-i" || args[0] == "--interval" {
+                    let interval = args[1].parse::<u128>();
+                    match interval {
+                        Ok(i) => task.interval = i,
+                        Err(e) => {
+                            return Ok(entity::Response {
+                                code: 50000,
+                                msg: format!("interval must be a number, {}", e),
+                                data: None,
+                            })
+                        }
+                    }
+                } else {
+                    break;
+                }
+                args.remove(0);
+                args.remove(0);
+            }
+            task.command = args[0].clone();
+            task.args = args[1..].to_vec();
 
             let result = command::run::run_task(task).await?;
             let res = entity::Response {
@@ -46,7 +85,7 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
         "exit" => {
             if command.args.len() == 0 {
                 let res = entity::Response {
-                    code: 50000,
+                    code: 40000,
                     msg: "args error".to_string(),
                     data: None,
                 };
@@ -59,7 +98,7 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
                     }
                     Err(e) => {
                         let res = entity::Response {
-                            code: 50000,
+                            code: 40000,
                             msg: e.to_string(),
                             data: None,
                         };
@@ -71,7 +110,7 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
         "start" => {
             if command.args.len() == 0 {
                 let res = entity::Response {
-                    code: 50000,
+                    code: 40000,
                     msg: "args error".to_string(),
                     data: None,
                 };
@@ -84,7 +123,7 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
                     }
                     Err(e) => {
                         let res = entity::Response {
-                            code: 50000,
+                            code: 40000,
                             msg: e.to_string(),
                             data: None,
                         };
@@ -96,7 +135,7 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
         "stop" => {
             if command.args.len() == 0 {
                 let res = entity::Response {
-                    code: 50000,
+                    code: 40000,
                     msg: "args error".to_string(),
                     data: None,
                 };
@@ -109,7 +148,7 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
                     }
                     Err(e) => {
                         let res = entity::Response {
-                            code: 50000,
+                            code: 40000,
                             msg: e.to_string(),
                             data: None,
                         };
@@ -126,7 +165,7 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
                 }
                 Err(e) => {
                     let res = entity::Response {
-                        code: 50000,
+                        code: 40000,
                         msg: e.to_string(),
                         data: None,
                     };

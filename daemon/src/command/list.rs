@@ -12,7 +12,7 @@ pub async fn list_tasks(args: Vec<String>) -> Result<entity::Response, Box<dyn E
 
     if len % 2 != 0 {
         let res = entity::Response {
-            code: 50000,
+            code: 40000,
             msg: format!("Invalid args length"),
             data: None,
         };
@@ -29,7 +29,7 @@ pub async fn list_tasks(args: Vec<String>) -> Result<entity::Response, Box<dyn E
     for key in keys {
         if !allowed_keys.contains(&key.as_str()) {
             let res = entity::Response {
-                code: 50000,
+                code: 40000,
                 msg: format!("Invalid arg key: '{}'", key),
                 data: None,
             };
@@ -43,7 +43,7 @@ pub async fn list_tasks(args: Vec<String>) -> Result<entity::Response, Box<dyn E
         && args_map["-n"] != args_map["--name"]
     {
         let res = entity::Response {
-            code: 50000,
+            code: 40000,
             msg: format!("Invalid args: '-n' and '--name' cannot be used at the same time"),
             data: None,
         };
@@ -56,7 +56,7 @@ pub async fn list_tasks(args: Vec<String>) -> Result<entity::Response, Box<dyn E
         && args_map["-s"] != args_map["--status"]
     {
         let res = entity::Response {
-            code: 50000,
+            code: 40000,
             msg: format!("Invalid args: '-s' and '--status' cannot be used at the same time"),
             data: None,
         };
@@ -69,7 +69,7 @@ pub async fn list_tasks(args: Vec<String>) -> Result<entity::Response, Box<dyn E
         && args_map["-p"] != args_map["--pid"]
     {
         let res = entity::Response {
-            code: 50000,
+            code: 40000,
             msg: format!("Invalid args: '-p' and '--pid' cannot be used at the same time"),
             data: None,
         };
@@ -79,7 +79,7 @@ pub async fn list_tasks(args: Vec<String>) -> Result<entity::Response, Box<dyn E
     if args_map.contains_key("-p") {
         if args_map.len() > 1 {
             let res = entity::Response {
-                code: 50000,
+                code: 40000,
                 msg: format!(
                     "Incompatible arg '-p' and {}",
                     args_map
@@ -97,7 +97,7 @@ pub async fn list_tasks(args: Vec<String>) -> Result<entity::Response, Box<dyn E
     if args_map.contains_key("--pid") {
         if args_map.len() > 1 {
             let res = entity::Response {
-                code: 50000,
+                code: 40000,
                 msg: format!(
                     "Incompatible arg '--pid' and {}",
                     args_map
