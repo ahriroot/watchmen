@@ -11,6 +11,10 @@ use crate::{
 const LIST_HELP: &str = r#"Usage: watchmen list [OPTION...] [SECTION] PAGE...
   -h, --help     display this help of 'start' command
 
+  -n, --name     list tasks by name with regular expression
+  -s, --status   list tasks by status
+  -p, --pid      list tasks by pid
+
 Report bugs to ahriknow@ahriknow.com.""#;
 
 pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {

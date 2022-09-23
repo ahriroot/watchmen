@@ -4,6 +4,7 @@ pub mod run;
 pub mod start;
 pub mod stop;
 
+use colored::Colorize;
 use std::error::Error;
 use std::fs::remove_file;
 use std::io::Write;
@@ -12,23 +13,36 @@ use std::process::Stdio;
 use crate::command;
 use crate::const_exit_code::ExitCode;
 
-const HTLP: &str = r#"Usage: watchmen [OPTION...] [SECTION] PAGE...
-  -h, --help     display this help and exit
-  -v, --version  output version information and exit
+const HTLP: &str = r#"Usage: watchmen [OPTION|SUBCOMMAND] ...
+  -h, --help        display this help and exit
+  -v, --version     display version information and exit
+  -i, --info        display information about watchmen and exit
 
-  run            start command
-    -h, --help   display this help of 'run' command
+  -d, --daemon      startup watchmen daemon
+  -t, --terminated  terminated watchmen daemon
+
+  run
+    create a task and run it
     run `watchmen run -h` for more information
 
-  stop           stop command
-    -h, --help   display this help of 'stop' command
+  drop | exit | rm
+    drop a task and stop if it is running
+    run `watchmen [this] -h` for more information
+
+  start
+    start a task if it is exists
+    run `watchmen start -h` for more information
+
+  stop
+    stop a task if it is running
     run `watchmen stop -h` for more information
 
-  list           list command
-    -h, --help   display this help of 'list' command
+  list
+    list all tasks
     run `watchmen list -h` for more information
 
-Report bugs to ahriknow@ahriknow.com."#;
+Report bugs to ahriknow@ahriknow.com
+Issues: https://git.ahriknow.com/ahriknow/watchmen/issues"#;
 const INFO: &str = r#"watchmen 0.1.0
 Homepage: https://watchmen.ahriknow.com/"#;
 const VERSION: &str = "watchmen 0.1.0";
@@ -53,7 +67,7 @@ pub async fn exec(args: Vec<String>) -> Result<ExitCode, Box<dyn Error>> {
             ExitCode::SUCCESS
         }
         "run" => command::run::run(&args[2..]).await?,
-        "exit" | "rm" => command::exit::run(&args[2..]).await?,
+        "exit" | "rm" | "drop" => command::exit::run(&args[2..]).await?,
         "start" => command::start::run(&args[2..]).await?,
         "stop" => command::stop::run(&args[2..]).await?,
         "list" => command::list::run(&args[2..]).await?,
@@ -61,7 +75,8 @@ pub async fn exec(args: Vec<String>) -> Result<ExitCode, Box<dyn Error>> {
         "-t" | "--terminated" => terminated_daemon(&args[2..]).await?,
         _ => {
             let err: String = format!("watchmen: invalid command '{}'", args[1]);
-            return Err(err.into());
+            eprintln!("{}", err.red());
+            ExitCode::ERROR
         }
     };
 

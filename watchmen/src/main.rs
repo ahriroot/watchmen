@@ -53,7 +53,7 @@ pub mod tests {
     #[test]
     fn test() {
         let mut args = vec![
-            "-c".to_string(),
+            "-o".to_string(),
             "123".to_string(),
             "-i".to_string(),
             "456".to_string(),
@@ -66,7 +66,7 @@ pub mod tests {
             index += 1;
             println!("{} {:?}", index, args);
             if args[0] == "-n" || args[0] == "--name" {
-            } else if args[0] == "-c" || args[0] == "--cycle" {
+            } else if args[0] == "-o" || args[0] == "--origin" {
             } else if args[0] == "-i" || args[0] == "--interval" {
             } else {
                 break;

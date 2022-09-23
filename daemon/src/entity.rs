@@ -14,7 +14,7 @@ pub struct Task {
     pub stopped_at: u128,
     pub exit_code: i32,
     pub interval: u128,
-    pub cycle: u128,
+    pub origin: u128,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

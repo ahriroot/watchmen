@@ -34,17 +34,17 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
                 stopped_at: 0,
                 exit_code: 100,
                 interval: id,
-                cycle: 0,
+                origin: 0,
             };
 
             let mut args = command.args.clone();
             while args.len() > 1 {
                 if args[0] == "-n" || args[0] == "--name" {
                     task.name = args[1].clone();
-                } else if args[0] == "-c" || args[0] == "--cycle" {
-                    let cycle = args[1].parse::<u128>();
-                    match cycle {
-                        Ok(c) => task.cycle = c,
+                } else if args[0] == "-o" || args[0] == "--origin" {
+                    let origin = args[1].parse::<u128>();
+                    match origin {
+                        Ok(c) => task.origin = c,
                         Err(_) => {
                             return Ok(entity::Response {
                                 code: 50000,

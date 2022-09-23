@@ -6,6 +6,10 @@ use crate::{const_exit_code::ExitCode, entity, socket};
 const RUN_HELP: &str = r#"Usage: watchmen run [OPTION...] [SECTION] PAGE...
   -h, --help     display this help of 'run' command
 
+  -n, --name     create and start a task with the specified name
+  -o, --origin   create and start a task with the specified origin
+  -i, --interval create and start a task with the specified interval
+
 Report bugs to ahriknow@ahriknow.com.""#;
 
 pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
