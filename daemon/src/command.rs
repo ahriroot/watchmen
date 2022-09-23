@@ -41,7 +41,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
 
             if command.options.contains_key("name") {
                 let name = command.options.get("name").unwrap();
-                match name.value {
+                match name {
                     entity::Opt::Str(ref s) => {
                         task.name = s.clone();
                     }
@@ -59,7 +59,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
 
             if command.options.contains_key("origin") {
                 let origin = command.options.get("origin").unwrap();
-                match origin.value {
+                match origin {
                     entity::Opt::U128(ref o) => {
                         task.origin = *o;
                     }
@@ -77,7 +77,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
 
             if command.options.contains_key("interval") {
                 let interval = command.options.get("interval").unwrap();
-                match interval.value {
+                match interval {
                     entity::Opt::U128(ref i) => {
                         task.interval = *i;
                     }

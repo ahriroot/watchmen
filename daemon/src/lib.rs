@@ -15,7 +15,10 @@ pub mod global {
     use serde_json;
     use tokio::sync::Mutex;
 
-    use crate::entity::Task;
+    use crate::{
+        command::start::{self},
+        entity::Task,
+    };
 
     lazy_static! {
         static ref TASKS: Mutex<Vec<Task>> = Mutex::new(Vec::new());
@@ -51,7 +54,19 @@ pub mod global {
             let f = File::open(path).unwrap();
             let data: Vec<Task> = serde_json::from_reader(f).unwrap();
             let mut tasks = TASKS.lock().await;
-            *tasks = data;
+            *tasks = data.clone();
+            
+            // 释放锁, 启动 task 时需要更改 task 状态, 需要获取锁
+            drop(tasks);
+
+            for task in data {
+                if task.status == "running" {
+                    match start::start_task_by_task(task.clone()).await {
+                        Ok(_) => {}
+                        Err(_) => {}
+                    };
+                }
+            }
         }
 
         Ok(())

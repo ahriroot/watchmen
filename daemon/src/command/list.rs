@@ -13,7 +13,7 @@ pub async fn list_tasks(command: entity::Command) -> Result<entity::Response, Bo
         let mut flag = true;
         for (key, value) in command.options.iter() {
             if key == "name" {
-                match value.value {
+                match value {
                     entity::Opt::Str(ref s) => {
                         if !task.name.contains(s) {
                             flag = false;
@@ -23,7 +23,7 @@ pub async fn list_tasks(command: entity::Command) -> Result<entity::Response, Bo
                 }
             }
             if key == "status" {
-                match value.value {
+                match value {
                     entity::Opt::Str(ref s) => {
                         if !task.status.contains(s) {
                             flag = false;
@@ -33,7 +33,7 @@ pub async fn list_tasks(command: entity::Command) -> Result<entity::Response, Bo
                 }
             }
             if key == "pid" {
-                match value.value {
+                match value {
                     entity::Opt::U32(ref s) => {
                         if task.pid != *s {
                             flag = false;

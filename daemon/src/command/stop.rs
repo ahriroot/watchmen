@@ -16,7 +16,7 @@ pub async fn stop_task(command: entity::Command) -> Result<entity::Response, Box
     let task;
     if command.options.contains_key("id") {
         let id = command.options.get("id").unwrap();
-        if let entity::Opt::U128(ref i) = id.value {
+        if let entity::Opt::U128(ref i) = id {
             task = get_task_by_id(*i).await?;
         } else {
             return Ok(entity::Response {
@@ -27,7 +27,7 @@ pub async fn stop_task(command: entity::Command) -> Result<entity::Response, Box
         }
     } else if command.options.contains_key("name") {
         let name = command.options.get("name").unwrap();
-        if let entity::Opt::Str(ref s) = name.value {
+        if let entity::Opt::Str(ref s) = name {
             task = get_task_by_name(s.clone()).await?;
         } else {
             return Ok(entity::Response {
@@ -38,7 +38,7 @@ pub async fn stop_task(command: entity::Command) -> Result<entity::Response, Box
         }
     } else if command.options.contains_key("pid") {
         let name = command.options.get("pid").unwrap();
-        if let entity::Opt::U32(ref s) = name.value {
+        if let entity::Opt::U32(ref s) = name {
             task = get_task_by_pid(*s).await?;
         } else {
             return Ok(entity::Response {
