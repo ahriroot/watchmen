@@ -28,6 +28,11 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
                 args: command.args[1..].to_vec(),
                 status: "running".to_string(),
                 pid: 0,
+                created_at: 0,
+                started_at: 0,
+                exited_at: 0,
+                stopped_at: 0,
+                exit_code: 100,
             };
 
             let result = command::run::run_task(task).await?;

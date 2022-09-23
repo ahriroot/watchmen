@@ -8,6 +8,11 @@ pub struct Task {
     pub args: Vec<String>,
     pub status: String,
     pub pid: u32,
+    pub created_at: u128,
+    pub started_at: u128,
+    pub exited_at: u128,
+    pub stopped_at: u128,
+    pub exit_code: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -23,15 +28,8 @@ pub struct Request {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TaskItem {
-    pub name: String,
-    pub status: String,
-    pub pid: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub enum Data {
-    TaskList(Vec<TaskItem>),
+    TaskList(Vec<Task>),
     None,
 }
 

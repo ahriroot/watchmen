@@ -1,12 +1,12 @@
 use std::error::Error;
 
 use crate::{
-    entity::{self, TaskItem},
+    entity::{self, Task},
     global::get_all_tasks,
 };
 
 pub async fn list_tasks(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>> {
-    let mut task_list: Vec<TaskItem> = Vec::new();
+    let mut task_list: Vec<Task> = Vec::new();
     let tasks = get_all_tasks().await?;
     let len = args.len();
 
@@ -130,12 +130,7 @@ pub async fn list_tasks(args: Vec<String>) -> Result<entity::Response, Box<dyn E
             }
         }
         if flag {
-            let task_item = TaskItem {
-                name: task.name.clone(),
-                status: task.status.clone(),
-                pid: task.pid,
-            };
-            task_list.push(task_item);
+            task_list.push(task.clone());
         }
     }
 
