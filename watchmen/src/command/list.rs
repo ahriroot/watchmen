@@ -1,10 +1,10 @@
 use chrono::{Local, TimeZone};
 use colored::Colorize;
-use std::{error::Error, collections::HashMap};
+use std::{collections::HashMap, error::Error};
 
 use crate::{
     const_exit_code::ExitCode,
-    entity::{self, Task, Options},
+    entity::{self, Options, Task},
     socket,
 };
 
@@ -26,6 +26,7 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
         return Ok(ExitCode::SUCCESS);
     }
     let mut options: HashMap<String, Options> = HashMap::new();
+    let mut more = false;
 
     let mut args: Vec<String> = args.to_vec();
     while args.len() > 1 {
@@ -37,15 +38,27 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                     value: entity::Opt::Str(args[1].clone()),
                 },
             );
+            args.remove(0);
+            args.remove(0);
+        } else if args[0] == "-s" || args[0] == "--status" {
+            options.insert(
+                "status".to_string(),
+                Options {
+                    key: "status".to_string(),
+                    value: entity::Opt::Str(args[1].clone()),
+                },
+            );
+            args.remove(0);
+            args.remove(0);
         } else if args[0] == "-p" || args[0] == "--pid" {
-            let pid = args[1].parse::<u128>();
+            let pid = args[1].parse::<u32>();
             match pid {
                 Ok(p) => {
                     options.insert(
                         "pid".to_string(),
                         Options {
                             key: "pid".to_string(),
-                            value: entity::Opt::Usize(p),
+                            value: entity::Opt::U32(p),
                         },
                     );
                 }
@@ -54,25 +67,28 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                     return Ok(ExitCode::ERROR);
                 }
             }
+            args.remove(0);
+            args.remove(0);
+        } else if args[0] == "-m" || args[0] == "--more" {
+            more = true;
+            args.remove(0);
         } else {
             break;
         }
-        args.remove(0);
-        args.remove(0);
     }
 
     let req = entity::Request {
         name: "list".to_string(),
         command: entity::Command {
             name: "list".to_string(),
-            options:  options,
+            options: options,
             args: args,
         },
     };
     let res = socket::request(&req).await?;
     if let Some(data) = res.data {
         match data {
-            entity::Data::TaskList(tasks) => print_format(tasks, true).await,
+            entity::Data::TaskList(tasks) => print_format(tasks, more).await,
             _ => {}
         }
     }
@@ -158,88 +174,157 @@ async fn print_format(res: Vec<Task>, more: bool) {
         title_exit_code.len()
     };
 
-    let len_sum = len_id
-        + len_name
-        + len_status
-        + len_pid
-        + len_created_at
-        + len_started_at
-        + len_exited_at
-        + len_stopped_at
-        + len_exit_code
-        + 9 * 2
-        + 10;
-    println!("{:-<len_sum$}", "", len_sum = len_sum);
-    println!(
+    if more {
+        let len_sum = len_id
+            + len_name
+            + len_status
+            + len_pid
+            + len_created_at
+            + len_started_at
+            + len_exited_at
+            + len_stopped_at
+            + len_exit_code
+            + 9 * 2
+            + 10;
+        println!("{:-<len_sum$}", "", len_sum = len_sum);
+        println!(
             "| {: <len_id$} | {: <len_name$} | {: <len_status$} | {: <len_pid$} | {: <len_created_at$} | {: <len_started_at$} | {: <len_exited_at$} | {: <len_stopped_at$} | {: <len_exit_code$} |",
             title_id, title_name, title_status, title_pid, title_created_at, title_started_at, title_exited_at, title_stopped_at, title_exit_code,
             len_id = len_id, len_name = len_name, len_status = len_status, len_pid = len_pid, len_created_at = len_created_at, len_started_at = len_started_at, len_exited_at = len_exited_at, len_stopped_at = len_stopped_at, len_exit_code = len_exit_code
         );
-    let mut sum_running = 0;
-    let mut sum_stopped = 0;
-    let mut sum_waiting = 0;
-    println!("{:-<len_sum$}", "", len_sum = len_sum);
-    for task in res {
-        let mut status = task.status;
-        if status == "running" {
-            status = status.green().to_string();
-            sum_running += 1;
-        } else if status == "stopped" {
-            status = status.red().to_string();
-            sum_stopped += 1;
-        } else if status == "waiting" {
-            status = status.blue().to_string();
-            sum_waiting += 1;
-        }
-        let created_at = if task.created_at > 0 {
-            Local
-                .timestamp_millis(task.created_at as i64)
-                .format("%Y-%m-%d %H:%M:%S")
-                .to_string()
-        } else {
-            "".to_string()
-        };
-        let started_at = if task.started_at > 0 {
-            Local
-                .timestamp_millis(task.started_at as i64)
-                .format("%Y-%m-%d %H:%M:%S")
-                .to_string()
-        } else {
-            "".to_string()
-        };
-        let exited_at = if task.exited_at > 0 {
-            Local
-                .timestamp_millis(task.exited_at as i64)
-                .format("%Y-%m-%d %H:%M:%S")
-                .to_string()
-        } else {
-            "".to_string()
-        };
-        let stopped_at = if task.stopped_at > 0 {
-            Local
-                .timestamp_millis(task.stopped_at as i64)
-                .format("%Y-%m-%d %H:%M:%S")
-                .to_string()
-        } else {
-            "".to_string()
-        };
-        let exit_code = if task.exit_code != 100 {
-            task.exit_code.to_string()
-        } else {
-            "".to_string()
-        };
-        println!(
+        let mut sum_running = 0;
+        let mut sum_stopped = 0;
+        let mut sum_waiting = 0;
+        println!("{:-<len_sum$}", "", len_sum = len_sum);
+        for task in res {
+            let mut status = task.status;
+            if status == "running" {
+                status = status.green().to_string();
+                sum_running += 1;
+            } else if status == "stopped" {
+                status = status.red().to_string();
+                sum_stopped += 1;
+            } else if status == "waiting" {
+                status = status.blue().to_string();
+                sum_waiting += 1;
+            }
+            let created_at = if task.created_at > 0 {
+                Local
+                    .timestamp_millis(task.created_at as i64)
+                    .format("%Y-%m-%d %H:%M:%S")
+                    .to_string()
+            } else {
+                "".to_string()
+            };
+            let started_at = if task.started_at > 0 {
+                Local
+                    .timestamp_millis(task.started_at as i64)
+                    .format("%Y-%m-%d %H:%M:%S")
+                    .to_string()
+            } else {
+                "".to_string()
+            };
+            let exited_at = if task.exited_at > 0 {
+                Local
+                    .timestamp_millis(task.exited_at as i64)
+                    .format("%Y-%m-%d %H:%M:%S")
+                    .to_string()
+            } else {
+                "".to_string()
+            };
+            let stopped_at = if task.stopped_at > 0 {
+                Local
+                    .timestamp_millis(task.stopped_at as i64)
+                    .format("%Y-%m-%d %H:%M:%S")
+                    .to_string()
+            } else {
+                "".to_string()
+            };
+            let exit_code = if task.exit_code != 100 {
+                task.exit_code.to_string()
+            } else {
+                "".to_string()
+            };
+            println!(
                 "| {: <len_id$} | {: <len_name$} | {: <len_status$} | {: <len_pid$} | {: <len_created_at$} | {: <len_started_at$} | {: <len_exited_at$} | {: <len_stopped_at$} | {: <len_exit_code$} |",
                 task.id, task.name, status, task.pid, created_at, started_at, exited_at, stopped_at, exit_code,
                 len_id = len_id, len_name = len_name, len_status = len_status, len_pid = len_pid, len_created_at = len_created_at, len_started_at = len_started_at, len_exited_at = len_exited_at, len_stopped_at = len_stopped_at, len_exit_code = len_exit_code
             );
+            println!("{:-<len_sum$}", "", len_sum = len_sum);
+        }
+        println!(
+            "{} Total: {} running, {} stopped, {} waiting",
+            sum_all,
+            sum_running.to_string().green().to_string(),
+            sum_stopped.to_string().red().to_string(),
+            sum_waiting.to_string().blue().to_string()
+        );
+    } else {
+        let len_sum = len_id
+            + len_name
+            + len_status
+            + len_pid
+            + len_started_at
+            + len_stopped_at
+            + len_exit_code
+            + 7 * 2
+            + 8;
         println!("{:-<len_sum$}", "", len_sum = len_sum);
+        println!(
+            "| {: <len_id$} | {: <len_name$} | {: <len_status$} | {: <len_pid$} | {: <len_started_at$} | {: <len_stopped_at$} | {: <len_exit_code$} |",
+            title_id, title_name, title_status, title_pid, title_started_at, title_stopped_at, title_exit_code,
+            len_id = len_id, len_name = len_name, len_status = len_status, len_pid = len_pid, len_started_at = len_started_at, len_stopped_at = len_stopped_at, len_exit_code = len_exit_code
+        );
+        let mut sum_running = 0;
+        let mut sum_stopped = 0;
+        let mut sum_waiting = 0;
+        println!("{:-<len_sum$}", "", len_sum = len_sum);
+        for task in res {
+            let mut status = task.status;
+            if status == "running" {
+                status = status.green().to_string();
+                sum_running += 1;
+            } else if status == "stopped" {
+                status = status.red().to_string();
+                sum_stopped += 1;
+            } else if status == "waiting" {
+                status = status.blue().to_string();
+                sum_waiting += 1;
+            }
+            let started_at = if task.started_at > 0 {
+                Local
+                    .timestamp_millis(task.started_at as i64)
+                    .format("%Y-%m-%d %H:%M:%S")
+                    .to_string()
+            } else {
+                "".to_string()
+            };
+            let stopped_at = if task.stopped_at > 0 {
+                Local
+                    .timestamp_millis(task.stopped_at as i64)
+                    .format("%Y-%m-%d %H:%M:%S")
+                    .to_string()
+            } else {
+                "".to_string()
+            };
+            let exit_code = if task.exit_code != 100 {
+                task.exit_code.to_string()
+            } else {
+                "".to_string()
+            };
+            println!(
+                "| {: <len_id$} | {: <len_name$} | {: <len_status$} | {: <len_pid$} | {: <len_started_at$} | {: <len_stopped_at$} | {: <len_exit_code$} |",
+                task.id, task.name, status, task.pid, started_at, stopped_at, exit_code,
+                len_id = len_id, len_name = len_name, len_status = len_status, len_pid = len_pid, len_started_at = len_started_at, len_stopped_at = len_stopped_at, len_exit_code = len_exit_code
+            );
+            println!("{:-<len_sum$}", "", len_sum = len_sum);
+        }
+        println!(
+            "{} Total: {} running, {} stopped, {} waiting",
+            sum_all,
+            sum_running.to_string().green().to_string(),
+            sum_stopped.to_string().red().to_string(),
+            sum_waiting.to_string().blue().to_string()
+        );
     }
-    println!(
-        "{} Total: {} running, {} stopped, {} waiting",
-        sum_all,
-        sum_running.to_string().green().to_string(),
-        sum_stopped.to_string().red().to_string(),
-        sum_waiting.to_string().blue().to_string()
-    );
 }

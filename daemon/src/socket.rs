@@ -37,42 +37,44 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
                 origin: 0,
             };
 
-            let mut args = command.args.clone();
-            while args.len() > 1 {
-                if args[0] == "-n" || args[0] == "--name" {
-                    task.name = args[1].clone();
-                } else if args[0] == "-o" || args[0] == "--origin" {
-                    let origin = args[1].parse::<u128>();
-                    match origin {
-                        Ok(c) => task.origin = c,
-                        Err(_) => {
-                            return Ok(entity::Response {
-                                code: 50000,
-                                msg: format!("Arg '{}' must be a number", args[0]),
-                                data: None,
-                            })
-                        }
+            if command.options.contains_key("name") {
+                let name = command.options.get("name").unwrap();
+                match name.value {
+                    entity::Opt::Str(ref s) => {
+                        task.name = s.clone();
                     }
-                } else if args[0] == "-i" || args[0] == "--interval" {
-                    let interval = args[1].parse::<u128>();
-                    match interval {
-                        Ok(i) => task.interval = i,
-                        Err(_) => {
-                            return Ok(entity::Response {
-                                code: 50000,
-                                msg: format!("Arg '{}' must be a number", args[0]),
-                                data: None,
-                            })
-                        }
+                    _ => {
+                        task.name = "watchmen".to_string();
                     }
-                } else {
-                    break;
                 }
-                args.remove(0);
-                args.remove(0);
             }
-            task.command = args[0].clone();
-            task.args = args[1..].to_vec();
+
+            if command.options.contains_key("origin") {
+                let origin = command.options.get("origin").unwrap();
+                match origin.value {
+                    entity::Opt::U128(ref o) => {
+                        task.origin = *o;
+                    }
+                    _ => {
+                        task.origin = 0;
+                    }
+                }
+            }
+
+            if command.options.contains_key("interval") {
+                let interval = command.options.get("interval").unwrap();
+                match interval.value {
+                    entity::Opt::U128(ref i) => {
+                        task.interval = *i;
+                    }
+                    _ => {
+                        task.interval = 0;
+                    }
+                }
+            }
+
+            task.command = command.args[0].clone();
+            task.args = command.args[1..].to_vec();
 
             let result = command::run::run_task(task).await?;
             let res = entity::Response {
@@ -83,82 +85,55 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
             return Ok(res);
         }
         "exit" => {
-            if command.args.len() == 0 {
-                let res = entity::Response {
-                    code: 40000,
-                    msg: "args error".to_string(),
-                    data: None,
-                };
-                return Ok(res);
-            } else {
-                let result = command::exit::exit_task(command.args.clone()).await;
-                match result {
-                    Ok(res) => {
-                        return Ok(res);
-                    }
-                    Err(e) => {
-                        let res = entity::Response {
-                            code: 40000,
-                            msg: e.to_string(),
-                            data: None,
-                        };
-                        return Ok(res);
-                    }
+            let result = command::exit::exit_task(command).await;
+            match result {
+                Ok(res) => {
+                    return Ok(res);
+                }
+                Err(e) => {
+                    let res = entity::Response {
+                        code: 40000,
+                        msg: e.to_string(),
+                        data: None,
+                    };
+                    return Ok(res);
                 }
             }
         }
         "start" => {
-            if command.args.len() == 0 {
-                let res = entity::Response {
-                    code: 40000,
-                    msg: "args error".to_string(),
-                    data: None,
-                };
-                return Ok(res);
-            } else {
-                let result = command::start::start_task(command.args.clone()).await;
-                match result {
-                    Ok(res) => {
-                        return Ok(res);
-                    }
-                    Err(e) => {
-                        let res = entity::Response {
-                            code: 40000,
-                            msg: e.to_string(),
-                            data: None,
-                        };
-                        return Ok(res);
-                    }
+            let result = command::start::start_task(command).await;
+            match result {
+                Ok(res) => {
+                    return Ok(res);
+                }
+                Err(e) => {
+                    let res = entity::Response {
+                        code: 40000,
+                        msg: e.to_string(),
+                        data: None,
+                    };
+                    return Ok(res);
                 }
             }
         }
         "stop" => {
-            if command.args.len() == 0 {
-                let res = entity::Response {
-                    code: 40000,
-                    msg: "args error".to_string(),
-                    data: None,
-                };
-                return Ok(res);
-            } else {
-                let result = command::stop::stop_task(command.args.clone()).await;
-                match result {
-                    Ok(res) => {
-                        return Ok(res);
-                    }
-                    Err(e) => {
-                        let res = entity::Response {
-                            code: 40000,
-                            msg: e.to_string(),
-                            data: None,
-                        };
-                        return Ok(res);
-                    }
+            let result = command::stop::stop_task(command).await;
+            match result {
+                Ok(res) => {
+                    return Ok(res);
+                }
+                Err(e) => {
+                    let res = entity::Response {
+                        code: 40000,
+                        msg: e.to_string(),
+                        data: None,
+                    };
+                    return Ok(res);
                 }
             }
         }
         "list" => {
-            let result = command::list::list_tasks(command.args.clone()).await;
+            let result = command::list::list_tasks(command).await;
             match result {
                 Ok(res) => {
                     return Ok(res);

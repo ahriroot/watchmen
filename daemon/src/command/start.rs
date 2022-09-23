@@ -14,40 +14,40 @@ async fn update_status(name: String, status: String) -> Result<(), Box<dyn Error
     Ok(())
 }
 
-pub async fn start_task(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>> {
-    let len = args.len();
+pub async fn start_task(command: entity::Command) -> Result<entity::Response, Box<dyn Error>> {
     let task;
-    if len == 1 {
-        task = get_task_by_name(args[0].clone()).await?;
-    } else if len == 2 {
-        if args[0] == "-n" || args[0] == "--name" {
-            task = get_task_by_name(args[1].clone()).await?;
-        } else if args[0] == "-p" || args[0] == "--pid" {
-            let pid = args[1].parse::<u32>();
-            if pid.is_err() {
-                let res = entity::Response {
-                    code: 40000,
-                    msg: format!("Invalid pid: '{}'", args[1]),
-                    data: None,
-                };
-                return Ok(res);
-            }
-            task = get_task_by_pid(pid.unwrap()).await?;
+    if command.options.contains_key("name") {
+        let name = command.options.get("name").unwrap();
+        if let entity::Opt::Str(ref s) = name.value {
+            task = get_task_by_name(s.clone()).await?;
         } else {
-            let res = entity::Response {
-                code: 40000,
-                msg: format!("Invalid args"),
+            return Ok(entity::Response {
+                code: 1,
+                msg: "Arg 'name' must be a string".to_string(),
                 data: None,
-            };
-            return Ok(res);
+            });
+        }
+    } else if command.options.contains_key("pid") {
+        let name = command.options.get("pid").unwrap();
+        if let entity::Opt::U32(ref s) = name.value {
+            task = get_task_by_pid(*s).await?;
+        } else {
+            return Ok(entity::Response {
+                code: 1,
+                msg: "Arg 'pid' must be a number".to_string(),
+                data: None,
+            });
         }
     } else {
-        let res = entity::Response {
-            code: 40000,
-            msg: format!("Invalid args"),
-            data: None,
-        };
-        return Ok(res);
+        if command.args.len() == 0 {
+            return Ok(entity::Response {
+                code: 1,
+                msg: "Arg 'name' or 'pid' is required".to_string(),
+                data: None,
+            });
+        } else {
+            task = get_task_by_name(command.args[0].clone()).await?;
+        }
     }
     // 声明指向文件的 stdout
     // TODO: 重定向到指定的文件

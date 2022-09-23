@@ -21,7 +21,8 @@ pub struct Task {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Opt {
-    Usize(u128),
+    U128(u128),
+    U32(u32),
     Str(String),
     None,
 }

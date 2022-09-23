@@ -35,14 +35,14 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                         },
                     );
                 } else if args[0] == "-p" || args[0] == "--pid" {
-                    let pid = args[1].parse::<u128>();
+                    let pid = args[1].parse::<u32>();
                     match pid {
                         Ok(p) => {
                             options.insert(
                                 "pid".to_string(),
                                 Options {
                                     key: "pid".to_string(),
-                                    value: entity::Opt::Usize(p),
+                                    value: entity::Opt::U32(p),
                                 },
                             );
                         }

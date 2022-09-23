@@ -9,44 +9,61 @@ extern "C" {
     pub fn kill(pid: i32, sig: i32) -> i32;
 }
 
-pub async fn exit_task(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>> {
-    let len = args.len();
+pub async fn exit_task(command: entity::Command) -> Result<entity::Response, Box<dyn Error>> {
     let task;
-    if len == 1 {
-        task = get_task_by_name(args[0].clone()).await?;
-    } else if len == 2 {
-        if args[0] == "-n" || args[0] == "--name" {
-            task = get_task_by_name(args[1].clone()).await?;
-        } else if args[0] == "-p" || args[0] == "--pid" {
-            let pid = args[1].parse::<u32>();
-            if pid.is_err() {
-                let res = entity::Response {
-                    code: 40000,
-                    msg: format!("Invalid pid: '{}'", args[1]),
-                    data: None,
-                };
-                return Ok(res);
-            }
-            task = get_task_by_pid(pid.unwrap()).await?;
+    if command.options.contains_key("name") {
+        let name = command.options.get("name").unwrap();
+        if let entity::Opt::Str(ref s) = name.value {
+            task = get_task_by_name(s.clone()).await?;
         } else {
+            return Ok(entity::Response {
+                code: 1,
+                msg: "Arg 'name' must be a string".to_string(),
+                data: None,
+            });
+        }
+    } else if command.options.contains_key("pid") {
+        let name = command.options.get("pid").unwrap();
+        if let entity::Opt::U32(ref s) = name.value {
+            task = get_task_by_pid(*s).await?;
+        } else {
+            return Ok(entity::Response {
+                code: 1,
+                msg: "Arg 'pid' must be a number".to_string(),
+                data: None,
+            });
+        }
+    } else {
+        if command.args.len() == 0 {
+            return Ok(entity::Response {
+                code: 1,
+                msg: "Arg 'name' or 'pid' is required".to_string(),
+                data: None,
+            });
+        } else {
+            task = get_task_by_name(command.args[0].clone()).await?;
+        }
+    }
+
+    let pid = task.pid;
+    if task.status == "running" {
+        let res = unsafe { kill(pid as i32, 15) };
+        if res == 0 {
+            remove_task_by_name(task.name).await?;
             let res = entity::Response {
-                code: 40000,
-                msg: format!("Invalid args"),
+                code: 10000,
+                msg: "success".to_string(),
                 data: None,
             };
             return Ok(res);
         }
-    } else {
         let res = entity::Response {
             code: 40000,
-            msg: format!("Invalid args"),
+            msg: "failed".to_string(),
             data: None,
         };
         return Ok(res);
-    }
-    let pid = task.pid;
-    let res = unsafe { kill(pid as i32, 15) };
-    if res == 0 {
+    } else {
         remove_task_by_name(task.name).await?;
         let res = entity::Response {
             code: 10000,
@@ -55,10 +72,4 @@ pub async fn exit_task(args: Vec<String>) -> Result<entity::Response, Box<dyn Er
         };
         return Ok(res);
     }
-    let res = entity::Response {
-        code: 40000,
-        msg: "failed".to_string(),
-        data: None,
-    };
-    return Ok(res);
 }
