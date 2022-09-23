@@ -7,10 +7,18 @@ use daemon::socket::run_socket;
 async fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
     println!("{:?}", args);
-    if args.len() < 3 {
-        println!("Missing path argument.");
-        exit(1);
+    if args.len() < 4 {
+        eprintln!("Missing path argument.");
+        exit(0);
     }
+
+    match daemon::global::load_tasks().await {
+        Ok(_) => {}
+        Err(err) => {
+            eprintln!("{}", err);
+            exit(0);
+        }
+    };
 
     let path = args[1].clone();
     let p1 = path.clone();
@@ -55,14 +63,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
-    fn test() {
-        let t = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis();
-        println!("{}", t);
-    }
+    fn test() {}
 }

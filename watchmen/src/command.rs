@@ -109,14 +109,15 @@ async fn start_daemon(_args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
     let file = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(daemon_stdout)?;
+        .open(daemon_stdout.clone())?;
     let stdout = Stdio::from(file);
 
-    let watchmen_path = watchmen_path.join("watchmen.sock");
+    let sock_path = watchmen_path.join("watchmen.sock");
 
     let path = std::env::current_dir()?.join("daemon");
     // 子进程
     let mut child = Command::new(path)
+        .arg(sock_path)
         .arg(watchmen_path)
         .arg(stdout_path)
         .stdout(stdout)

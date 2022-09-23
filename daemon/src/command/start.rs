@@ -52,10 +52,20 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
             task = get_task_by_name(command.args[0].clone()).await?;
         }
     }
+
+    let args_cmdline: Vec<String> = std::env::args().collect();
+    if args_cmdline.len() < 3 {
+        return Ok(entity::Response {
+            code: 50000,
+            msg: "Miss stdout path".to_string(),
+            data: None,
+        });
+    }
+
     // 声明指向文件的 stdout
-    // TODO: 重定向到指定的文件
-    let path = Path::new("/tmp/watchmen/tmp.log");
-    // let file = std::fs::File::create(path)?;
+    let path = Path::new(&args_cmdline[3]);
+    let path = path.join(format!("{}.log", task.name));
+    
     // 创建或追加文件
     let file = std::fs::OpenOptions::new()
         .create(true)

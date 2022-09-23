@@ -6,16 +6,55 @@ pub mod utils;
 pub mod global {
     use std::{
         error::Error,
+        fs::File,
+        path::Path,
         time::{SystemTime, UNIX_EPOCH},
     };
 
     use lazy_static::lazy_static;
+    use serde_json;
     use tokio::sync::Mutex;
 
     use crate::entity::Task;
 
     lazy_static! {
         static ref TASKS: Mutex<Vec<Task>> = Mutex::new(Vec::new());
+    }
+
+    pub async fn save_tasks(tasks: Vec<Task>) -> Result<(), Box<dyn Error>> {
+        let args: Vec<String> = std::env::args().collect();
+        if args.len() < 4 {
+            return Err("Command line args error".into());
+        }
+        let home_path = args[2].clone();
+
+        let path = Path::new(&home_path);
+        let path = path.join("tasks.json");
+        match File::create(path) {
+            Ok(f) => match serde_json::to_writer_pretty(f, &tasks.clone()) {
+                _ => Ok(()),
+            },
+            Err(_) => Ok(()),
+        }
+    }
+
+    pub async fn load_tasks() -> Result<(), Box<dyn Error>> {
+        let args: Vec<String> = std::env::args().collect();
+        if args.len() < 4 {
+            return Err("Command line args error".into());
+        }
+        let home_path = args[2].clone();
+        let path = Path::new(&home_path);
+        let path = path.join("tasks.json");
+
+        if path.exists() && path.is_file() {
+            let f = File::open(path).unwrap();
+            let data: Vec<Task> = serde_json::from_reader(f).unwrap();
+            let mut tasks = TASKS.lock().await;
+            *tasks = data;
+        }
+
+        Ok(())
     }
 
     pub async fn check_exists(name: String) -> Result<bool, Box<dyn Error>> {
@@ -40,7 +79,7 @@ pub mod global {
     }
 
     pub async fn get_task_by_name(name: String) -> Result<Task, Box<dyn Error>> {
-        let tasks = TASKS.lock().await;
+        let tasks = get_all_tasks().await?;
         for task in tasks.iter() {
             if task.name == name {
                 return Ok(task.clone());
@@ -73,6 +112,7 @@ pub mod global {
             let res = tasks.remove(pos);
             return Ok(Some(res));
         }
+        save_tasks(tasks.clone()).await?;
         Ok(None)
     }
 
@@ -83,6 +123,7 @@ pub mod global {
             let res = tasks.remove(pos);
             return Ok(Some(res));
         }
+        save_tasks(tasks.clone()).await?;
         Ok(None)
     }
 
@@ -97,6 +138,7 @@ pub mod global {
             ..task
         };
         tasks.push(task);
+        save_tasks(tasks.clone()).await?;
         Ok(())
     }
 
@@ -106,6 +148,7 @@ pub mod global {
         if let Some(pos) = pos {
             tasks[pos].pid = pid;
         }
+        save_tasks(tasks.clone()).await?;
         Ok(())
     }
 
@@ -115,6 +158,7 @@ pub mod global {
         if let Some(pos) = pos {
             tasks[pos].status = status;
         }
+        save_tasks(tasks.clone()).await?;
         Ok(())
     }
 
@@ -127,6 +171,7 @@ pub mod global {
         if let Some(pos) = pos {
             tasks[pos].exit_code = exit_code;
         }
+        save_tasks(tasks.clone()).await?;
         Ok(())
     }
 }
