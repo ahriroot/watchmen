@@ -1,3 +1,4 @@
+use colored::Colorize;
 use std::error::Error;
 
 use crate::{const_exit_code::ExitCode, entity, socket};
@@ -27,8 +28,22 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                 },
             };
             let res = socket::request(&req).await?;
-            println!("run command: {:?}", res);
-            ExitCode::SUCCESS
+            if res.code >= 50000 {
+                println!("{}", res.msg.blue());
+                return Ok(ExitCode::ERROR);
+            } else if res.code >= 40000 {
+                println!("{}", res.msg.red());
+                return Ok(ExitCode::ERROR);
+            } else if res.code >= 20000 {
+                println!("{}", res.msg.yellow());
+                return Ok(ExitCode::ERROR);
+            } else if res.code >= 10000 {
+                println!("{}", res.msg.green());
+                return Ok(ExitCode::SUCCESS);
+            } else {
+                println!("{}", res.msg);
+                return Ok(ExitCode::ERROR);
+            }
         }
     };
     Ok(code)

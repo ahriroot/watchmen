@@ -45,10 +45,10 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
                     let cycle = args[1].parse::<u128>();
                     match cycle {
                         Ok(c) => task.cycle = c,
-                        Err(e) => {
+                        Err(_) => {
                             return Ok(entity::Response {
                                 code: 50000,
-                                msg: format!("cycle must be a number, {}", e),
+                                msg: format!("Arg '{}' must be a number", args[0]),
                                 data: None,
                             })
                         }
@@ -57,10 +57,10 @@ async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<d
                     let interval = args[1].parse::<u128>();
                     match interval {
                         Ok(i) => task.interval = i,
-                        Err(e) => {
+                        Err(_) => {
                             return Ok(entity::Response {
                                 code: 50000,
-                                msg: format!("interval must be a number, {}", e),
+                                msg: format!("Arg '{}' must be a number", args[0]),
                                 data: None,
                             })
                         }
