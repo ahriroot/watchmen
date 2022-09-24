@@ -1,4 +1,6 @@
-use std::error::Error;
+use std::{env, error::Error, process::Stdio};
+
+use tokio::process::{Child, Command};
 
 use crate::{
     entity,
@@ -8,8 +10,22 @@ use crate::{
     },
 };
 
-extern "C" {
-    pub fn kill(pid: i32, sig: i32) -> i32;
+pub async fn kill_process(pid: u32) -> Result<i32, Box<dyn Error>> {
+    let env_path = env::var("PATH")?;
+    let mut child: Child = Command::new("kill")
+        .arg("-9")
+        .arg(pid.to_string())
+        .env("PATH", env_path)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()?;
+    let res_exit = child.wait().await;
+    let code = match res_exit {
+        Ok(exit) => exit.code().unwrap_or(0),
+        Err(_) => -1,
+    };
+    Ok(code)
 }
 
 pub async fn stop_task(command: entity::Command) -> Result<entity::Response, Box<dyn Error>> {
@@ -60,13 +76,26 @@ pub async fn stop_task(command: entity::Command) -> Result<entity::Response, Box
     }
 
     let pid = task.pid;
-    let res = unsafe { kill(pid as i32, 15) };
+
+    if pid <= 3 {
+        let res = entity::Response {
+            code: 10000,
+            msg: format!("{} success", command.name),
+            data: None,
+        };
+        return Ok(res);
+    }
+
+    let res = match kill_process(pid).await {
+        Ok(code) => code,
+        Err(_) => -1,
+    };
     if res == 0 {
         update_status_by_name(task.name.clone(), "stopped".to_string()).await?;
         update_pid_by_name(task.name, 0).await?;
         let res = entity::Response {
             code: 10000,
-            msg: "success".to_string(),
+            msg: format!("{} success", command.name),
             data: None,
         };
         return Ok(res);

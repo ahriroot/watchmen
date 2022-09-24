@@ -50,7 +50,7 @@ pub async fn list_tasks(command: entity::Command) -> Result<entity::Response, Bo
 
     let res = entity::Response {
         code: 10000,
-        msg: "success".to_string(),
+        msg: format!("{} success", command.name),
         data: Some(entity::Data::TaskList(task_list)),
     };
     Ok(res)

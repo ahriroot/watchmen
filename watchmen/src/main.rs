@@ -1,3 +1,4 @@
+use colored::Colorize;
 use std::{env, error::Error, fs, process::exit};
 
 use watchmen::command;
@@ -21,9 +22,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // 命令行参数 / command line arguments
     let args: Vec<String> = std::env::args().collect();
     // 执行命令 / execute command
-    let exec_result = command::exec(args).await;
-    match exec_result {
-        Ok(exit_code) => exit(exit_code as i32),
+    let response = command::exec(args).await;
+    match response {
+        Ok(res) => {
+            if res.code >= 50000 {
+                println!("{}", res.msg.blue());
+            } else if res.code >= 40000 {
+                println!("{}", res.msg.red());
+            } else if res.code >= 20000 {
+                println!("{}", res.msg.yellow());
+            } else if res.code >= 10000 {
+                println!("{}", res.msg.green());
+            } else {
+                println!("{}", res.msg);
+            }
+            exit(-1);
+        }
         Err(err) => {
             eprintln!("{}", err);
             exit(ExitCode::ERROR as i32);

@@ -6,17 +6,15 @@ pub mod run;
 pub mod start;
 pub mod stop;
 
-use colored::Colorize;
 use std::error::Error;
 use std::fs::remove_file;
 use std::io::Write;
 use std::process::Stdio;
 use tokio::process::Command;
 
-use crate::command;
-use crate::const_exit_code::ExitCode;
+use crate::{command, entity};
 
-const HTLP: &str = r#"Usage: watchmen [OPTION|SUBCOMMAND] ...
+const HELP: &str = r#"Usage: watchmen [OPTION|SUBCOMMAND] ...
   -h, --help        display this help and exit
   -v, --version     display version information and exit
   -i, --info        display information about watchmen and exit
@@ -58,25 +56,28 @@ const INFO: &str = r#"watchmen 0.1.0
 Homepage: https://watchmen.ahriknow.com/"#;
 const VERSION: &str = "watchmen 0.1.0";
 
-pub async fn exec(args: Vec<String>) -> Result<ExitCode, Box<dyn Error>> {
+pub async fn exec(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();
     if len < 2 {
-        println!("{}", HTLP);
-        return Ok(ExitCode::SUCCESS);
+        println!("{}", HELP);
+        return Ok(entity::Response::ok(HELP));
     }
-    let exit_code = match args[1].as_str() {
-        "-h" | "--help" => {
-            println!("{}", HTLP);
-            ExitCode::SUCCESS
-        }
-        "-i" | "--info" => {
-            println!("{}", INFO);
-            ExitCode::SUCCESS
-        }
-        "-v" | "--version" => {
-            println!("{}", VERSION);
-            ExitCode::SUCCESS
-        }
+    let response: entity::Response = match args[1].as_str() {
+        "-h" | "--help" => entity::Response {
+            code: 10000,
+            msg: HELP.to_string(),
+            data: None,
+        },
+        "-i" | "--info" => entity::Response {
+            code: 10000,
+            msg: INFO.to_string(),
+            data: None,
+        },
+        "-v" | "--version" => entity::Response {
+            code: 10000,
+            msg: VERSION.to_string(),
+            data: None,
+        },
         "run" => command::run::run(&args[2..]).await?,
         "add" => command::add::run(&args[2..]).await?,
         "exit" | "rm" | "drop" => command::exit::run(&args[2..]).await?,
@@ -88,15 +89,18 @@ pub async fn exec(args: Vec<String>) -> Result<ExitCode, Box<dyn Error>> {
         "-t" | "--terminated" => terminated_daemon(&args[2..]).await?,
         _ => {
             let err: String = format!("watchmen: invalid command '{}'", args[1]);
-            eprintln!("{}", err.red());
-            ExitCode::ERROR
+            entity::Response {
+                code: 40000,
+                msg: err,
+                data: None,
+            }
         }
     };
 
-    Ok(exit_code)
+    Ok(response)
 }
 
-async fn start_daemon(_args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
+async fn start_daemon(_args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
     let watchmen_path_str =
         std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
 
@@ -141,23 +145,19 @@ async fn start_daemon(_args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
             // 写入 pid
             file.write_all(pid.to_string().as_bytes())?;
 
-            println!("Start daemon pid: {}", pid);
             tokio::spawn(async move {
                 child.wait().await.unwrap();
                 remove_file(path).unwrap_or_default();
             });
-            Ok(ExitCode::SUCCESS)
+            Ok(entity::Response::ok(format!("Start daemon pid: {}", pid)))
         }
-        None => {
-            eprintln!("watchmen: failed to start daemon");
-            Ok(ExitCode::ERROR)
-        }
+        None => Ok(entity::Response::err("watchmen: failed to start daemon")),
     }
 }
 extern "C" {
     pub fn kill(pid: i32, sig: i32) -> i32;
 }
-async fn terminated_daemon(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
+async fn terminated_daemon(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
     let mut signal = 15;
     if args.len() == 1 {
         match args[0].as_str() {
@@ -176,8 +176,10 @@ async fn terminated_daemon(args: &[String]) -> Result<ExitCode, Box<dyn Error>> 
     let path = std::path::Path::new(&watchmen_path);
     let path = path.join("watchmen.pid");
     if !path.exists() {
-        eprintln!("Pid file not exists: {}", path.display());
-        return Ok(ExitCode::ERROR);
+        return Ok(entity::Response::err(format!(
+            "Pid file not exists: {}",
+            path.display()
+        )));
     }
     let pid = std::fs::read_to_string(path.clone())?;
     let pid = pid.parse::<i32>()?;
@@ -185,13 +187,19 @@ async fn terminated_daemon(args: &[String]) -> Result<ExitCode, Box<dyn Error>> 
     if res == 0 {
         // 删除文件
         remove_file(path).unwrap_or_default();
-        println!("Terminated daemon pid: {}", pid);
+        return Ok(entity::Response::ok(format!(
+            "Terminated daemon pid: {}",
+            pid
+        )));
     } else if res == -1 {
-        eprintln!("Daemon process not exists: {}", pid);
-        return Ok(ExitCode::ERROR);
+        return Ok(entity::Response::err(format!(
+            "Daemon process not exists: {}",
+            pid
+        )));
     } else {
-        eprintln!("Terminated daemon error code: {}", res);
-        return Ok(ExitCode::ERROR);
+        return Ok(entity::Response::err(format!(
+            "Terminated daemon error code: {}",
+            res
+        )));
     }
-    Ok(ExitCode::SUCCESS)
 }

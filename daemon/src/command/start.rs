@@ -71,13 +71,13 @@ pub async fn start_task_by_task(task: entity::Task) -> Result<entity::Response, 
             });
             Ok(entity::Response {
                 code: 10000,
-                msg: "success".to_string(),
+                msg: "start success".to_string(),
                 data: None,
             })
         }
         None => Ok(entity::Response {
             code: 40000,
-            msg: "failed".to_string(),
+            msg: "start failed".to_string(),
             data: None,
         }),
     }
@@ -173,13 +173,13 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
             });
             Ok(entity::Response {
                 code: 10000,
-                msg: "success".to_string(),
+                msg: format!("{} success", command.name),
                 data: None,
             })
         }
         None => Ok(entity::Response {
             code: 40000,
-            msg: "failed".to_string(),
+            msg: format!("{} failed", command.name),
             data: None,
         }),
     }

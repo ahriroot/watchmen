@@ -3,7 +3,6 @@ use colored::Colorize;
 use std::{collections::HashMap, error::Error};
 
 use crate::{
-    const_exit_code::ExitCode,
     entity::{self, Opt, Task},
     socket,
 };
@@ -19,13 +18,12 @@ const LIST_HELP: &str = r#"Usage: watchmen list [OPTION...] ...
 
 Report bugs to ahriknow@ahriknow.com.""#;
 
-pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
+pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();
     let mut more = false;
     if len == 1 {
         if args[0] == "-h" || args[0] == "--help" {
-            println!("{}", LIST_HELP);
-            return Ok(ExitCode::SUCCESS);
+            return Ok(entity::Response::ok(LIST_HELP));
         } else if args[0] == "-m" || args[0] == "--more" {
             more = true;
         }
@@ -49,8 +47,10 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                     options.insert("pid".to_string(), Opt::U32(p));
                 }
                 Err(_) => {
-                    eprintln!("Arg '{}' must be a number", args[0]);
-                    return Ok(ExitCode::ERROR);
+                    return Ok(entity::Response::err(format!(
+                        "Arg '{}' must be a number",
+                        args[0]
+                    )));
                 }
             }
             args.remove(0);
@@ -78,7 +78,7 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
             _ => {}
         }
     }
-    Ok(ExitCode::SUCCESS)
+    Ok(entity::Response::ok("list success"))
 }
 
 async fn print_format(res: Vec<Task>, more: bool) {

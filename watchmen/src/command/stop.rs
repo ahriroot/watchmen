@@ -1,7 +1,6 @@
 use std::{collections::HashMap, error::Error};
 
 use crate::{
-    const_exit_code::ExitCode,
     entity::{self, Opt},
     socket,
 };
@@ -15,17 +14,13 @@ const STOP_HELP: &str = r#"Usage: watchmen stop [OPTION...] ...
 
 Report bugs to ahriknow@ahriknow.com.""#;
 
-pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
+pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();
     if len < 1 {
-        println!("{}", STOP_HELP);
-        return Ok(ExitCode::SUCCESS);
+        return Ok(entity::Response::ok(STOP_HELP));
     }
-    let code = match args[0].as_str() {
-        "-h" | "--help" => {
-            println!("{}", STOP_HELP);
-            ExitCode::SUCCESS
-        }
+    let response = match args[0].as_str() {
+        "-h" | "--help" => entity::Response::ok(STOP_HELP),
         _ => {
             let mut options: HashMap<String, Opt> = HashMap::new();
 
@@ -40,8 +35,10 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                             options.insert("pid".to_string(), Opt::U32(p));
                         }
                         Err(_) => {
-                            eprintln!("Arg '{}' must be a number", args[0]);
-                            return Ok(ExitCode::ERROR);
+                            return Ok(entity::Response::err(format!(
+                                "Arg '{}' must be a number",
+                                args[0]
+                            )));
                         }
                     }
                 } else if args[0] == "-i" || args[0] == "--id" {
@@ -51,8 +48,10 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                             options.insert("id".to_string(), Opt::U128(i));
                         }
                         Err(_) => {
-                            eprintln!("Arg '{}' must be a number", args[0]);
-                            return Ok(ExitCode::ERROR);
+                            return Ok(entity::Response::err(format!(
+                                "Arg '{}' must be a number",
+                                args[0]
+                            )));
                         }
                     }
                 } else {
@@ -71,9 +70,8 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                 },
             };
             let res = socket::request(&req).await?;
-            println!("start command: {:?}", res);
-            ExitCode::SUCCESS
+            res
         }
     };
-    Ok(code)
+    Ok(response)
 }

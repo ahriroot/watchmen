@@ -63,7 +63,7 @@ pub async fn exit_task(command: entity::Command) -> Result<entity::Response, Box
             remove_task_by_name(task.name).await?;
             let res = entity::Response {
                 code: 10000,
-                msg: "success".to_string(),
+                msg: format!("{} success", command.name),
                 data: None,
             };
             return Ok(res);
@@ -78,7 +78,7 @@ pub async fn exit_task(command: entity::Command) -> Result<entity::Response, Box
         remove_task_by_name(task.name).await?;
         let res = entity::Response {
             code: 10000,
-            msg: "success".to_string(),
+            msg: format!("{} success", command.name),
             data: None,
         };
         return Ok(res);

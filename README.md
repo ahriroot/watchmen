@@ -9,18 +9,20 @@ Watchmen is a daemon process manager that for you manage and keep your applicati
 `watchmen [OPTIONS|COMMAND] ...`
 
 ## Options
-| Option             | Description         |
-| ------------------ | ------------------- |
-| -h, --help         | Show help           |
-| -v, --version      | Show version        |
-| -i, --info         | Show info           |
-| -d, --daemon       | startup daemon      |
-| -t, --terminated   | terminated daemon   |
-| run [oprions...]   | create and run task |
-| drop [oprions...]  | stop and drop task  |
-| start [oprions...] | start task          |
-| stop [oprions...]  | stop task           |
-| list [oprions...]  | list tasks          |
+| Option               | Description         |
+| -------------------- | ------------------- |
+| -h, --help           | Show help           |
+| -v, --version        | Show version        |
+| -i, --info           | Show info           |
+| -d, --daemon         | startup daemon      |
+| -t, --terminated     | terminated daemon   |
+| run [oprions...]     | create and run task |
+| add [oprions...]     | add task            |
+| drop [oprions...]    | stop and drop task  |
+| start [oprions...]   | start task          |
+| restart [oprions...] | restart task        |
+| stop [oprions...]    | stop task           |
+| list [oprions...]    | list tasks          |
 
 
 ## SubCommands
@@ -28,6 +30,17 @@ Watchmen is a daemon process manager that for you manage and keep your applicati
 ### run
 
 `watchmen run [OPTIONS] ...`
+
+| Option         | Description         |
+| -------------- | ------------------- |
+| -h, --help     | Show help           |
+| -n, --name     | task name           |
+| -o, --origin   | task start datetime |
+| -i, --interval | task time interval  |
+
+### add
+
+`watchmen add [OPTIONS] ...`
 
 | Option         | Description         |
 | -------------- | ------------------- |
@@ -55,6 +68,16 @@ Watchmen is a daemon process manager that for you manage and keep your applicati
 | -h, --help | Show help   |
 | -n, --name | task name   |
 | -p, --pid  | task pid    |
+
+### restart
+
+`watchmen restart [OPTIONS] ...`
+
+| Option     | Description |
+| ---------- | ----------- |
+| -h, --help | Show help   |
+| -i, --name | task id     |
+| -n, --pid  | task name   |
 
 ### stop
 
@@ -155,3 +178,5 @@ Result from shell task: 5
 
 ## License
 
+
+## Copyright ahriknow 2022

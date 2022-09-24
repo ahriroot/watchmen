@@ -1,8 +1,6 @@
-use colored::Colorize;
 use std::{collections::HashMap, error::Error};
 
 use crate::{
-    const_exit_code::ExitCode,
     entity::{self, Opt},
     socket,
 };
@@ -16,17 +14,13 @@ const RUN_HELP: &str = r#"Usage: watchmen run [OPTION...] ...
 
 Report bugs to ahriknow@ahriknow.com.""#;
 
-pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
+pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();
     if len < 1 {
-        println!("{}", RUN_HELP);
-        return Ok(ExitCode::SUCCESS);
+        return Ok(entity::Response::ok(RUN_HELP));
     }
-    let code = match args[0].as_str() {
-        "-h" | "--help" => {
-            println!("{}", RUN_HELP);
-            ExitCode::SUCCESS
-        }
+    let response = match args[0].as_str() {
+        "-h" | "--help" => entity::Response::ok(RUN_HELP),
         _ => {
             let mut options: HashMap<String, Opt> = HashMap::new();
 
@@ -41,22 +35,23 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
                             options.insert("pid".to_string(), Opt::U128(o));
                         }
                         Err(_) => {
-                            eprintln!("Arg '{}' must be a number", args[0]);
-                            return Ok(ExitCode::ERROR);
+                            return Ok(entity::Response::err(format!(
+                                "Arg '{}' must be a number",
+                                args[0]
+                            )));
                         }
                     }
                 } else if args[0] == "-i" || args[0] == "--interval" {
                     let interval = args[1].parse::<u128>();
                     match interval {
                         Ok(i) => {
-                            options.insert(
-                                "interval".to_string(),
-                                Opt::U128(i),
-                            );
+                            options.insert("interval".to_string(), Opt::U128(i));
                         }
                         Err(_) => {
-                            eprintln!("Arg '{}' must be a number", args[0]);
-                            return Ok(ExitCode::ERROR);
+                            return Ok(entity::Response::err(format!(
+                                "Arg '{}' must be a number",
+                                args[0]
+                            )));
                         }
                     }
                 } else {
@@ -75,23 +70,8 @@ pub async fn run(args: &[String]) -> Result<ExitCode, Box<dyn Error>> {
             };
 
             let res = socket::request(&req).await?;
-            if res.code >= 50000 {
-                println!("{}", res.msg.blue());
-                return Ok(ExitCode::ERROR);
-            } else if res.code >= 40000 {
-                println!("{}", res.msg.red());
-                return Ok(ExitCode::ERROR);
-            } else if res.code >= 20000 {
-                println!("{}", res.msg.yellow());
-                return Ok(ExitCode::ERROR);
-            } else if res.code >= 10000 {
-                println!("{}", res.msg.green());
-                return Ok(ExitCode::SUCCESS);
-            } else {
-                println!("{}", res.msg);
-                return Ok(ExitCode::ERROR);
-            }
+            res
         }
     };
-    Ok(code)
+    Ok(response)
 }

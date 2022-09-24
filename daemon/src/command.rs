@@ -261,13 +261,10 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                 }
             }
         }
-        _ => {
-            println!("unknown command: {:?}", command);
-            Ok(entity::Response {
-                code: 10000,
-                msg: "success".to_string(),
-                data: None,
-            })
-        }
+        _ => Ok(entity::Response {
+            code: 40000,
+            msg: format!("unknown command: {:?}", command),
+            data: None,
+        }),
     }
 }

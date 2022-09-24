@@ -93,13 +93,13 @@ pub async fn run_task(task: Task) -> Result<entity::Response, Box<dyn Error>> {
     if code > 0 {
         return Ok(entity::Response {
             code: 10000,
-            msg: "success".to_string(),
+            msg: "run success".to_string(),
             data: None,
         });
     } else {
         return Ok(entity::Response {
             code: 40000,
-            msg: "failed".to_string(),
+            msg: "run failed".to_string(),
             data: None,
         });
     }
