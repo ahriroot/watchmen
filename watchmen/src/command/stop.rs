@@ -6,11 +6,11 @@ use crate::{
 };
 
 const STOP_HELP: &str = r#"Usage: watchmen stop [OPTION...] ...
-  -h, --help     display this help of 'start' command
+    -h, --help     display this help of 'start' command
 
-  -i, --id       stop a task with the specified id
-  -n, --name     stop a task with the specified name
-  -p, --pid      stop a task with the specified pid
+    -i, --id       task id
+    -n, --name     task name
+    -p, --pid      task pid
 
 Report bugs to ahriknow@ahriknow.com.""#;
 
@@ -35,7 +35,7 @@ pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
                             options.insert("pid".to_string(), Opt::U32(p));
                         }
                         Err(_) => {
-                            return Ok(entity::Response::err(format!(
+                            return Ok(entity::Response::f(format!(
                                 "Arg '{}' must be a number",
                                 args[0]
                             )));
@@ -48,7 +48,7 @@ pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
                             options.insert("id".to_string(), Opt::U128(i));
                         }
                         Err(_) => {
-                            return Ok(entity::Response::err(format!(
+                            return Ok(entity::Response::f(format!(
                                 "Arg '{}' must be a number",
                                 args[0]
                             )));

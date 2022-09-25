@@ -49,7 +49,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                     }
                     _ => {
                         return Ok(entity::Response {
-                            code: 40000,
+                            code: 50000,
                             msg: "Arg 'name' must be a string".to_string(),
                             data: None,
                         });
@@ -67,7 +67,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                     }
                     _ => {
                         return Ok(entity::Response {
-                            code: 40000,
+                            code: 50000,
                             msg: "Arg 'origin' must be a number".to_string(),
                             data: None,
                         });
@@ -85,7 +85,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                     }
                     _ => {
                         return Ok(entity::Response {
-                            code: 40000,
+                            code: 50000,
                             msg: "Arg 'interval' must be a number".to_string(),
                             data: None,
                         });
@@ -131,7 +131,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                     }
                     _ => {
                         return Ok(entity::Response {
-                            code: 40000,
+                            code: 50000,
                             msg: "Arg 'name' must be a string".to_string(),
                             data: None,
                         });
@@ -149,7 +149,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                     }
                     _ => {
                         return Ok(entity::Response {
-                            code: 40000,
+                            code: 50000,
                             msg: "Arg 'origin' must be a number".to_string(),
                             data: None,
                         });
@@ -160,6 +160,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
             }
 
             if command.options.contains_key("interval") {
+                task.status = "interval".to_string();
                 let interval = command.options.get("interval").unwrap();
                 match interval {
                     entity::Opt::U128(ref i) => {
@@ -167,7 +168,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                     }
                     _ => {
                         return Ok(entity::Response {
-                            code: 40000,
+                            code: 50000,
                             msg: "Arg 'interval' must be a number".to_string(),
                             data: None,
                         });

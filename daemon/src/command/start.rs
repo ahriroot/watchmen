@@ -102,7 +102,7 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
             task = get_task_by_name(s.clone()).await?;
         } else {
             return Ok(entity::Response {
-                code: 40000,
+                code: 50000,
                 msg: "Arg 'name' must be a string".to_string(),
                 data: None,
             });

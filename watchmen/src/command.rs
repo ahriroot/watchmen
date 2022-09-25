@@ -15,45 +15,47 @@ use tokio::process::Command;
 use crate::{command, entity};
 
 const HELP: &str = r#"Usage: watchmen [OPTION|SUBCOMMAND] ...
-  -h, --help        display this help and exit
-  -v, --version     display version information and exit
-  -i, --info        display information about watchmen and exit
+    -h, --help        display this help
+    -v, --version     display version
+    -i, --info        display information
 
-  -d, --daemon      startup watchmen daemon
-  -t, --terminated  terminated watchmen daemon
+    -d, --daemon      startup watchmen daemon
+    -t, --terminated  terminated watchmen daemon
 
-  run
-    create a task and run it
-    run `watchmen run -h` for more information
+    run
+        create a task and run it
+        run `watchmen run -h` for more information
 
-  add
-    create a task but not run it
-    run `watchmen add -h` for more information
+    add
+        create a task but not run it
+        run `watchmen add -h` for more information
 
-  drop | exit | rm
-    drop a task and stop if it is running
-    run `watchmen [this] -h` for more information
+    drop | exit | rm
+        stop and drop a task
+        run `watchmen [this] -h` for more information
 
-  start
-    start a task if it is exists
-    run `watchmen start -h` for more information
+    start
+        start a task if it is exists
+        run `watchmen start -h` for more information
 
-  restart
-    restart a task if it is exists
-    run `watchmen restart -h` for more information
+    restart
+        restart a task
+        run `watchmen restart -h` for more information
 
-  stop
-    stop a task if it is running
-    run `watchmen stop -h` for more information
+    stop
+        stop a task
+        run `watchmen stop -h` for more information
 
-  list
-    list all tasks
-    run `watchmen list -h` for more information
+    list
+        list tasks
+        run `watchmen list -h` for more information
 
 Report bugs to ahriknow@ahriknow.com
 Issues: https://git.ahriknow.com/ahriknow/watchmen/issues"#;
 const INFO: &str = r#"watchmen 0.1.0
-Homepage: https://watchmen.ahriknow.com/"#;
+Homepage: https://watchmen.ahriknow.com/"
+Report bugs to ahriknow@ahriknow.com
+Issues: https://git.ahriknow.com/ahriknow/watchmen/issues"#;
 const VERSION: &str = "watchmen 0.1.0";
 
 pub async fn exec(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>> {

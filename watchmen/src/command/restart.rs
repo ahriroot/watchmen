@@ -6,10 +6,10 @@ use crate::{
 };
 
 const RESTART_HELP: &str = r#"Usage: watchmen restart [OPTION...] ...
-  -h, --help     display this help of 'restart' command
+    -h, --help      display this help of 'restart' command
 
-  -i, --id       restart a task with the specified id
-  -n, --name     restart a task with the specified name
+    -i, --id        task id
+    -n, --name      task name
 
 Report bugs to ahriknow@ahriknow.com.""#;
 
@@ -34,7 +34,7 @@ pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
                             options.insert("id".to_string(), Opt::U128(i));
                         }
                         Err(_) => {
-                            return Ok(entity::Response::err(format!(
+                            return Ok(entity::Response::f(format!(
                                 "Arg '{}' must be a number",
                                 args[0]
                             )));

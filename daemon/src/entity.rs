@@ -82,4 +82,12 @@ impl Response {
             data: None,
         }
     }
+
+    pub fn f<T: ToString>(msg: T) -> Self {
+        Self {
+            code: 40000,
+            msg: msg.to_string(),
+            data: None,
+        }
+    }
 }

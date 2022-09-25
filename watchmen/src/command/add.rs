@@ -6,11 +6,11 @@ use crate::{
 };
 
 const ADD_HELP: &str = r#"Usage: watchmen add [OPTION...] ...
-  -h, --help     display this help of 'add' command
+    -h, --help          display this help of 'add' command
 
-  -n, --name     create a task with the specified name
-  -o, --origin   create a task with the specified origin
-  -i, --interval create a task with the specified interval
+    -n, --name          task name, default is a random string
+    -o, --origin        recurring task start time
+    -i, --interval      recurring task interval
 
 Report bugs to ahriknow@ahriknow.com.""#;
 
@@ -27,6 +27,12 @@ pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
             let mut args: Vec<String> = args.to_vec();
             while args.len() > 1 {
                 if args[0] == "-n" || args[0] == "--name" {
+                    if args[1].starts_with("-") {
+                        return Ok(entity::Response::err(format!(
+                            "Value of '{}' connot start with '-'",
+                            args[0]
+                        )));
+                    }
                     options.insert("name".to_string(), Opt::Str(args[1].clone()));
                 } else if args[0] == "-o" || args[0] == "--origin" {
                     let origin = args[1].parse::<u128>();
@@ -35,7 +41,7 @@ pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
                             options.insert("pid".to_string(), Opt::U128(o));
                         }
                         Err(_) => {
-                            return Ok(entity::Response::err(format!(
+                            return Ok(entity::Response::f(format!(
                                 "Arg '{}' must be a number",
                                 args[0]
                             )));
@@ -48,7 +54,7 @@ pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
                             options.insert("interval".to_string(), Opt::U128(i));
                         }
                         Err(_) => {
-                            return Ok(entity::Response::err(format!(
+                            return Ok(entity::Response::f(format!(
                                 "Arg '{}' must be a number",
                                 args[0]
                             )));

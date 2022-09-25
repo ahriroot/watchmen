@@ -6,11 +6,9 @@ use crate::{
 };
 
 const RUN_HELP: &str = r#"Usage: watchmen run [OPTION...] ...
-  -h, --help     display this help of 'run' command
+    -h, --help      display this help of 'run' command
 
-  -n, --name     create and start a task with the specified name
-  -o, --origin   create and start a task with the specified origin
-  -i, --interval create and start a task with the specified interval
+    -n, --name      task name
 
 Report bugs to ahriknow@ahriknow.com.""#;
 
@@ -35,7 +33,7 @@ pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
                             options.insert("pid".to_string(), Opt::U128(o));
                         }
                         Err(_) => {
-                            return Ok(entity::Response::err(format!(
+                            return Ok(entity::Response::f(format!(
                                 "Arg '{}' must be a number",
                                 args[0]
                             )));
@@ -48,7 +46,7 @@ pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
                             options.insert("interval".to_string(), Opt::U128(i));
                         }
                         Err(_) => {
-                            return Ok(entity::Response::err(format!(
+                            return Ok(entity::Response::f(format!(
                                 "Arg '{}' must be a number",
                                 args[0]
                             )));

@@ -8,13 +8,13 @@ use crate::{
 };
 
 const LIST_HELP: &str = r#"Usage: watchmen list [OPTION...] ...
-  -h, --help     display this help of 'list' command
+    -h, --help      display this help of 'list' command
 
-  -n, --name     list tasks by name with regular expression
-  -s, --status   list tasks by status
-  -p, --pid      list tasks by pid
+    -n, --name      tasks name with regular expression
+    -s, --status    task status
+    -p, --pid       task pid
 
-  -m, --more     list tasks with more details
+    -m, --more      show more details
 
 Report bugs to ahriknow@ahriknow.com.""#;
 
@@ -47,7 +47,7 @@ pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
                     options.insert("pid".to_string(), Opt::U32(p));
                 }
                 Err(_) => {
-                    return Ok(entity::Response::err(format!(
+                    return Ok(entity::Response::f(format!(
                         "Arg '{}' must be a number",
                         args[0]
                     )));
