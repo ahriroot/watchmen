@@ -119,7 +119,7 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
         }
     }
 
-    if task.status != "stopped" || task.status != "added" {
+    if task.status != "stopped" && task.status != "added" {
         return Ok(entity::Response {
             code: 40000,
             msg: format!("Task with '{}' could not be started", task.status),

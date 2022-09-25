@@ -35,7 +35,7 @@ pub mod global {
         let path = Path::new(&home_path);
         let path = path.join("tasks.json");
         match File::create(path) {
-            Ok(f) => match serde_json::to_writer_pretty(f, &tasks.clone()) {
+            Ok(f) => match serde_json::to_writer_pretty(f, &tasks) {
                 _ => Ok(()),
             },
             Err(_) => Ok(()),
@@ -121,14 +121,28 @@ pub mod global {
         Ok(tasks.to_vec())
     }
 
+    pub async fn remove_task_by_id(id: u128) -> Result<(), Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        let mut index = 0;
+        for (i, task) in tasks.iter().enumerate() {
+            if task.id == id {
+                index = i;
+                break;
+            }
+        }
+        tasks.remove(index);
+        save_tasks(tasks.clone()).await?;
+        Ok(())
+    }
+
     pub async fn remove_task_by_name(name: String) -> Result<Option<Task>, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
         let pos = tasks.iter().position(|task| task.name == name);
         if let Some(pos) = pos {
             let res = tasks.remove(pos);
+            save_tasks(tasks.clone()).await?;
             return Ok(Some(res));
         }
-        save_tasks(tasks.clone()).await?;
         Ok(None)
     }
 
@@ -137,9 +151,9 @@ pub mod global {
         let pos = tasks.iter().position(|task| task.pid == pid);
         if let Some(pos) = pos {
             let res = tasks.remove(pos);
+            save_tasks(tasks.clone()).await?;
             return Ok(Some(res));
         }
-        save_tasks(tasks.clone()).await?;
         Ok(None)
     }
 
@@ -163,8 +177,8 @@ pub mod global {
         let pos = tasks.iter().position(|task| task.name == name);
         if let Some(pos) = pos {
             tasks[pos].pid = pid;
+            save_tasks(tasks.clone()).await?;
         }
-        save_tasks(tasks.clone()).await?;
         Ok(())
     }
 
@@ -173,8 +187,8 @@ pub mod global {
         let pos = tasks.iter().position(|task| task.name == name);
         if let Some(pos) = pos {
             tasks[pos].status = status;
+            save_tasks(tasks.clone()).await?;
         }
-        save_tasks(tasks.clone()).await?;
         Ok(())
     }
 
@@ -183,8 +197,8 @@ pub mod global {
         let pos = tasks.iter().position(|task| task.id == id);
         if let Some(pos) = pos {
             tasks[pos].started_at = started_at;
+            save_tasks(tasks.clone()).await?;
         }
-        save_tasks(tasks.clone()).await?;
         Ok(())
     }
 
@@ -193,8 +207,8 @@ pub mod global {
         let pos = tasks.iter().position(|task| task.id == id);
         if let Some(pos) = pos {
             tasks[pos].exited_at = exited_at;
+            save_tasks(tasks.clone()).await?;
         }
-        save_tasks(tasks.clone()).await?;
         Ok(())
     }
 
@@ -203,18 +217,21 @@ pub mod global {
         let pos = tasks.iter().position(|task| task.id == id);
         if let Some(pos) = pos {
             tasks[pos].stopped_at = stopped_at;
+            save_tasks(tasks.clone()).await?;
         }
-        save_tasks(tasks.clone()).await?;
         Ok(())
     }
 
-    pub async fn update_laststart_at_by_id(id: u128, laststart_at: u128) -> Result<(), Box<dyn Error>> {
+    pub async fn update_laststart_at_by_id(
+        id: u128,
+        laststart_at: u128,
+    ) -> Result<(), Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
         let pos = tasks.iter().position(|task| task.id == id);
         if let Some(pos) = pos {
             tasks[pos].laststart_at = laststart_at;
+            save_tasks(tasks.clone()).await?;
         }
-        save_tasks(tasks.clone()).await?;
         Ok(())
     }
 
@@ -226,8 +243,8 @@ pub mod global {
         let pos = tasks.iter().position(|task| task.name == name);
         if let Some(pos) = pos {
             tasks[pos].exit_code = exit_code;
+            save_tasks(tasks.clone()).await?;
         }
-        save_tasks(tasks.clone()).await?;
         Ok(())
     }
 }
