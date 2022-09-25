@@ -1,5 +1,6 @@
 pub mod command;
 pub mod entity;
+pub mod monitor;
 pub mod socket;
 pub mod utils;
 
@@ -55,7 +56,7 @@ pub mod global {
             let data: Vec<Task> = serde_json::from_reader(f).unwrap();
             let mut tasks = TASKS.lock().await;
             *tasks = data.clone();
-            
+
             // 释放锁, 启动 task 时需要更改 task 状态, 需要获取锁
             drop(tasks);
 
@@ -172,6 +173,46 @@ pub mod global {
         let pos = tasks.iter().position(|task| task.name == name);
         if let Some(pos) = pos {
             tasks[pos].status = status;
+        }
+        save_tasks(tasks.clone()).await?;
+        Ok(())
+    }
+
+    pub async fn update_started_at_by_id(id: u128, started_at: u128) -> Result<(), Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        let pos = tasks.iter().position(|task| task.id == id);
+        if let Some(pos) = pos {
+            tasks[pos].started_at = started_at;
+        }
+        save_tasks(tasks.clone()).await?;
+        Ok(())
+    }
+
+    pub async fn update_exited_at_by_id(id: u128, exited_at: u128) -> Result<(), Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        let pos = tasks.iter().position(|task| task.id == id);
+        if let Some(pos) = pos {
+            tasks[pos].exited_at = exited_at;
+        }
+        save_tasks(tasks.clone()).await?;
+        Ok(())
+    }
+
+    pub async fn update_stopped_at_by_id(id: u128, stopped_at: u128) -> Result<(), Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        let pos = tasks.iter().position(|task| task.id == id);
+        if let Some(pos) = pos {
+            tasks[pos].stopped_at = stopped_at;
+        }
+        save_tasks(tasks.clone()).await?;
+        Ok(())
+    }
+
+    pub async fn update_laststart_at_by_id(id: u128, laststart_at: u128) -> Result<(), Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        let pos = tasks.iter().position(|task| task.id == id);
+        if let Some(pos) = pos {
+            tasks[pos].laststart_at = laststart_at;
         }
         save_tasks(tasks.clone()).await?;
         Ok(())

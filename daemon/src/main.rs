@@ -1,6 +1,7 @@
 use std::{error::Error, fs::remove_file, path::Path, process::exit};
 use tokio::sync::mpsc;
 
+use daemon::monitor::run_monitor;
 use daemon::socket::run_socket;
 
 #[tokio::main]
@@ -13,7 +14,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     match daemon::global::load_tasks().await {
-        Ok(_) => {}
+        Ok(_) => {
+            // 新线程运行 run_monitor
+            tokio::spawn(async move {
+                match run_monitor().await {
+                    Ok(_) => {}
+                    Err(e) => {
+                        eprintln!("run_monitor error: {}", e);
+                    }
+                }
+            });
+        }
         Err(err) => {
             eprintln!("{}", err);
             exit(0);

@@ -14,6 +14,7 @@ pub struct Task {
     pub started_at: u128,
     pub exited_at: u128,
     pub stopped_at: u128,
+    pub laststart_at: u128,
     pub exit_code: u32,
     pub interval: u128,
     pub origin: u128,

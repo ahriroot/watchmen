@@ -59,7 +59,6 @@ const VERSION: &str = "watchmen 0.1.0";
 pub async fn exec(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();
     if len < 2 {
-        println!("{}", HELP);
         return Ok(entity::Response::ok(HELP));
     }
     let response: entity::Response = match args[1].as_str() {

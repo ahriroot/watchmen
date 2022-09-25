@@ -87,7 +87,6 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
     let task;
     if command.options.contains_key("id") {
         let id = command.options.get("id").unwrap();
-        println!("Start task: {:?}", id);
         if let entity::Opt::U128(ref i) = id {
             task = get_task_by_id(*i).await?;
         } else {
@@ -103,7 +102,7 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
             task = get_task_by_name(s.clone()).await?;
         } else {
             return Ok(entity::Response {
-                code: 1,
+                code: 40000,
                 msg: "Arg 'name' must be a string".to_string(),
                 data: None,
             });
@@ -111,7 +110,7 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
     } else {
         if command.args.len() == 0 {
             return Ok(entity::Response {
-                code: 1,
+                code: 40000,
                 msg: "Arg 'name' is required".to_string(),
                 data: None,
             });
@@ -119,6 +118,16 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
             task = get_task_by_name(command.args[0].clone()).await?;
         }
     }
+
+    if task.status != "stopped" || task.status != "added" {
+        return Ok(entity::Response {
+            code: 40000,
+            msg: format!("Task with '{}' could not be started", task.status),
+            data: None,
+        });
+    }
+
+    println!("Start task: {:?}", task);
 
     let args_cmdline: Vec<String> = std::env::args().collect();
     if args_cmdline.len() < 3 {

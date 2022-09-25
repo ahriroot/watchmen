@@ -14,6 +14,7 @@ pub struct Task {
     pub started_at: u128,
     pub exited_at: u128,
     pub stopped_at: u128,
+    pub laststart_at: u128,
     pub exit_code: u32,
     pub interval: u128,
     pub origin: u128,
@@ -51,4 +52,34 @@ pub struct Response {
     pub code: u32,
     pub msg: String,
     pub data: Option<Data>,
+}
+
+impl Response {
+    pub fn new(code: u32, msg: String, data: Option<Data>) -> Self {
+        Self { code, msg, data }
+    }
+
+    pub fn ok<T: ToString>(msg: T) -> Self {
+        Self {
+            code: 10000,
+            msg: msg.to_string(),
+            data: None,
+        }
+    }
+
+    pub fn data<T: ToString>(msg: T, data: Option<Data>) -> Self {
+        Self {
+            code: 10000,
+            msg: msg.to_string(),
+            data: data,
+        }
+    }
+
+    pub fn err<T: ToString>(msg: T) -> Self {
+        Self {
+            code: 40000,
+            msg: msg.to_string(),
+            data: None,
+        }
+    }
 }

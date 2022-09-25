@@ -28,7 +28,7 @@ pub async fn exit_task(command: entity::Command) -> Result<entity::Response, Box
             task = get_task_by_name(s.clone()).await?;
         } else {
             return Ok(entity::Response {
-                code: 1,
+                code: 40000,
                 msg: "Arg 'name' must be a string".to_string(),
                 data: None,
             });
@@ -39,7 +39,7 @@ pub async fn exit_task(command: entity::Command) -> Result<entity::Response, Box
             task = get_task_by_pid(*s).await?;
         } else {
             return Ok(entity::Response {
-                code: 1,
+                code: 40000,
                 msg: "Arg 'pid' must be a number".to_string(),
                 data: None,
             });
@@ -47,7 +47,7 @@ pub async fn exit_task(command: entity::Command) -> Result<entity::Response, Box
     } else {
         if command.args.len() == 0 {
             return Ok(entity::Response {
-                code: 1,
+                code: 40000,
                 msg: "Arg 'name' or 'pid' is required".to_string(),
                 data: None,
             });

@@ -25,18 +25,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let response = command::exec(args).await;
     match response {
         Ok(res) => {
+            let mut code = -1;
             if res.code >= 50000 {
-                println!("{}", res.msg.blue());
+                eprintln!("{}", res.msg.blue());
             } else if res.code >= 40000 {
-                println!("{}", res.msg.red());
+                eprintln!("{}", res.msg.red());
             } else if res.code >= 20000 {
-                println!("{}", res.msg.yellow());
+                eprintln!("{}", res.msg.yellow());
             } else if res.code >= 10000 {
+                code = 0;
                 println!("{}", res.msg.green());
             } else {
-                println!("{}", res.msg);
+                eprintln!("{}", res.msg);
             }
-            exit(-1);
+            exit(code);
         }
         Err(err) => {
             eprintln!("{}", err);
