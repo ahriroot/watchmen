@@ -22,6 +22,9 @@ const HELP: &str = r#"Usage: watchmen [OPTION|SUBCOMMAND] ...
     -d, --daemon      startup watchmen daemon
     -t, --terminated  terminated watchmen daemon
 
+    -gd, --guard-daemon         startup watchmen daemon
+    -gt, --guardt-terminated    terminated watchmen daemon
+
     run
         create a task and run it
         run `watchmen run -h` for more information

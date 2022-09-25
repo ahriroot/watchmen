@@ -1,71 +1,71 @@
 # Watchmen
 
 `
-Watchmen 是一个守护进程管理器，可为您全天候管理和保持应用程序在线
+Watchmen is a daemon process manager that for you manage and keep your application online 24/7
 `
 
 [中文简体](README.md) | [English](README_EN.md)
 
-## 二进制文件
+## Binaries
 
-watchmen
+`watchmen`
 
-用于执行命令的命令行界面
+The cli to execute commands
 
-daemon
+`daemon`
 
-使应用程序保持在线的守护进程
+The daemon process that will keep your application online
 
-guard (非必须)
+`guard` (Not required)
 
-防止 daemon 意外退出的守护进程 (Not required)
+The guard process that will the daemon process online
 
-## 命令 
+### Command 
 
 `watchmen [OPTIONS|COMMAND] ...`
 
-### 选项或子命令
-| Option                   | Description          |
-| ------------------------ | -------------------- |
-| -h, --help               | 帮助信息             |
-| -v, --version            | 版本信息             |
-| -i, --info               | 软件信息             |
-| -d, --daemon             | 启动守护进程         |
-| -t, --terminated         | 终止守护进程         |
-| -gd, --guard-daemon      | 启动被守护的守护进程 |
-| -gt, --guardt-terminated | 终止被守护的守护进程 |
-| run [oprions...]         | 创建并运行任务       |
-| add [oprions...]         | 添加任务             |
-| drop [oprions...]        | 停止并删除任务       |
-| start [oprions...]       | 开始任务             |
-| restart [oprions...]     | 重启任务             |
-| stop [oprions...]        | 停止任务             |
-| list [oprions...]        | 查看任务             |
+## Options
+| Option                   | Description             |
+| ------------------------ | ----------------------- |
+| -h, --help               | show help               |
+| -v, --version            | Show version            |
+| -i, --info               | Show info               |
+| -d, --daemon             | startup daemon          |
+| -t, --terminated         | terminated daemon       |
+| -gd, --guard-daemon      | startup guard daemon    |
+| -gt, --guardt-terminated | terminated guard daemon |
+| run [oprions...]         | create and run task     |
+| add [oprions...]         | add task                |
+| drop [oprions...]        | stop and drop task      |
+| start [oprions...]       | start task              |
+| restart [oprions...]     | restart task            |
+| stop [oprions...]        | stop task               |
+| list [oprions...]        | list tasks              |
 
 
-## 子命令
+## SubCommands
 
 ### run
 
 `watchmen run [OPTIONS] ...`
 
-| Option         | Description     |
-| -------------- | --------------- |
-| -h, --help     | 帮助信息        |
-| -n, --name     | 任务名          |
-| -o, --origin   | 任务开始时间    |
-| -i, --interval | 任务执行周期 ms |
+| Option         | Description         |
+| -------------- | ------------------- |
+| -h, --help     | show help           |
+| -n, --name     | task name           |
+| -o, --origin   | task start datetime |
+| -i, --interval | task time interval  |
 
 ### add
 
 `watchmen add [OPTIONS] ...`
 
-| Option         | Description     |
-| -------------- | --------------- |
-| -h, --help     | 帮助信息        |
-| -n, --name     | 任务名          |
-| -o, --origin   | 任务开始时间    |
-| -i, --interval | 任务执行周期 ms |
+| Option         | Description         |
+| -------------- | ------------------- |
+| -h, --help     | show help           |
+| -n, --name     | task name           |
+| -o, --origin   | task start datetime |
+| -i, --interval | task time interval  |
 
 ### drop
 
@@ -73,9 +73,9 @@ guard (非必须)
 
 | Option     | Description |
 | ---------- | ----------- |
-| -h, --help | 帮助信息    |
-| -n, --name | 任务名      |
-| -p, --pid  | 任务 pid    |
+| -h, --help | show help   |
+| -n, --name | task name   |
+| -p, --pid  | task pid    |
 
 ### start
 
@@ -83,9 +83,9 @@ guard (非必须)
 
 | Option     | Description |
 | ---------- | ----------- |
-| -h, --help | 帮助信息    |
-| -n, --name | 任务名      |
-| -p, --pid  | 任务 pid    |
+| -h, --help | show help   |
+| -n, --name | task name   |
+| -p, --pid  | task pid    |
 
 ### restart
 
@@ -93,9 +93,9 @@ guard (非必须)
 
 | Option     | Description |
 | ---------- | ----------- |
-| -h, --help | 帮助信息    |
-| -i, --name | 任务信息    |
-| -n, --pid  | 任务名      |
+| -h, --help | show help   |
+| -i, --name | task id     |
+| -n, --pid  | task name   |
 
 ### stop
 
@@ -103,9 +103,9 @@ guard (非必须)
 
 | Option     | Description |
 | ---------- | ----------- |
-| -h, --help | 帮助信息    |
-| -n, --name | 任务名      |
-| -p, --pid  | 任务 pid    |
+| -h, --help | show help   |
+| -n, --name | task name   |
+| -p, --pid  | task pid    |
 
 ### list
 
@@ -113,35 +113,35 @@ guard (非必须)
 
 | Option       | Description |
 | ------------ | ----------- |
-| -h, --help   | 帮助信息    |
-| -n, --name   | 任务名      |
-| -s, --status | 任务状态    |
-| -p, --pid    | 任务 pid    |
-| -m, --more   | 更过信息    |
+| -h, --help   | show help   |
+| -n, --name   | task name   |
+| -s, --status | task status |
+| -p, --pid    | task pid    |
+| -m, --more   | more info   |
 
-## 从源码构建并运行示例程序
+## Build and run Examples
 
 ```bash
-# 下载源码
+# download source code
 git clone https://git.ahriknow.com/ahriknow/watchmen
 cd watchmen
 cargo build --release
 
-# 启动守护进程
+# start the daemon
 ./target/release/watchmen -d
 Start daemon pid: 65535
 
-# 查询任务
+# show tasks
 ./target/release/watchmen list
 ------------------------------------------------------------------------------------
 | ID | NAME | STATUS | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
 ------------------------------------------------------------------------------------
 0 Total: 0 running, 0 stopped, 0 waiting
 
-# 创建并运行一个任务
+# create a task
 ./watchmen run -n test sh ${watchmen_project_path}/script/task.sh
 
-# 查询任务
+# show tasks
 ./target/release/watchmen list
 ------------------------------------------------------------------------------------------------
 | ID            | NAME | STATUS  | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
@@ -150,10 +150,10 @@ Start daemon pid: 65535
 ------------------------------------------------------------------------------------------------
 1 Total: 1 running, 0 stopped, 0 waiting
 
-# 停止任务
+# stop the task
 ./watchmen stop test
 
-# 查询任务
+# show tasks
 ./target/release/watchmen list
 ------------------------------------------------------------------------------------------------
 | ID            | NAME | STATUS  | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
@@ -162,22 +162,22 @@ Start daemon pid: 65535
 ------------------------------------------------------------------------------------------------
 1 Total: 0 running, 1 stopped, 0 waiting
 
-# 删除任务
+# drop the task
 ./watchmen drop test
 
-# 查询任务
+# show tasks
 ./target/release/watchmen list
 ------------------------------------------------------------------------------------
 | ID | NAME | STATUS | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
 ------------------------------------------------------------------------------------
 0 Total: 0 running, 0 stopped, 0 waiting
 
-# 停止守护进程
+# terminated the daemon
 ./target/release/watchmen -t
 Terminated daemon pid: 65535
 
-# 查看输出
-# 默认输出路径是 /tmp/watchmen (或 读取环境变量: WATCHMEN_PATH)
+# show output
+# the default output path is /tmp/watchmen (or environment: WATCHMEN_PATH)
 ls /tmp/watchmen
 -rw-r--r-- 1 user user    0 Sep 01 00:00 daemon.log
 drwxr-xr-x 2 user user 4096 Sep 01 00:00 stdout
