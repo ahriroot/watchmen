@@ -19,6 +19,13 @@ use crate::{
 
 pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<dyn Error>> {
     match command.name.as_str() {
+        "terminated" => {
+            return Ok(entity::Response {
+                code: 10,
+                msg: "Daemon terminated.".to_string(),
+                data: None,
+            });
+        }
         "run" => {
             let id = SystemTime::now()
                 .duration_since(UNIX_EPOCH)

@@ -25,7 +25,6 @@ pub async fn run_monitor() -> Result<entity::Response, Box<dyn std::error::Error
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
                     .as_millis();
-                println!("{} - {} = {}", now, task.laststart_at, now - task.laststart_at);
                 if now - task.laststart_at < task.interval {
                     continue;
                 }
@@ -64,7 +63,7 @@ pub async fn run_monitor() -> Result<entity::Response, Box<dyn std::error::Error
                     update_laststart_at_by_id(task.id, now).await?;
                     tokio::spawn(async move {
                         let s = child.wait().await.unwrap();
-                        println!("exit code: {}", s.code().unwrap());
+                        println!("monitor task exit code: {}: {:?}", s.code().unwrap(), task);
                     });
                 }
             }

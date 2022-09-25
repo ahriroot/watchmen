@@ -1,4 +1,4 @@
-use std::{error::Error, fs::remove_file, path::Path};
+use std::{error::Error, fs::remove_file, path::Path, process::exit};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{UnixListener, UnixStream},
@@ -16,6 +16,14 @@ async fn handle_connection(mut stream: UnixStream) -> Result<(), Box<dyn Error>>
     let res = command::handle_exec(req.command).await?;
 
     writer.write_all(&serde_json::to_vec(&res)?).await?;
+
+    if res.code == 10 {
+        let args: Vec<String> = std::env::args().collect();
+        let path = args[1].clone();
+        let sock_path = Path::new(&path);
+        remove_file(sock_path).unwrap_or_default();
+        exit(0);
+    }
     Ok(())
 }
 

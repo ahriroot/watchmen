@@ -6,13 +6,13 @@ pub mod run;
 pub mod start;
 pub mod stop;
 
-use std::error::Error;
 use std::fs::remove_file;
 use std::io::Write;
 use std::process::Stdio;
+use std::{collections::HashMap, error::Error};
 use tokio::process::Command;
 
-use crate::{command, entity};
+use crate::{command, entity, socket};
 
 const HELP: &str = r#"Usage: watchmen [OPTION|SUBCOMMAND] ...
     -h, --help        display this help
@@ -87,7 +87,10 @@ pub async fn exec(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>>
         "stop" => command::stop::run(&args[2..]).await?,
         "list" => command::list::run(&args[2..]).await?,
         "-d" | "--daemon" => start_daemon(&args[2..]).await?,
-        "-t" | "--terminated" => terminated_daemon(&args[2..]).await?,
+        // "-t" | "--terminated" => terminated_daemon(&args[2..]).await?,
+        "-t" | "--terminated" => terminated_daemon2().await?,
+        "-gd" | "--guard-daemon" => start_guard_daemon(&args[2..]).await?,
+        "-gt" | "--guardt-terminated" => terminated_daemon(&args[2..]).await?,
         _ => {
             let err: String = format!("watchmen: invalid command '{}'", args[1]);
             entity::Response {
@@ -99,6 +102,27 @@ pub async fn exec(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>>
     };
 
     Ok(response)
+}
+
+async fn terminated_daemon2() -> Result<entity::Response, Box<dyn Error>> {
+    let options: HashMap<std::string::String, entity::Opt> = HashMap::new();
+    let req = entity::Request {
+        name: "terminated".to_string(),
+        command: entity::Command {
+            name: "terminated".to_string(),
+            options: options,
+            args: vec![],
+        },
+    };
+    let res = socket::request(&req).await?;
+    if res.code == 10 {
+        let watchmen_path =
+            std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
+        let path = std::path::Path::new(&watchmen_path);
+        let path = path.join("watchmen.pid");
+        remove_file(path).unwrap_or_default();
+    }
+    Ok(res)
 }
 
 async fn start_daemon(_args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
@@ -155,9 +179,11 @@ async fn start_daemon(_args: &[String]) -> Result<entity::Response, Box<dyn Erro
         None => Ok(entity::Response::err("watchmen: failed to start daemon")),
     }
 }
+
 extern "C" {
     pub fn kill(pid: i32, sig: i32) -> i32;
 }
+
 async fn terminated_daemon(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
     let mut signal = 15;
     if args.len() == 1 {
@@ -202,5 +228,63 @@ async fn terminated_daemon(args: &[String]) -> Result<entity::Response, Box<dyn 
             "Terminated daemon error code: {}",
             res
         )));
+    }
+}
+
+async fn start_guard_daemon(_args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
+    let watchmen_path_str =
+        std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
+
+    let watchmen_path = std::path::Path::new(&watchmen_path_str);
+
+    if !watchmen_path.exists() {
+        std::fs::create_dir_all(watchmen_path)?;
+    }
+
+    let stdout_path = watchmen_path.join("stdout/").clone();
+    if !stdout_path.exists() {
+        std::fs::create_dir(stdout_path.clone()).unwrap();
+    }
+
+    let daemon_stdout = watchmen_path.join("guard.log").clone();
+    let file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(daemon_stdout.clone())?;
+    let stdout = Stdio::from(file);
+
+    let sock_path = watchmen_path.join("watchmen.sock");
+
+    let path = std::env::current_dir()?.join("guard");
+    // 子进程
+    let mut child = Command::new(path)
+        .arg(sock_path)
+        .arg(watchmen_path)
+        .arg(stdout_path)
+        .stdout(stdout)
+        .spawn()?;
+
+    let result = child.id();
+
+    match result {
+        Some(pid) => {
+            // 保存 pid
+            let path = std::path::Path::new(&watchmen_path_str);
+            let path = path.join("guard.pid");
+            // 创建文件
+            let mut file = std::fs::File::create(path.clone())?;
+            // 写入 pid
+            file.write_all(pid.to_string().as_bytes())?;
+
+            tokio::spawn(async move {
+                child.wait().await.unwrap();
+                remove_file(path).unwrap_or_default();
+            });
+            Ok(entity::Response::ok(format!(
+                "Start guard pid: {}",
+                pid
+            )))
+        }
+        None => Ok(entity::Response::err("watchmen: failed to start daemon")),
     }
 }

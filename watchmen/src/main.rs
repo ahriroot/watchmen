@@ -26,7 +26,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     match response {
         Ok(res) => {
             let mut code = -1;
-            if res.code >= 50000 {
+            if res.code == 10 {
+                code = 0;
+                println!("{}", res.msg.green());
+            } else if res.code >= 50000 {
                 eprintln!("{}", res.msg.blue());
             } else if res.code >= 40000 {
                 eprintln!("{}", res.msg.red());

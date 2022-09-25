@@ -1,0 +1,15 @@
+[package]
+name = "guard"
+version = "0.1.0"
+authors = ["ahriknow <ahriknow@ahriknow.com>"]
+edition = "2021"
+description = "Watchmen is a daemon process manager that for you manage and keep your application online 24/7"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "guard"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1.20.1", features = ["full"] }
