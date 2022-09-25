@@ -9,20 +9,22 @@ Watchmen is a daemon process manager that for you manage and keep your applicati
 `watchmen [OPTIONS|COMMAND] ...`
 
 ## Options
-| Option               | Description         |
-| -------------------- | ------------------- |
-| -h, --help           | Show help           |
-| -v, --version        | Show version        |
-| -i, --info           | Show info           |
-| -d, --daemon         | startup daemon      |
-| -t, --terminated     | terminated daemon   |
-| run [oprions...]     | create and run task |
-| add [oprions...]     | add task            |
-| drop [oprions...]    | stop and drop task  |
-| start [oprions...]   | start task          |
-| restart [oprions...] | restart task        |
-| stop [oprions...]    | stop task           |
-| list [oprions...]    | list tasks          |
+| Option                   | Description             |
+| ------------------------ | ----------------------- |
+| -h, --help               | Show help               |
+| -v, --version            | Show version            |
+| -i, --info               | Show info               |
+| -d, --daemon             | startup daemon          |
+| -gd, --guard-daemon      | startup guard daemon    |
+| -t, --terminated         | terminated daemon       |
+| -gt, --guardt-terminated | terminated guard daemon |
+| run [oprions...]         | create and run task     |
+| add [oprions...]         | add task                |
+| drop [oprions...]        | stop and drop task      |
+| start [oprions...]       | start task              |
+| restart [oprions...]     | restart task            |
+| stop [oprions...]        | stop task               |
+| list [oprions...]        | list tasks              |
 
 
 ## SubCommands
@@ -176,7 +178,7 @@ Result from shell task: 4
 Result from shell task: 5
 ```
 
-## License
-
+## License Apache Licence 2.0
+[License](./LICENSE)
 
 ## Copyright ahriknow 2022

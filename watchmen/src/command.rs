@@ -87,10 +87,9 @@ pub async fn exec(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>>
         "stop" => command::stop::run(&args[2..]).await?,
         "list" => command::list::run(&args[2..]).await?,
         "-d" | "--daemon" => start_daemon(&args[2..]).await?,
-        // "-t" | "--terminated" => terminated_daemon(&args[2..]).await?,
-        "-t" | "--terminated" => terminated_daemon2().await?,
+        "-t" | "--terminated" => terminated_daemon(&args[2..]).await?,
         "-gd" | "--guard-daemon" => start_guard_daemon(&args[2..]).await?,
-        "-gt" | "--guardt-terminated" => terminated_daemon(&args[2..]).await?,
+        "-gt" | "--guardt-terminated" => terminated_daemon2().await?,
         _ => {
             let err: String = format!("watchmen: invalid command '{}'", args[1]);
             entity::Response {
@@ -280,10 +279,7 @@ async fn start_guard_daemon(_args: &[String]) -> Result<entity::Response, Box<dy
                 child.wait().await.unwrap();
                 remove_file(path).unwrap_or_default();
             });
-            Ok(entity::Response::ok(format!(
-                "Start guard pid: {}",
-                pid
-            )))
+            Ok(entity::Response::ok(format!("Start guard pid: {}", pid)))
         }
         None => Ok(entity::Response::err("watchmen: failed to start daemon")),
     }
