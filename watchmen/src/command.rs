@@ -1,7 +1,9 @@
 pub mod add;
 pub mod exit;
 pub mod list;
+pub mod pause;
 pub mod restart;
+pub mod resume;
 pub mod run;
 pub mod start;
 pub mod stop;
@@ -49,6 +51,14 @@ const HELP: &str = r#"Usage: watchmen [OPTION|SUBCOMMAND] ...
         stop a task
         run `watchmen stop -h` for more information
 
+    pause
+        pause a scheduled task
+        run `watchmen stop -h` for more information
+
+    resume
+        resume a scheduled task
+        run `watchmen stop -h` for more information
+
     list
         list tasks
         run `watchmen list -h` for more information
@@ -88,6 +98,8 @@ pub async fn exec(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>>
         "start" => command::start::run(&args[2..]).await?,
         "restart" => command::restart::run(&args[2..]).await?,
         "stop" => command::stop::run(&args[2..]).await?,
+        "pause" => command::pause::run(&args[2..]).await?,
+        "resume" => command::resume::run(&args[2..]).await?,
         "list" => command::list::run(&args[2..]).await?,
         "-d" | "--daemon" => start_daemon(&args[2..]).await?,
         "-t" | "--terminated" => terminated_daemon(&args[2..]).await?,

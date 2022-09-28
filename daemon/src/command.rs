@@ -1,7 +1,9 @@
 pub mod add;
 pub mod exit;
 pub mod list;
+pub mod pause;
 pub mod restart;
+pub mod resume;
 pub mod run;
 pub mod start;
 pub mod stop;
@@ -89,6 +91,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                 match interval {
                     entity::Opt::U128(ref i) => {
                         task.interval = *i;
+                        task.status = "interval".to_string();
                     }
                     _ => {
                         return Ok(entity::Response {
@@ -172,6 +175,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                 match interval {
                     entity::Opt::U128(ref i) => {
                         task.interval = *i;
+                        task.status = "interval".to_string();
                     }
                     _ => {
                         return Ok(entity::Response {
@@ -241,6 +245,38 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
         }
         "stop" => {
             let result = command::stop::stop_task(command).await;
+            match result {
+                Ok(res) => {
+                    return Ok(res);
+                }
+                Err(e) => {
+                    let res = entity::Response {
+                        code: 40000,
+                        msg: e.to_string(),
+                        data: None,
+                    };
+                    return Ok(res);
+                }
+            }
+        }
+        "pause" => {
+            let result = command::pause::pause_task(command).await;
+            match result {
+                Ok(res) => {
+                    return Ok(res);
+                }
+                Err(e) => {
+                    let res = entity::Response {
+                        code: 40000,
+                        msg: e.to_string(),
+                        data: None,
+                    };
+                    return Ok(res);
+                }
+            }
+        }
+        "resume" => {
+            let result = command::resume::resume_task(command).await;
             match result {
                 Ok(res) => {
                     return Ok(res);

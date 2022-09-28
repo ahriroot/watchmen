@@ -127,8 +127,6 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
         });
     }
 
-    println!("Start task: {:?}", task);
-
     let args_cmdline: Vec<String> = std::env::args().collect();
     if args_cmdline.len() < 3 {
         return Ok(entity::Response {
