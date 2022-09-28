@@ -63,7 +63,7 @@ async fn start_daemon(args: &[String]) -> Result<i32, Box<dyn Error>> {
     match result {
         Some(pid) => {
             // 保存 pid
-            let path_watchmen = path.join("watchmen.pid");
+            let path_watchmen = path.join("daemon.pid");
             // 创建文件
             let mut file = std::fs::File::create(path_watchmen.clone())?;
             // 写入 pid

@@ -18,11 +18,11 @@ daemon
 
 guard (非必须)
 
-防止 daemon 意外退出的守护进程 (Not required)
+防止 daemon 意外退出的守护进程
 
 ## 命令 
 
-`watchmen [OPTIONS|COMMAND] ...`
+`watchmen [OPTIONS|SUBCOMMAND] ...`
 
 ### 选项或子命令
 | Option                   | Description          |
@@ -40,6 +40,8 @@ guard (非必须)
 | start [oprions...]       | 开始任务             |
 | restart [oprions...]     | 重启任务             |
 | stop [oprions...]        | 停止任务             |
+| pause [oprions...]       | 暂停定时任务         |
+| resume [oprions...]      | 继续定时任务         |
 | list [oprions...]        | 查看任务             |
 
 
@@ -107,6 +109,25 @@ guard (非必须)
 | -n, --name | 任务名      |
 | -p, --pid  | 任务 pid    |
 
+### pause
+
+`watchmen stop [OPTIONS] ...`
+
+| Option     | Description |
+| ---------- | ----------- |
+| -h, --help | 帮助信息    |
+| -n, --name | 任务名      |
+| -p, --pid  | 任务 pid    |
+
+### resume
+
+`watchmen stop [OPTIONS] ...`
+
+| Option     | Description |
+| ---------- | ----------- |
+| -h, --help | 帮助信息    |
+| -n, --name | 任务名      |
+
 ### list
 
 `watchmen list [OPTIONS] ...`
@@ -118,6 +139,19 @@ guard (非必须)
 | -s, --status | 任务状态    |
 | -p, --pid    | 任务 pid    |
 | -m, --more   | 更过信息    |
+
+## 输出文件
+
+默认输出路径: /tmp/watchmen (或 读取环境变量: WATCHMEN_PATH)
+|--/tmp/watchmen/
+    |--stdout/
+        |--[task name].log ==> 任务日志
+    |--daemon.log ==> daemon 进程输出日志
+    |--guard.log ==> guard 进程输出日志
+    |--tasks.json ==> 所有任务列表
+    |--daemon.pid ==> daemon 进程 pid
+    |--guard.pid => guard 进程 id
+    |--watchmen.sock ==> watchmen daemon 通信 sock 文件
 
 ## 从源码构建并运行示例程序
 
@@ -181,7 +215,7 @@ Terminated daemon pid: 65535
 ls /tmp/watchmen
 -rw-r--r-- 1 user user    0 Sep 01 00:00 daemon.log
 drwxr-xr-x 2 user user 4096 Sep 01 00:00 stdout
--rw-r--r-- 1 user user    5 Sep 01 00:00 watchmen.pid
+-rw-r--r-- 1 user user    5 Sep 01 00:00 daemon.pid
 srwxr-xr-x 1 user user    0 Sep 01 00:00 watchmen.sock
 
 ls /tmp/watchmen/stdout

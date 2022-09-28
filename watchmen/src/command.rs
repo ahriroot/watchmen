@@ -133,7 +133,7 @@ async fn terminated_daemon2() -> Result<entity::Response, Box<dyn Error>> {
         let watchmen_path =
             std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
         let path = std::path::Path::new(&watchmen_path);
-        let path = path.join("watchmen.pid");
+        let path = path.join("daemon.pid");
         remove_file(path).unwrap_or_default();
     }
     Ok(res)
@@ -178,7 +178,7 @@ async fn start_daemon(_args: &[String]) -> Result<entity::Response, Box<dyn Erro
         Some(pid) => {
             // 保存 pid
             let path = std::path::Path::new(&watchmen_path_str);
-            let path = path.join("watchmen.pid");
+            let path = path.join("daemon.pid");
             // 创建文件
             let mut file = std::fs::File::create(path.clone())?;
             // 写入 pid
@@ -215,7 +215,7 @@ async fn terminated_daemon(args: &[String]) -> Result<entity::Response, Box<dyn 
     let watchmen_path =
         std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
     let path = std::path::Path::new(&watchmen_path);
-    let path = path.join("watchmen.pid");
+    let path = path.join("daemon.pid");
     if !path.exists() {
         return Ok(entity::Response::err(format!(
             "Pid file not exists: {}",

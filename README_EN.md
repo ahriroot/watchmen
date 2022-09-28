@@ -22,7 +22,7 @@ The guard process that will the daemon process online
 
 ### Command 
 
-`watchmen [OPTIONS|COMMAND] ...`
+`watchmen [OPTIONS|SUBCOMMAND] ...`
 
 ## Options
 | Option                   | Description             |
@@ -40,6 +40,8 @@ The guard process that will the daemon process online
 | start [oprions...]       | start task              |
 | restart [oprions...]     | restart task            |
 | stop [oprions...]        | stop task               |
+| pause [oprions...]       | pause scheduled task    |
+| resume [oprions...]      | resume scheduled task   |
 | list [oprions...]        | list tasks              |
 
 
@@ -107,6 +109,25 @@ The guard process that will the daemon process online
 | -n, --name | task name   |
 | -p, --pid  | task pid    |
 
+### pause
+
+`watchmen stop [OPTIONS] ...`
+
+| Option     | Description |
+| ---------- | ----------- |
+| -h, --help | show help   |
+| -n, --name | task name   |
+| -p, --pid  | task pid    |
+
+### resume
+
+`watchmen stop [OPTIONS] ...`
+
+| Option     | Description |
+| ---------- | ----------- |
+| -h, --help | show help   |
+| -n, --name | task name   |
+
 ### list
 
 `watchmen list [OPTIONS] ...`
@@ -118,6 +139,19 @@ The guard process that will the daemon process online
 | -s, --status | task status |
 | -p, --pid    | task pid    |
 | -m, --more   | more info   |
+
+## 输出文件
+
+Default output directory: /tmp/watchmen (OR environment name: WATCHMEN_PATH)
+|--/tmp/watchmen/
+    |--stdout/
+        |--[task name].log ==> tasks log
+    |--daemon.log ==> daemon process output log
+    |--guard.log ==> guard process output log
+    |--tasks.json ==> all tasks list
+    |--daemon.pid ==> daemon process id
+    |--guard.pid => guard process id
+    |--watchmen.sock ==> sock file of watchmen / daemon process
 
 ## Build and run Examples
 
@@ -181,7 +215,7 @@ Terminated daemon pid: 65535
 ls /tmp/watchmen
 -rw-r--r-- 1 user user    0 Sep 01 00:00 daemon.log
 drwxr-xr-x 2 user user 4096 Sep 01 00:00 stdout
--rw-r--r-- 1 user user    5 Sep 01 00:00 watchmen.pid
+-rw-r--r-- 1 user user    5 Sep 01 00:00 daemon.pid
 srwxr-xr-x 1 user user    0 Sep 01 00:00 watchmen.sock
 
 ls /tmp/watchmen/stdout
