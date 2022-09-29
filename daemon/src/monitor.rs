@@ -1,9 +1,5 @@
-use std::{
-    env,
-    path::Path,
-    process::Stdio,
-    time::{Duration, SystemTime, UNIX_EPOCH},
-};
+use chrono::prelude::{DateTime, Local};
+use std::{env, path::Path, process::Stdio, time::Duration};
 use tokio::{
     process::{Child, Command},
     time,
@@ -17,14 +13,13 @@ use crate::{
 pub async fn run_monitor() -> Result<entity::Response, Box<dyn std::error::Error>> {
     let mut interval = time::interval(Duration::from_secs(10));
     loop {
-        interval.tick().await;
         let tasks = get_all_tasks().await.unwrap();
         for task in tasks {
-            if task.status == "interval" {
-                let now = SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_millis();
+            let time: DateTime<Local> = Local::now();
+            let now = time.timestamp_millis() as u128;
+            let dft = time.to_string();
+
+            if task.status == "interval" && now >= task.origin {
                 if now - task.laststart_at < task.interval {
                     continue;
                 }
@@ -48,6 +43,7 @@ pub async fn run_monitor() -> Result<entity::Response, Box<dyn std::error::Error
                     .open(path)?;
                 let stdout = Stdio::from(file);
 
+                println!("Execute {}: {:?}", dft, task);
                 // 获取环境变量 PATH
                 let env_path = env::var("PATH")?;
                 let mut child: Child = Command::new(&task.command)
@@ -63,10 +59,16 @@ pub async fn run_monitor() -> Result<entity::Response, Box<dyn std::error::Error
                     update_laststart_at_by_id(task.id, now).await?;
                     tokio::spawn(async move {
                         let s = child.wait().await.unwrap();
-                        println!("monitor task exit code: {}: {:?}", s.code().unwrap(), task);
+                        println!(
+                            "Finish {} Exit code {} {:?}",
+                            Local::now().to_string(),
+                            s,
+                            task
+                        );
                     });
                 }
             }
         }
+        interval.tick().await;
     }
 }
