@@ -43,7 +43,7 @@ pub async fn run_monitor() -> Result<entity::Response, Box<dyn std::error::Error
                     .open(path)?;
                 let stdout = Stdio::from(file);
 
-                println!("Execute {}: {:?}", dft, task);
+                println!("{}\tEXECUTE\t\t{:?}", dft, task);
                 // 获取环境变量 PATH
                 let env_path = env::var("PATH")?;
                 let mut child: Child = Command::new(&task.command)
@@ -60,7 +60,7 @@ pub async fn run_monitor() -> Result<entity::Response, Box<dyn std::error::Error
                     tokio::spawn(async move {
                         let s = child.wait().await.unwrap();
                         println!(
-                            "Finish {} Exit code {} {:?}",
+                            "{}\tFINISH\tExit code: {}\t{:?}",
                             Local::now().to_string(),
                             s,
                             task

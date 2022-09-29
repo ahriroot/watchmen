@@ -1,10 +1,11 @@
+use chrono::prelude::{DateTime, Local};
 use std::{env, error::Error, path::Path, process::Stdio};
 use tokio::process::{Child, Command};
 
 use crate::entity;
 use crate::global::{
     get_task_by_id, get_task_by_name, update_exit_code_by_name, update_pid_by_name,
-    update_status_by_name,
+    update_started_at_by_id, update_status_by_name,
 };
 
 async fn update_pid(name: String, pid: u32) -> Result<(), Box<dyn Error>> {
@@ -147,6 +148,12 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
         .open(path)?;
     let stdout = Stdio::from(file);
 
+    let time: DateTime<Local> = Local::now();
+    let now = time.timestamp_millis() as u128;
+    let dft = time.to_string();
+
+    println!("{}\tSTART\t\t{:?}", dft, task);
+
     // 获取环境变量 PATH
     let env_path = env::var("PATH")?;
     let mut child: Child = Command::new(&task.command)
@@ -162,12 +169,21 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
     match result {
         Some(pid) => {
             // 更改 task pid
-            update_pid(task.name.clone(), pid).await?;
+            update_pid(task.name.clone(), pid).await.unwrap();
             // 更改 task status
-            update_status(task.name.clone(), "running".to_string()).await?;
+            update_status(task.name.clone(), "running".to_string())
+                .await
+                .unwrap();
+            update_started_at_by_id(task.id, now).await.unwrap();
             // 异步等待子进程结束并更改 task status
             tokio::spawn(async move {
                 let s = child.wait().await.unwrap();
+                println!(
+                    "{}\tSTOP\tExit code: {}\t{:?}",
+                    Local::now().to_string(),
+                    s,
+                    task
+                );
                 update_status(task.name.clone(), "stopped".to_string())
                     .await
                     .unwrap();
