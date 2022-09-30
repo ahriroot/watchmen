@@ -179,7 +179,7 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
             tokio::spawn(async move {
                 let s = child.wait().await.unwrap();
                 println!(
-                    "{}\tSTOP\tExit code: {}\t{:?}",
+                    "{}\tSTOP\t{}\t{:?}",
                     Local::now().to_string(),
                     s,
                     task

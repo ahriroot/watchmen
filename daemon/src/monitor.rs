@@ -13,7 +13,7 @@ use crate::{
 pub async fn run_monitor() -> Result<entity::Response, Box<dyn std::error::Error>> {
     let mut interval = time::interval(Duration::from_secs(10));
     loop {
-        let tasks = get_all_tasks().await.unwrap();
+        let tasks = get_all_tasks().await?;
         for task in tasks {
             let time: DateTime<Local> = Local::now();
             let now = time.timestamp_millis() as u128;
@@ -60,7 +60,7 @@ pub async fn run_monitor() -> Result<entity::Response, Box<dyn std::error::Error
                     tokio::spawn(async move {
                         let s = child.wait().await.unwrap();
                         println!(
-                            "{}\tFINISH\tExit code: {}\t{:?}",
+                            "{}\tFINISH\t{}\t{:?}",
                             Local::now().to_string(),
                             s,
                             task

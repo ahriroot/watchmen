@@ -84,7 +84,7 @@ pub async fn run_task(task: Task) -> Result<entity::Response, Box<dyn Error>> {
             tokio::spawn(async move {
                 let s = child.wait().await.unwrap();
                 println!(
-                    "{}\tSTOP\tExit code: {}\t{:?}",
+                    "{}\tSTOP\t{}\t{:?}",
                     Local::now().to_string(),
                     s,
                     task
