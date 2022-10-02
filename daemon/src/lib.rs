@@ -1,5 +1,6 @@
 pub mod command;
 pub mod entity;
+pub mod macros;
 pub mod monitor;
 pub mod socket;
 pub mod utils;
@@ -42,8 +43,7 @@ pub mod global {
         }
     }
 
-    pub async fn load_tasks(args: Vec<String>) -> Result<(), Box<dyn Error>> {
-        let home_path = args[2].clone();
+    pub async fn load_tasks(home_path: String) -> Result<(), Box<dyn Error>> {
         let path = Path::new(&home_path);
         let path = path.join("tasks.json");
 
@@ -64,9 +64,10 @@ pub mod global {
                     };
                 }
             }
+            Ok(())
+        } else {
+            Err("Tasks file not exists".into())
         }
-
-        Ok(())
     }
 
     pub async fn check_exists(name: String) -> Result<bool, Box<dyn Error>> {

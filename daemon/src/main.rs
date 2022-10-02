@@ -12,12 +12,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
         exit(255);
     }
 
+    let home_path = args[2].clone();
     let monitor;
-    match daemon::global::load_tasks(args.clone()).await {
+    match daemon::global::load_tasks(home_path.clone()).await {
         Ok(_) => {
             // 新线程运行 run_monitor
             monitor = tokio::spawn(async move {
-                match run_monitor().await {
+                match run_monitor(home_path).await {
                     Ok(_) => {}
                     Err(e) => {
                         println!("Exit code: 253 => {}", e);
