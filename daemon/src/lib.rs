@@ -10,7 +10,6 @@ pub mod global {
         error::Error,
         fs::File,
         path::Path,
-        time::{SystemTime, UNIX_EPOCH},
     };
 
     use lazy_static::lazy_static;
@@ -156,10 +155,7 @@ pub mod global {
 
     pub async fn add_task(task: Task) -> Result<(), Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis();
+        let timestamp = crate::utils::get_millis().await;
         let task = Task {
             created_at: timestamp,
             ..task

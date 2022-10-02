@@ -146,7 +146,8 @@ Default output directory: /tmp/watchmen (OR environment name: WATCHMEN_PATH)
 |--/tmp/watchmen/
     |--stdout/
         |--[task name].log ==> tasks log
-    |--daemon.log ==> daemon process output log
+    |--daemon_stdout.log ==> daemon process output log
+    |--daemon_stderr.log ==> daemon process error log
     |--guard.log ==> guard process output log
     |--tasks.json ==> all tasks list
     |--daemon.pid ==> daemon process id
@@ -213,7 +214,8 @@ Terminated daemon pid: 65535
 # show output
 # the default output path is /tmp/watchmen (or environment: WATCHMEN_PATH)
 ls /tmp/watchmen
--rw-r--r-- 1 user user    0 Sep 01 00:00 daemon.log
+-rw-r--r-- 1 user user    0 Sep 01 00:00 daemon_stdout.log
+-rw-r--r-- 1 user user    0 Sep 01 00:00 daemon_stderr.log
 drwxr-xr-x 2 user user 4096 Sep 01 00:00 stdout
 -rw-r--r-- 1 user user    5 Sep 01 00:00 daemon.pid
 srwxr-xr-x 1 user user    0 Sep 01 00:00 watchmen.sock

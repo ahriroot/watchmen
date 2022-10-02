@@ -1,5 +1,5 @@
 use nanoid::nanoid;
-use std::fmt::Error;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub async fn get_id() -> String {
     let alphabet: [char; 62] = [
@@ -11,9 +11,9 @@ pub async fn get_id() -> String {
     nanoid!(10, &alphabet)
 }
 
-pub async fn logging(msg: Result<String, Error>) {
-    match msg {
-        Ok(res) => println!("{}", res),
-        Err(err) => eprintln!("{}", err),
-    }
+pub async fn get_millis() -> u128 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
 }

@@ -146,7 +146,8 @@ guard (非必须)
 |--/tmp/watchmen/
     |--stdout/
         |--[task name].log ==> 任务日志
-    |--daemon.log ==> daemon 进程输出日志
+    |--daemon_stdout.log ==> daemon 进程输出日志
+    |--daemon_stderr.log ==> daemon 进程错误日志
     |--guard.log ==> guard 进程输出日志
     |--tasks.json ==> 所有任务列表
     |--daemon.pid ==> daemon 进程 pid
@@ -213,7 +214,8 @@ Terminated daemon pid: 65535
 # 查看输出
 # 默认输出路径是 /tmp/watchmen (或 读取环境变量: WATCHMEN_PATH)
 ls /tmp/watchmen
--rw-r--r-- 1 user user    0 Sep 01 00:00 daemon.log
+-rw-r--r-- 1 user user    0 Sep 01 00:00 daemon_stdout.log
+-rw-r--r-- 1 user user    0 Sep 01 00:00 daemon_stderr.log
 drwxr-xr-x 2 user user 4096 Sep 01 00:00 stdout
 -rw-r--r-- 1 user user    5 Sep 01 00:00 daemon.pid
 srwxr-xr-x 1 user user    0 Sep 01 00:00 watchmen.sock

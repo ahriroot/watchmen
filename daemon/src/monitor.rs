@@ -32,7 +32,7 @@ pub async fn rerun_tasks(home_path: String) -> Result<(), Box<dyn std::error::Er
                 .open(path)?;
             let stdout = Stdio::from(file);
 
-            crate::info!("EXECUTE\t-1\t{:?}", task);
+            crate::info!("TASK EXECUTE\t-1\t{:?}", task);
 
             // 获取环境变量 PATH
             let env_path = env::var("PATH")?;
@@ -49,7 +49,7 @@ pub async fn rerun_tasks(home_path: String) -> Result<(), Box<dyn std::error::Er
                 update_laststart_at_by_id(task.id, now).await?;
                 tokio::spawn(async move {
                     let s = child.wait().await.unwrap();
-                    crate::info!("FINISH\t{}\t{:?}", s, task);
+                    crate::info!("TASK FINISH\t{}\t{:?}", s, task);
                 });
             }
         }
@@ -63,9 +63,7 @@ pub async fn run_monitor(
     let mut interval = time::interval(Duration::from_secs(10));
     loop {
         match rerun_tasks(home_path.clone()).await {
-            Ok(_) => {
-                crate::info!("Monitor tasks");
-            }
+            Ok(_) => {}
             Err(e) => {
                 crate::error!("Monitor tasks error: {}", e);
             }

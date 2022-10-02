@@ -8,10 +8,7 @@ pub mod run;
 pub mod start;
 pub mod stop;
 
-use std::{
-    error::Error,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::error::Error;
 
 use crate::{
     command,
@@ -29,10 +26,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
             });
         }
         "run" => {
-            let id = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_millis();
+            let id = crate::utils::get_millis().await;
             let mut task: Task = Task {
                 id: id,
                 name: command.name,
@@ -112,10 +106,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
             return Ok(result);
         }
         "add" => {
-            let id = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_millis();
+            let id = crate::utils::get_millis().await;
             let mut task: Task = Task {
                 id: id,
                 name: command.name,

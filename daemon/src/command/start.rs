@@ -150,9 +150,8 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
 
     let time: DateTime<Local> = Local::now();
     let now = time.timestamp_millis() as u128;
-    let dft = time.to_string();
 
-    println!("{}\tSTART\t\t{:?}", dft, task);
+    crate::info!("TASK START\t0\t{:?}", task);
 
     // 获取环境变量 PATH
     let env_path = env::var("PATH")?;
@@ -178,12 +177,7 @@ pub async fn start_task(command: entity::Command) -> Result<entity::Response, Bo
             // 异步等待子进程结束并更改 task status
             tokio::spawn(async move {
                 let s = child.wait().await.unwrap();
-                println!(
-                    "{}\tSTOP\t{}\t{:?}",
-                    Local::now().to_string(),
-                    s,
-                    task
-                );
+                crate::info!("TASK STOP\t{}\t{:?}", s, task);
                 update_status(task.name.clone(), "stopped".to_string())
                     .await
                     .unwrap();

@@ -47,7 +47,7 @@ pub async fn run_socket(path: &String) -> Result<(), Box<dyn Error>> {
                 });
             }
             Err(e) => {
-                println!("failed to accept socket; error = {:?}", e);
+                eprintln!("failed to accept socket; error = {:?}", e);
             }
         }
     }

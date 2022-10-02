@@ -44,18 +44,25 @@ async fn main() {
 async fn start_daemon(args: &[String]) -> Result<i32, Box<dyn Error>> {
     // let daemon_stdout = watchmen_path.join("daemon.log").clone();
     let path = Path::new(&args[1]);
-    let path_daemon_stdout = path.clone().join("daemon.log");
-    let file = std::fs::OpenOptions::new()
+    let path_daemon_stdout = path.clone().join("daemon_stdout.log");
+    let path_daemon_stderr = path.clone().join("daemon_stderr.log");
+    let file_stdout = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open(path_daemon_stdout.clone())?;
-    let stdout = Stdio::from(file);
+    let file_stderr = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path_daemon_stderr.clone())?;
+    let stdout = Stdio::from(file_stdout);
+    let stderr = Stdio::from(file_stderr);
 
     let path_daemon = std::env::current_dir()?.join("daemon");
     // 子进程
     let mut child = Command::new(path_daemon)
         .args(args)
         .stdout(stdout)
+        .stderr(stderr)
         .spawn()?;
 
     let result = child.id();
