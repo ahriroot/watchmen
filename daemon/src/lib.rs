@@ -42,11 +42,7 @@ pub mod global {
         }
     }
 
-    pub async fn load_tasks() -> Result<(), Box<dyn Error>> {
-        let args: Vec<String> = std::env::args().collect();
-        if args.len() < 4 {
-            return Err("Command line args error".into());
-        }
+    pub async fn load_tasks(args: Vec<String>) -> Result<(), Box<dyn Error>> {
         let home_path = args[2].clone();
         let path = Path::new(&home_path);
         let path = path.join("tasks.json");

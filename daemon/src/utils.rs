@@ -9,3 +9,7 @@ pub async fn get_id() -> String {
     ];
     nanoid!(10, &alphabet)
 }
+
+pub async fn logging(msg: String) {
+    println!("{}", msg);
+}

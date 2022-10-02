@@ -8,25 +8,27 @@ use daemon::socket::run_socket;
 async fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 4 {
-        eprintln!("Missing path argument.");
-        exit(0);
+        println!("Exit code: 255 => Missing path argument.");
+        exit(255);
     }
 
-    match daemon::global::load_tasks().await {
+    let monitor;
+    match daemon::global::load_tasks(args.clone()).await {
         Ok(_) => {
             // 新线程运行 run_monitor
-            tokio::spawn(async move {
+            monitor = tokio::spawn(async move {
                 match run_monitor().await {
                     Ok(_) => {}
                     Err(e) => {
-                        eprintln!("run_monitor error: {}", e);
+                        println!("Exit code: 253 => {}", e);
+                        exit(253);
                     }
                 }
             });
         }
         Err(err) => {
-            eprintln!("{}", err);
-            exit(0);
+            println!("Exit code: 254 => {}", err);
+            exit(254);
         }
     };
 
@@ -60,19 +62,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // 等待停止信号 / wait for stop signal
     let res = rx.recv().await;
 
-    println!("\nexiting...");
+    monitor.abort();
     signal1.abort();
     signal2.abort();
     socket.abort();
+
+    // 删除 sock 文件 / remove sock file
     let sock_path = Path::new(&p2);
     remove_file(sock_path).unwrap_or_default();
-    println!("exited");
 
     if let Some(code) = res {
+        println!("Exit code: {} => exited", code);
         exit(code);
+    } else {
+        println!("Exit code: 0 => exited");
+        exit(0);
     }
-
-    Ok(())
 }
 
 #[cfg(test)]
