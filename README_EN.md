@@ -140,7 +140,15 @@ The guard process that will the daemon process online
 | -p, --pid    | task pid    |
 | -m, --more   | more info   |
 
-## 输出文件
+## Task status
+
+- added: task added
+- running: task running
+- stopped: task stopped
+- interval: task interval
+- paused: task paused
+
+## Output files
 
 Default output directory: /tmp/watchmen (OR environment name: WATCHMEN_PATH)
 |--/tmp/watchmen/

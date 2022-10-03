@@ -140,6 +140,14 @@ guard (非必须)
 | -p, --pid    | 任务 pid    |
 | -m, --more   | 更过信息    |
 
+# 任务状态
+
+- added: 新添加的任务
+- running: 正在运行的任务
+- stopped: 已停止的任务
+- interval: 正在运行的定时任务
+- paused: 已暂停的定时任务
+
 ## 输出文件
 
 默认输出路径: /tmp/watchmen (或 读取环境变量: WATCHMEN_PATH)
