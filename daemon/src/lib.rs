@@ -6,11 +6,7 @@ pub mod socket;
 pub mod utils;
 
 pub mod global {
-    use std::{
-        error::Error,
-        fs::File,
-        path::Path,
-    };
+    use std::{error::Error, fs::File, path::Path};
 
     use lazy_static::lazy_static;
     use serde_json;
@@ -239,5 +235,12 @@ pub mod global {
             save_tasks(tasks.clone()).await?;
         }
         Ok(())
+    }
+}
+
+pub mod constants {
+    pub enum ExitCode {
+        SUCCESS = 0,
+        ERROR = 255,
     }
 }

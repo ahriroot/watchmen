@@ -2,7 +2,6 @@ use colored::Colorize;
 use std::{env, error::Error, fs, process::exit};
 
 use watchmen::command;
-use watchmen::const_exit_code::ExitCode;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -49,7 +48,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         Err(err) => {
             eprintln!("{}", err);
-            exit(ExitCode::ERROR as i32);
+            exit(1);
         }
     }
 }
