@@ -56,18 +56,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 #[cfg(test)]
 pub mod tests {
 
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    use chrono::prelude::*;
     #[test]
     fn test() {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis();
-        println!("{}", now);
-        let now: DateTime<Local> = Local::now();
-        println!("{}", now.to_string());
-        println!("{}", now.format("%Y-%m-%d %H:%M:%S"));
+
+        assert_eq!(1, 1);
     }
 }

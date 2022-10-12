@@ -42,6 +42,7 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                 exit_code: 100,
                 interval: id,
                 origin: 0,
+                timing: Vec::new(),
             };
 
             if command.options.contains_key("name") {
@@ -120,8 +121,9 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                 stopped_at: 0,
                 laststart_at: 0,
                 exit_code: 100,
-                interval: id,
+                interval: 0,
                 origin: 0,
+                timing: Vec::new(),
             };
 
             if command.options.contains_key("name") {
@@ -156,12 +158,9 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                         });
                     }
                 }
-            } else {
-                task.origin = 0;
             }
 
             if command.options.contains_key("interval") {
-                task.status = "interval".to_string();
                 let interval = command.options.get("interval").unwrap();
                 match interval {
                     entity::Opt::U128(ref i) => {
@@ -176,8 +175,23 @@ pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, B
                         });
                     }
                 }
-            } else {
-                task.interval = 0;
+            }
+
+            if command.options.contains_key("timing") {
+                let timing = command.options.get("timing").unwrap();
+                match timing {
+                    entity::Opt::U128s(i) => {
+                        task.timing = i.clone();
+                        task.status = "timing".to_string();
+                    }
+                    _ => {
+                        return Ok(entity::Response {
+                            code: 50000,
+                            msg: "Arg 'timing' must be a number array".to_string(),
+                            data: None,
+                        });
+                    }
+                }
             }
 
             task.command = command.args[0].clone();

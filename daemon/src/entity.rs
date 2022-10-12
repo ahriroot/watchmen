@@ -18,11 +18,13 @@ pub struct Task {
     pub exit_code: u32,
     pub interval: u128,
     pub origin: u128,
+    pub timing: Vec<u128>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Opt {
     U128(u128),
+    U128s(Vec<u128>),
     U32(u32),
     Str(String),
     None,
