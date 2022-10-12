@@ -62,12 +62,36 @@ The guard process that will the daemon process online
 
 `watchmen add [OPTIONS] ...`
 
-| Option         | Description         |
-| -------------- | ------------------- |
-| -h, --help     | show help           |
-| -n, --name     | task name           |
-| -o, --origin   | task start datetime |
-| -i, --interval | task time interval  |
+| Option         | Description              |
+| -------------- | ------------------------ |
+| -h, --help     | show help                |
+| -n, --name     | task name                |
+| -o, --origin   | task start datetime      |
+| -i, --interval | task time interval       |
+| -t, --timing   | exec time of timing task |
+
+> -o, --origin
+> 
+> format: YYYYMMDD.HHMMSS | YYYYMMDD | MMDD | MMDD.HHMMSS | HHMMSS
+>
+> example: 20201231.235959 | 20201231 | 1231 | 1231.235959 | 235959
+> 
+> input => auto into\
+> 20201231.235959 => 20201231.235959\
+> 20201231 => 20201231.000000\
+> 1231 => [current year]1231.000000\
+> 1231.235959 => [current year]1231.235959\
+> 235959 => [current year][current month][today].235959
+
+> -i, --interval
+> 
+> format: 1d2h3m4s5 | 3m4s5 | 4s5 | 5 ...
+
+> -t, --timing
+> 
+> format: split by ',' YYYYMMDD.HHMMSS | YYYYMMDD | MMDD | MMDD.HHMMSS | HHMMSS
+> 
+> example: 20210101.000000,20210102.000000,20210103
 
 ### drop
 
