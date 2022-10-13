@@ -57,8 +57,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
 pub mod tests {
 
     #[test]
-    fn test() {
-
+    fn test_plugin() {
+        unsafe {
+            let lib = libloading::Library::new("/tmp/watchmen/plugins/libplugin.so").unwrap();
+            let func: libloading::Symbol<unsafe extern "C" fn(t: i32) -> bool> =
+                lib.get(b"func_plugin").unwrap();
+            println!("PLUGIN: {:?}", func(1));
+        }
         assert_eq!(1, 1);
     }
 }

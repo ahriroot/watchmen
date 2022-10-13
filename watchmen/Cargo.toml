@@ -21,3 +21,4 @@ serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 colored = "2.0.0"
 chrono = "0.4.22"
+libloading = "0.7.3"
