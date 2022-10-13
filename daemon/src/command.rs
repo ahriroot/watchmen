@@ -10,6 +10,8 @@ pub mod stop;
 
 use std::error::Error;
 
+use chrono::Local;
+
 use crate::{
     command,
     entity::{self, Task},
@@ -17,6 +19,7 @@ use crate::{
 };
 
 pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<dyn Error>> {
+    crate::info!("COMMAND\t{:?}", command);
     match command.name.as_str() {
         "terminated" => {
             return Ok(entity::Response {

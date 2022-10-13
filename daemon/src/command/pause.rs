@@ -52,6 +52,14 @@ pub async fn pause_task(command: entity::Command) -> Result<entity::Response, Bo
         }
     }
 
+    if task.status != "interval" {
+        return Ok(entity::Response {
+            code: 40000,
+            msg: "Task is not interval".to_string(),
+            data: None,
+        });
+    }
+
     update_status_by_name(task.name, "paused".to_string()).await?;
 
     let res = entity::Response {

@@ -75,6 +75,14 @@ pub async fn stop_task(command: entity::Command) -> Result<entity::Response, Box
         }
     }
 
+    if task.status != "running" {
+        return Ok(entity::Response {
+            code: 40000,
+            msg: "Task is not running".to_string(),
+            data: None,
+        });
+    }
+
     let pid = task.pid;
 
     if pid <= 3 {

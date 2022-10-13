@@ -42,7 +42,7 @@ pub async fn resume_task(command: entity::Command) -> Result<entity::Response, B
     if task.status != "paused" && task.status != "waiting" {
         return Ok(entity::Response {
             code: 40000,
-            msg: format!("Task with '{}' could not be started", task.status),
+            msg: format!("Task with '{}' could not be resumed", task.status),
             data: None,
         });
     }

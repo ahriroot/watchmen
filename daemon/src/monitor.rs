@@ -23,6 +23,7 @@ pub async fn rerun_tasks(home_path: String) -> Result<(), Box<dyn std::error::Er
 
             // 声明指向文件的 stdout
             let path = Path::new(&home_path);
+            let path = path.join("stdout");
             let path = path.join(format!("{}.log", task.name));
 
             // 创建或追加文件
@@ -32,7 +33,7 @@ pub async fn rerun_tasks(home_path: String) -> Result<(), Box<dyn std::error::Er
                 .open(path)?;
             let stdout = Stdio::from(file);
 
-            crate::info!("TASK EXECUTE\t-1\t{:?}", task);
+            crate::info!("TASK\tEXECUTE\t{:?}", task);
 
             // 获取环境变量 PATH
             let env_path = env::var("PATH")?;
@@ -49,7 +50,8 @@ pub async fn rerun_tasks(home_path: String) -> Result<(), Box<dyn std::error::Er
                 update_laststart_at_by_id(task.id, now).await?;
                 tokio::spawn(async move {
                     let s = child.wait().await.unwrap();
-                    crate::info!("TASK FINISH\t{}\t{:?}", s, task);
+                    let exit_code = s.code().unwrap_or(-1);
+                    crate::info!("TASK\tFINISH\t{}\t{:?}", exit_code, task);
                 });
             }
         }

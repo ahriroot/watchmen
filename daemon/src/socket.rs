@@ -1,3 +1,4 @@
+use chrono::Local;
 use std::{error::Error, fs::remove_file, path::Path, process::exit};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -32,23 +33,32 @@ pub async fn run_socket(path: &String) -> Result<(), Box<dyn Error>> {
     remove_file(sock_path).unwrap_or_default();
 
     // 创建监听器 / create a listener
-    let listener = UnixListener::bind(path).unwrap();
-    println!("Listening on {:?}", listener.local_addr().unwrap());
+    let listener = UnixListener::bind(path);
 
-    loop {
-        // 等待连接 / wait connection
-        match listener.accept().await {
-            Ok((stream, _addr)) => {
-                // 处理连接 / handle connection
-                tokio::spawn(async move {
-                    if let Err(e) = handle_connection(stream).await {
-                        eprintln!("failed to process connection: {}", e);
+    match listener {
+        Ok(listener) => {
+            crate::info!("Listening\t{:?}", listener.local_addr().unwrap());
+
+            loop {
+                // 等待连接 / wait connection
+                match listener.accept().await {
+                    Ok((stream, _addr)) => {
+                        // 处理连接 / handle connection
+                        tokio::spawn(async move {
+                            if let Err(e) = handle_connection(stream).await {
+                                eprintln!("failed to process connection: {}", e);
+                            }
+                        });
                     }
-                });
+                    Err(e) => {
+                        eprintln!("failed to accept socket; error = {:?}", e);
+                    }
+                }
             }
-            Err(e) => {
-                eprintln!("failed to accept socket; error = {:?}", e);
-            }
+        }
+        Err(e) => {
+            eprintln!("{}: {}", Local::now(), e);
+            exit(1);
         }
     }
 }
