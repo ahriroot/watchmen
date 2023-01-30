@@ -62,7 +62,7 @@ pub async fn rerun_tasks(home_path: String) -> Result<(), Box<dyn std::error::Er
 pub async fn run_monitor(
     home_path: String,
 ) -> Result<entity::Response, Box<dyn std::error::Error>> {
-    let mut interval = time::interval(Duration::from_secs(10));
+    let mut interval = time::interval(Duration::from_secs(2));
     loop {
         match rerun_tasks(home_path.clone()).await {
             Ok(_) => {}

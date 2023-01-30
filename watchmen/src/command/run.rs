@@ -10,7 +10,8 @@ const RUN_HELP: &str = r#"Usage: watchmen run [OPTION...] ...
 
     -n, --name      task name
 
-Report bugs to ahriknow@ahriknow.com.""#;
+Report bugs to ahriknow@ahriknow.com
+Issues: https://git.ahriknow.com/ahriknow/watchmen/issues"#;
 
 pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();

@@ -59,10 +59,8 @@ pub mod global {
                     };
                 }
             }
-            Ok(())
-        } else {
-            Err("Tasks file not exists".into())
         }
+        Ok(())
     }
 
     pub async fn check_exists(name: String) -> Result<bool, Box<dyn Error>> {

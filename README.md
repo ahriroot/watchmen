@@ -206,7 +206,7 @@ Start daemon pid: 65535
 0 Total: 0 running, 0 stopped, 0 waiting
 
 # 创建并运行一个任务
-./watchmen run -n test sh ${watchmen_project_path}/script/task.sh
+./target/release/watchmen run -n test sh ${watchmen_project_path}/script/task.sh
 
 # 查询任务
 ./target/release/watchmen list
@@ -218,7 +218,7 @@ Start daemon pid: 65535
 1 Total: 1 running, 0 stopped, 0 waiting
 
 # 停止任务
-./watchmen stop test
+./target/release/watchmen stop test
 
 # 查询任务
 ./target/release/watchmen list
@@ -230,7 +230,7 @@ Start daemon pid: 65535
 1 Total: 0 running, 1 stopped, 0 waiting
 
 # 删除任务
-./watchmen drop test
+./target/release/watchmen drop test
 
 # 查询任务
 ./target/release/watchmen list

@@ -16,7 +16,8 @@ const LIST_HELP: &str = r#"Usage: watchmen list [OPTION...] ...
 
     -m, --more      show more details
 
-Report bugs to ahriknow@ahriknow.com.""#;
+Report bugs to ahriknow@ahriknow.com
+Issues: https://git.ahriknow.com/ahriknow/watchmen/issues"#;
 
 pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();

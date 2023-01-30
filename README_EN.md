@@ -206,7 +206,7 @@ Start daemon pid: 65535
 0 Total: 0 running, 0 stopped, 0 waiting
 
 # create a task
-./watchmen run -n test sh ${watchmen_project_path}/script/task.sh
+./target/release/watchmen run -n test sh ${watchmen_project_path}/script/task.sh
 
 # show tasks
 ./target/release/watchmen list
@@ -218,7 +218,7 @@ Start daemon pid: 65535
 1 Total: 1 running, 0 stopped, 0 waiting
 
 # stop the task
-./watchmen stop test
+./target/release/watchmen stop test
 
 # show tasks
 ./target/release/watchmen list
@@ -230,7 +230,7 @@ Start daemon pid: 65535
 1 Total: 0 running, 1 stopped, 0 waiting
 
 # drop the task
-./watchmen drop test
+./target/release/watchmen drop test
 
 # show tasks
 ./target/release/watchmen list

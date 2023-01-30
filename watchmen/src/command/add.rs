@@ -21,7 +21,8 @@ const ADD_HELP: &str = r#"Usage: watchmen add [OPTION...] ...
                         format: split by ',' YYYYMMDD.HHMMSS | YYYYMMDD | MMDD | MMDD.HHMMSS | HHMMSS
                         example: 20210101.000000,20210102.000000,20210103
 
-Report bugs to ahriknow@ahriknow.com.""#;
+Report bugs to ahriknow@ahriknow.com
+Issues: https://git.ahriknow.com/ahriknow/watchmen/issues"#;
 
 pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();
