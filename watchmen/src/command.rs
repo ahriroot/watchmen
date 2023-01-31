@@ -71,7 +71,10 @@ Report bugs to ahriknow@ahriknow.com
 Issues: https://git.ahriknow.com/ahriknow/watchmen/issues"#;
 const VERSION: &str = "watchmen 0.1.0";
 
-pub async fn exec(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>> {
+pub async fn exec(
+    args: Vec<String>,
+    home_path: String,
+) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();
     if len < 2 {
         return Ok(entity::Response::ok(HELP));
@@ -92,21 +95,21 @@ pub async fn exec(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>>
             msg: VERSION.to_string(),
             data: None,
         },
-        "run" => command::run::run(&args[2..]).await?,
-        "add" => command::add::run(&args[2..]).await?,
-        "exit" | "rm" | "drop" => command::exit::run(&args[2..]).await?,
-        "start" => command::start::run(&args[2..]).await?,
-        "restart" => command::restart::run(&args[2..]).await?,
-        "stop" => command::stop::run(&args[2..]).await?,
-        "pause" => command::pause::run(&args[2..]).await?,
-        "resume" => command::resume::run(&args[2..]).await?,
-        "list" => command::list::run(&args[2..]).await?,
-        "-d" | "--daemon" => start_daemon(&args[2..]).await?,
-        "-t" | "--terminated" => terminated_daemon(&args[2..]).await?,
-        "-gd" | "--guard-daemon" => start_guard_daemon(&args[2..]).await?,
-        "-gt" | "--guardt-terminated" => terminated_daemon2().await?,
+        "run" => command::run::run(&args[2..], home_path).await?,
+        "add" => command::add::run(&args[2..], home_path).await?,
+        "exit" | "rm" | "drop" => command::exit::run(&args[2..], home_path).await?,
+        "start" => command::start::run(&args[2..], home_path).await?,
+        "restart" => command::restart::run(&args[2..], home_path).await?,
+        "stop" => command::stop::run(&args[2..], home_path).await?,
+        "pause" => command::pause::run(&args[2..], home_path).await?,
+        "resume" => command::resume::run(&args[2..], home_path).await?,
+        "list" => command::list::run(&args[2..], home_path).await?,
+        "-d" | "--daemon" => start_daemon(&args[2..], home_path).await?,
+        "-t" | "--terminated" => terminated_daemon(&args[2..], home_path).await?,
+        "-gd" | "--guard-daemon" => start_guard_daemon(&args[2..], home_path).await?,
+        "-gt" | "--guardt-terminated" => terminated_guard_daemon(&args[2..], home_path).await?,
         _ => {
-            let err: String = format!("watchmen: invalid command '{}'", args[1]);
+            let err: String = format!("watchmen: invalid command option '{}'", args[1]);
             entity::Response {
                 code: 40000,
                 msg: err,
@@ -118,48 +121,27 @@ pub async fn exec(args: Vec<String>) -> Result<entity::Response, Box<dyn Error>>
     Ok(response)
 }
 
-async fn terminated_daemon2() -> Result<entity::Response, Box<dyn Error>> {
-    let options: HashMap<std::string::String, entity::Opt> = HashMap::new();
-    let req = entity::Request {
-        name: "terminated".to_string(),
-        command: entity::Command {
-            name: "terminated".to_string(),
-            options: options,
-            args: vec![],
-        },
-    };
-    let res = socket::request(&req).await?;
-    if res.code == 10 {
-        let watchmen_path =
-            std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
-        let path = std::path::Path::new(&watchmen_path);
-        let path = path.join("daemon.pid");
-        remove_file(path).unwrap_or_default();
-    }
-    Ok(res)
-}
-
-async fn start_daemon(_args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
-    let watchmen_path_str =
-        std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
-
-    let watchmen_path = std::path::Path::new(&watchmen_path_str);
-
-    if !watchmen_path.exists() {
-        std::fs::create_dir_all(watchmen_path)?;
-    }
+async fn start_daemon(
+    _args: &[String],
+    home_path: String,
+) -> Result<entity::Response, Box<dyn Error>> {
+    let watchmen_path = std::path::Path::new(&home_path);
 
     let stdout_path = watchmen_path.join("stdout/").clone();
-    if !stdout_path.exists() {
-        std::fs::create_dir(stdout_path.clone()).unwrap();
-    }
 
     let daemon_stdout = watchmen_path.join("daemon.log").clone();
-    let file = std::fs::OpenOptions::new()
+    let file_result = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(daemon_stdout.clone())?;
-    let stdout = Stdio::from(file);
+        .open(daemon_stdout.clone());
+    if file_result.is_err() {
+        let err: String = format!(
+            "watchmen: cannot open stdout file '{}'",
+            daemon_stdout.to_str().unwrap()
+        );
+        return Ok(entity::Response::err(err));
+    }
+    let stdout = Stdio::from(file_result.unwrap());
 
     let sock_path = watchmen_path.join("watchmen.sock");
 
@@ -177,7 +159,7 @@ async fn start_daemon(_args: &[String]) -> Result<entity::Response, Box<dyn Erro
     match result {
         Some(pid) => {
             // 保存 pid
-            let path = std::path::Path::new(&watchmen_path_str);
+            let path = std::path::Path::new(&home_path);
             let path = path.join("daemon.pid");
             // 创建文件
             let mut file = std::fs::File::create(path.clone())?;
@@ -198,7 +180,10 @@ extern "C" {
     pub fn kill(pid: i32, sig: i32) -> i32;
 }
 
-async fn terminated_daemon(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
+async fn terminated_daemon(
+    args: &[String],
+    home_path: String,
+) -> Result<entity::Response, Box<dyn Error>> {
     let mut signal = 15;
     if args.len() == 1 {
         match args[0].as_str() {
@@ -212,22 +197,19 @@ async fn terminated_daemon(args: &[String]) -> Result<entity::Response, Box<dyn 
         }
     }
 
-    let watchmen_path =
-        std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
-    let path = std::path::Path::new(&watchmen_path);
-    let path = path.join("daemon.pid");
-    if !path.exists() {
+    let daemon_pid_path = std::path::Path::new(&home_path).join("daemon.pid");
+    if !daemon_pid_path.exists() {
         return Ok(entity::Response::err(format!(
             "Pid file not exists: {}",
-            path.display()
+            daemon_pid_path.display()
         )));
     }
-    let pid = std::fs::read_to_string(path.clone())?;
+    let pid = std::fs::read_to_string(daemon_pid_path.clone())?;
     let pid = pid.parse::<i32>()?;
     let res = unsafe { kill(pid, signal) };
     if res == 0 {
         // 删除文件
-        remove_file(path).unwrap_or_default();
+        remove_file(daemon_pid_path).unwrap_or_default();
         return Ok(entity::Response::ok(format!(
             "Terminated daemon pid: {}",
             pid
@@ -245,27 +227,27 @@ async fn terminated_daemon(args: &[String]) -> Result<entity::Response, Box<dyn 
     }
 }
 
-async fn start_guard_daemon(_args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
-    let watchmen_path_str =
-        std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
-
-    let watchmen_path = std::path::Path::new(&watchmen_path_str);
-
-    if !watchmen_path.exists() {
-        std::fs::create_dir_all(watchmen_path)?;
-    }
+async fn start_guard_daemon(
+    _args: &[String],
+    home_path: String,
+) -> Result<entity::Response, Box<dyn Error>> {
+    let watchmen_path = std::path::Path::new(&home_path);
 
     let stdout_path = watchmen_path.join("stdout/").clone();
-    if !stdout_path.exists() {
-        std::fs::create_dir(stdout_path.clone()).unwrap();
-    }
 
     let daemon_stdout = watchmen_path.join("guard.log").clone();
-    let file = std::fs::OpenOptions::new()
+    let file_result = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(daemon_stdout.clone())?;
-    let stdout = Stdio::from(file);
+        .open(daemon_stdout.clone());
+    if file_result.is_err() {
+        let err: String = format!(
+            "watchmen: cannot open stdout file '{}'",
+            daemon_stdout.to_str().unwrap()
+        );
+        return Ok(entity::Response::err(err));
+    }
+    let stdout = Stdio::from(file_result.unwrap());
 
     let sock_path = watchmen_path.join("watchmen.sock");
 
@@ -283,7 +265,7 @@ async fn start_guard_daemon(_args: &[String]) -> Result<entity::Response, Box<dy
     match result {
         Some(pid) => {
             // 保存 pid
-            let path = std::path::Path::new(&watchmen_path_str);
+            let path = std::path::Path::new(&home_path);
             let path = path.join("guard.pid");
             // 创建文件
             let mut file = std::fs::File::create(path.clone())?;
@@ -298,4 +280,25 @@ async fn start_guard_daemon(_args: &[String]) -> Result<entity::Response, Box<dy
         }
         None => Ok(entity::Response::err("watchmen: failed to start daemon")),
     }
+}
+
+async fn terminated_guard_daemon(
+    _args: &[String],
+    home_path: String,
+) -> Result<entity::Response, Box<dyn Error>> {
+    let options: HashMap<std::string::String, entity::Opt> = HashMap::new();
+    let req = entity::Request {
+        name: "terminated".to_string(),
+        command: entity::Command {
+            name: "terminated".to_string(),
+            options: options,
+            args: vec![],
+        },
+    };
+    let res = socket::request(&req, home_path.clone()).await?;
+    if res.code == 10 {
+        let path = std::path::Path::new(&home_path).join("daemon.pid");
+        remove_file(path).unwrap_or_default();
+    }
+    Ok(res)
 }

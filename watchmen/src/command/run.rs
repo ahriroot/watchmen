@@ -13,7 +13,7 @@ const RUN_HELP: &str = r#"Usage: watchmen run [OPTION...] ...
 Report bugs to ahriknow@ahriknow.com
 Issues: https://git.ahriknow.com/ahriknow/watchmen/issues"#;
 
-pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
+pub async fn run(args: &[String], home_path: String) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();
     if len < 1 {
         return Ok(entity::Response::ok(RUN_HELP));
@@ -68,7 +68,7 @@ pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
                 },
             };
 
-            let res = socket::request(&req).await?;
+            let res = socket::request(&req, home_path).await?;
             res
         }
     };

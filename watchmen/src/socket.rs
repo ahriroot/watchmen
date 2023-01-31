@@ -6,20 +6,9 @@ use tokio::{
 
 use crate::entity;
 
-pub async fn request(request: &entity::Request) -> Result<entity::Response, Box<dyn Error>> {
-    // 获取环境变量,默认为 /tmp/watchmen.sock
-    let watchmen_path =
-        std::env::var("WATCHMEN_PATH").unwrap_or_else(|_| "/tmp/watchmen".to_string());
+pub async fn request(request: &entity::Request, home_path: String) -> Result<entity::Response, Box<dyn Error>> {
     // 判断文件夹是否存在
-    let path = Path::new(&watchmen_path);
-    if !path.exists() {
-        std::fs::create_dir_all(path)?;
-        return Err("socket file not exists".into());
-    }
-    // 判断是不是文件夹
-    if !path.is_dir() {
-        return Err("socket file is not a directory".into());
-    }
+    let path = Path::new(&home_path);
 
     let socket_path: &Path = &path.join("watchmen.sock");
     if !socket_path.exists() {

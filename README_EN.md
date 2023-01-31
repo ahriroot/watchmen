@@ -120,8 +120,9 @@ The guard process that will the daemon process online
 | Option     | Description |
 | ---------- | ----------- |
 | -h, --help | show help   |
-| -i, --name | task id     |
-| -n, --pid  | task name   |
+| -i, --id   | task id     |
+| -n, --name | task name   |
+| -p, --pid  | task pid    |
 
 ### stop
 
@@ -194,22 +195,24 @@ git clone https://git.ahriknow.com/ahriknow/watchmen
 cd watchmen
 cargo build --release
 
+cd ./target/release
+
 # start the daemon
-./target/release/watchmen -d
+./watchmen -d
 Start daemon pid: 65535
 
 # show tasks
-./target/release/watchmen list
+./watchmen list
 ------------------------------------------------------------------------------------
 | ID | NAME | STATUS | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
 ------------------------------------------------------------------------------------
 0 Total: 0 running, 0 stopped, 0 waiting
 
 # create a task
-./target/release/watchmen run -n test sh ${watchmen_project_path}/script/task.sh
+./watchmen run -n test sh ${watchmen_project_path}/script/task.sh
 
 # show tasks
-./target/release/watchmen list
+./watchmen list
 ------------------------------------------------------------------------------------------------
 | ID            | NAME | STATUS  | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
 ------------------------------------------------------------------------------------------------
@@ -218,10 +221,10 @@ Start daemon pid: 65535
 1 Total: 1 running, 0 stopped, 0 waiting
 
 # stop the task
-./target/release/watchmen stop test
+./watchmen stop test
 
 # show tasks
-./target/release/watchmen list
+./watchmen list
 ------------------------------------------------------------------------------------------------
 | ID            | NAME | STATUS  | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
 ------------------------------------------------------------------------------------------------
@@ -230,17 +233,17 @@ Start daemon pid: 65535
 1 Total: 0 running, 1 stopped, 0 waiting
 
 # drop the task
-./target/release/watchmen drop test
+./watchmen drop test
 
 # show tasks
-./target/release/watchmen list
+./watchmen list
 ------------------------------------------------------------------------------------
 | ID | NAME | STATUS | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
 ------------------------------------------------------------------------------------
 0 Total: 0 running, 0 stopped, 0 waiting
 
 # terminated the daemon
-./target/release/watchmen -t
+./watchmen -t
 Terminated daemon pid: 65535
 
 # show output

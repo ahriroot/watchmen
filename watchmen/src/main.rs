@@ -10,18 +10,34 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let sock_path = std::path::Path::new(&watchmen_path);
 
     if !sock_path.exists() {
-        fs::create_dir_all(sock_path)?;
+        match fs::create_dir_all(sock_path) {
+            Ok(_) => {
+                println!("{} {}", "Created watchmen path: ".green(), watchmen_path);
+            }
+            Err(err) => {
+                eprintln!("{} {}", "Error creating watchmen path: ".red(), err);
+                exit(1);
+            }
+        }
     }
 
     let stdout_path = sock_path.join("stdout/").clone();
     if !stdout_path.exists() {
-        fs::create_dir(stdout_path).unwrap();
+        match fs::create_dir(stdout_path.clone()) {
+            Ok(_) => {
+                println!("{} {}", "Created stdout path: ".green(), stdout_path.display());
+            }
+            Err(err) => {
+                eprintln!("{} {}", "Error creating stdout path: ".red(), err);
+                exit(1);
+            }
+        }
     }
 
     // 命令行参数 / command line arguments
     let args: Vec<String> = std::env::args().collect();
     // 执行命令 / execute command
-    let response = command::exec(args).await;
+    let response = command::exec(args, watchmen_path).await;
     match response {
         Ok(res) => {
             let code;

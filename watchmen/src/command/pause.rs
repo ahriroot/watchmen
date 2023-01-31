@@ -15,7 +15,7 @@ const PAUSE_HELP: &str = r#"Usage: watchmen pause [OPTION...] ...
 Report bugs to ahriknow@ahriknow.com
 Issues: https://git.ahriknow.com/ahriknow/watchmen/issues"#;
 
-pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
+pub async fn run(args: &[String], home_path: String) -> Result<entity::Response, Box<dyn Error>> {
     let len = args.len();
     if len < 1 {
         return Ok(entity::Response::ok(PAUSE_HELP));
@@ -70,7 +70,7 @@ pub async fn run(args: &[String]) -> Result<entity::Response, Box<dyn Error>> {
                     args: args,
                 },
             };
-            let res = socket::request(&req).await?;
+            let res = socket::request(&req, home_path).await?;
             res
         }
     };

@@ -120,8 +120,9 @@ guard (非必须)
 | Option     | Description |
 | ---------- | ----------- |
 | -h, --help | 帮助信息    |
-| -i, --name | 任务信息    |
-| -n, --pid  | 任务名      |
+| -i, --id   | 任务 id     |
+| -n, --name | 任务名      |
+| -p, --pid  | 任务 pid    |
 
 ### stop
 
@@ -194,22 +195,24 @@ git clone https://git.ahriknow.com/ahriknow/watchmen
 cd watchmen
 cargo build --release
 
+cd ./target/release
+
 # 启动守护进程
-./target/release/watchmen -d
+./watchmen -d
 Start daemon pid: 65535
 
 # 查询任务
-./target/release/watchmen list
+./watchmen list
 ------------------------------------------------------------------------------------
 | ID | NAME | STATUS | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
 ------------------------------------------------------------------------------------
 0 Total: 0 running, 0 stopped, 0 waiting
 
 # 创建并运行一个任务
-./target/release/watchmen run -n test sh ${watchmen_project_path}/script/task.sh
+./watchmen run -n test sh ${watchmen_project_path}/script/task.sh
 
 # 查询任务
-./target/release/watchmen list
+./watchmen list
 ------------------------------------------------------------------------------------------------
 | ID            | NAME | STATUS  | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
 ------------------------------------------------------------------------------------------------
@@ -218,10 +221,10 @@ Start daemon pid: 65535
 1 Total: 1 running, 0 stopped, 0 waiting
 
 # 停止任务
-./target/release/watchmen stop test
+./watchmen stop test
 
 # 查询任务
-./target/release/watchmen list
+./watchmen list
 ------------------------------------------------------------------------------------------------
 | ID            | NAME | STATUS  | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
 ------------------------------------------------------------------------------------------------
@@ -230,17 +233,17 @@ Start daemon pid: 65535
 1 Total: 0 running, 1 stopped, 0 waiting
 
 # 删除任务
-./target/release/watchmen drop test
+./watchmen drop test
 
 # 查询任务
-./target/release/watchmen list
+./watchmen list
 ------------------------------------------------------------------------------------
 | ID | NAME | STATUS | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
 ------------------------------------------------------------------------------------
 0 Total: 0 running, 0 stopped, 0 waiting
 
 # 停止守护进程
-./target/release/watchmen -t
+./watchmen -t
 Terminated daemon pid: 65535
 
 # 查看输出
