@@ -4,6 +4,8 @@ use tokio::sync::mpsc;
 use daemon::monitor::run_monitor;
 use daemon::socket::run_socket;
 
+use logger::{self, log};
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
@@ -12,23 +14,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // args[2]: home_path
     // args[3]: stdout_path
     if args.len() < 4 {
-        println!("Exit code: 255 => Missing path argument.");
+        eprintln!("Exit code: 255 => Missing path argument.");
         exit(255);
     }
+
+    let mut l = logger::Logger::new(
+        logger::Level::Info,
+        String::from("[L]\t[T]\t[M]"),
+        String::from(args[2].clone()),
+        String::from("daemon"),
+        1024 * 1024 * 10,
+    );
 
     let home_path = args[2].clone();
 
     // 加载上次运行的任务
     let tasks_result = daemon::global::load_tasks(home_path.clone()).await;
     if tasks_result.is_err() {
-        println!("Exit code: 254 => {}", tasks_result.err().unwrap());
+        log!(l, error, "Exit code: 254 => {}", tasks_result.err().unwrap());
         exit(254);
     }
+    let mut ll = l.clone();
     let monitor = tokio::spawn(async move {
         match run_monitor(home_path).await {
             Ok(_) => {}
             Err(e) => {
-                println!("Exit code: 253 => {}", e);
+                log!(ll, error, "Exit code: 253 => {}", e);
                 exit(253);
             }
         }
@@ -45,16 +56,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // 协程间通信 / channel, 监听 ctrl c 和 ctrl d 信号 / listen ctrl-c and ctrl-d signal
     let (tx, mut rx) = mpsc::channel::<i32>(12);
 
-    let tx1 = tx.clone();  // 监听到 ctrl c 通信管道
-    let tx2 = tx.clone();  // 监听到 ctrl d 通信管道
+    let tx1 = tx.clone(); // 监听到 ctrl c 通信管道
+    let tx2 = tx.clone(); // 监听到 ctrl d 通信管道
 
-    
     // ctrl c 停止运行 / terminate on ctrl-c
     let signal1 = tokio::spawn(async move {
         tokio::signal::ctrl_c().await.unwrap();
         tx1.send(9).await.unwrap();
     });
-    
+
     // ctrl d 停止运行 / terminate on ctrl-d
     let signal2 = tokio::spawn(async move {
         tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
@@ -78,10 +88,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     remove_file(sock_path).unwrap_or_default();
 
     if let Some(code) = res {
-        println!("Exit code: {} => exited", code);
+        log!(l, info, "Exit code: {} => exited", code);
         exit(code);
     } else {
-        println!("Exit code: 0 => exited");
+        log!(l, info, "Exit code: 0 => exited");
         exit(0);
     }
 }
@@ -89,6 +99,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
 #[cfg(test)]
 mod tests {
 
+    use logger;
+
     #[test]
-    fn test() {}
+    fn test() {
+        let mut log = logger::Logger::new(
+            logger::Level::Info,
+            String::from("[T]\t[L]\t[M]"),
+            String::from("/tmp/watchmen/"),
+            String::from("daemon"),
+            1024,
+        );
+
+        log.info("test");
+    }
 }
