@@ -2,244 +2,213 @@ pub mod command;
 pub mod engine;
 pub mod entity;
 pub mod macros;
-pub mod monitor;
-pub mod socket;
+// pub mod monitor;
 pub mod utils;
 
 pub mod global {
-    use std::{error::Error, fs::File, path::Path};
 
+    use std::{collections::HashMap, error::Error, process::Stdio};
+
+    use common::task::Task;
     use lazy_static::lazy_static;
-    use serde_json;
-    use tokio::sync::Mutex;
-
-    use crate::{
-        command::start::{self},
-        entity::Task,
+    use tokio::{
+        io::AsyncWriteExt,
+        process::{Child, Command},
+        sync::{mpsc, Mutex},
+        task::JoinHandle,
     };
 
+    static CHANNEL_SIZE: usize = 1024;
+
+    struct TaskProcess {
+        task: Task,
+        joinhandle: Option<JoinHandle<Option<i32>>>,
+        tx: Option<mpsc::Sender<Vec<u8>>>,
+    }
+
     lazy_static! {
-        static ref TASKS: Mutex<Vec<Task>> = Mutex::new(Vec::new());
+        static ref TASKS: Mutex<HashMap<String, TaskProcess>> = Mutex::new(HashMap::new());
     }
 
-    pub async fn save_tasks(tasks: Vec<Task>) -> Result<(), Box<dyn Error>> {
-        let args: Vec<String> = std::env::args().collect();
-        if args.len() < 4 {
-            return Err("Command line args error".into());
-        }
-        let home_path = args[2].clone();
-
-        let path = Path::new(&home_path);
-        let path = path.join("tasks.json");
-        match File::create(path) {
-            Ok(f) => match serde_json::to_writer_pretty(f, &tasks) {
-                _ => Ok(()),
-            },
-            Err(_) => Ok(()),
-        }
-    }
-
-    pub async fn load_tasks(home_path: String) -> Result<(), Box<dyn Error>> {
-        let path = Path::new(&home_path);
-        let path = path.join("tasks.json");
-
-        if path.exists() && path.is_file() {
-            let f = File::open(path).unwrap();
-            let data: Vec<Task> = serde_json::from_reader(f).unwrap();
-            let mut tasks = TASKS.lock().await;
-            *tasks = data.clone();
-
-            // 释放锁, 启动 task 时需要更改 task 状态, 需要获取锁
-            drop(tasks);
-
-            for task in data {
-                if task.status == "running" {
-                    match start::start_task_by_task(task.clone()).await {
-                        Ok(_) => {}
-                        Err(_) => {}
-                    };
-                }
-            }
-        }
-        Ok(())
-    }
-
-    pub async fn check_exists(name: String) -> Result<bool, Box<dyn Error>> {
-        let tasks = get_all_tasks().await?;
-        for task in tasks.iter() {
-            if task.name == name {
-                return Ok(true);
-            }
-        }
-        Ok(false)
-    }
-
-    pub async fn get_task_by_id(id: u128) -> Result<Task, Box<dyn Error>> {
-        let tasks = get_all_tasks().await?;
-        for task in tasks.iter() {
-            if task.id == id {
-                return Ok(task.clone());
-            }
-        }
-        let err = format!("Task id '{}' not found", id);
-        return Err(err.into());
-    }
-
-    pub async fn get_task_by_name(name: String) -> Result<Task, Box<dyn Error>> {
-        let tasks = get_all_tasks().await?;
-        for task in tasks.iter() {
-            if task.name == name {
-                return Ok(task.clone());
-            }
-        }
-        let err = format!("Task named '{}' not found", name);
-        return Err(err.into());
-    }
-
-    pub async fn get_task_by_pid(pid: u32) -> Result<Task, Box<dyn Error>> {
-        let tasks = TASKS.lock().await;
-        for task in tasks.iter() {
-            if task.pid == pid {
-                return Ok(task.clone());
-            }
-        }
-        let err = format!("Task pid is '{}' not found", pid);
-        return Err(err.into());
-    }
-
-    pub async fn get_all_tasks() -> Result<Vec<Task>, Box<dyn Error>> {
-        let tasks = TASKS.lock().await;
-        Ok(tasks.to_vec())
-    }
-
-    pub async fn remove_task_by_id(id: u128) -> Result<(), Box<dyn Error>> {
-        let mut tasks = TASKS.lock().await;
-        let mut index = 0;
-        for (i, task) in tasks.iter().enumerate() {
-            if task.id == id {
-                index = i;
-                break;
-            }
-        }
-        tasks.remove(index);
-        save_tasks(tasks.clone()).await?;
-        Ok(())
-    }
-
-    pub async fn remove_task_by_name(name: String) -> Result<Option<Task>, Box<dyn Error>> {
-        let mut tasks = TASKS.lock().await;
-        let pos = tasks.iter().position(|task| task.name == name);
-        if let Some(pos) = pos {
-            let res = tasks.remove(pos);
-            save_tasks(tasks.clone()).await?;
-            return Ok(Some(res));
-        }
-        Ok(None)
-    }
-
-    pub async fn remove_task_by_pid(pid: u32) -> Result<Option<Task>, Box<dyn Error>> {
-        let mut tasks = TASKS.lock().await;
-        let pos = tasks.iter().position(|task| task.pid == pid);
-        if let Some(pos) = pos {
-            let res = tasks.remove(pos);
-            save_tasks(tasks.clone()).await?;
-            return Ok(Some(res));
-        }
-        Ok(None)
-    }
-
-    pub async fn add_task(task: Task) -> Result<(), Box<dyn Error>> {
-        let mut tasks = TASKS.lock().await;
-        let timestamp = crate::utils::get_millis().await;
-        let task = Task {
-            created_at: timestamp,
-            ..task
-        };
-        tasks.push(task);
-        save_tasks(tasks.clone()).await?;
-        Ok(())
-    }
-
-    pub async fn update_pid_by_name(name: String, pid: u32) -> Result<(), Box<dyn Error>> {
-        let mut tasks = TASKS.lock().await;
-        let pos = tasks.iter().position(|task| task.name == name);
-        if let Some(pos) = pos {
-            tasks[pos].pid = pid;
-            save_tasks(tasks.clone()).await?;
-        }
-        Ok(())
-    }
-
-    pub async fn update_status_by_name(name: String, status: String) -> Result<(), Box<dyn Error>> {
-        let mut tasks = TASKS.lock().await;
-        let pos = tasks.iter().position(|task| task.name == name);
-        if let Some(pos) = pos {
-            tasks[pos].status = status;
-            save_tasks(tasks.clone()).await?;
-        }
-        Ok(())
-    }
-
-    pub async fn update_started_at_by_id(id: u128, started_at: u128) -> Result<(), Box<dyn Error>> {
-        let mut tasks = TASKS.lock().await;
-        let pos = tasks.iter().position(|task| task.id == id);
-        if let Some(pos) = pos {
-            tasks[pos].started_at = started_at;
-            save_tasks(tasks.clone()).await?;
-        }
-        Ok(())
-    }
-
-    pub async fn update_exited_at_by_id(id: u128, exited_at: u128) -> Result<(), Box<dyn Error>> {
-        let mut tasks = TASKS.lock().await;
-        let pos = tasks.iter().position(|task| task.id == id);
-        if let Some(pos) = pos {
-            tasks[pos].exited_at = exited_at;
-            save_tasks(tasks.clone()).await?;
-        }
-        Ok(())
-    }
-
-    pub async fn update_stopped_at_by_id(id: u128, stopped_at: u128) -> Result<(), Box<dyn Error>> {
-        let mut tasks = TASKS.lock().await;
-        let pos = tasks.iter().position(|task| task.id == id);
-        if let Some(pos) = pos {
-            tasks[pos].stopped_at = stopped_at;
-            save_tasks(tasks.clone()).await?;
-        }
-        Ok(())
-    }
-
-    pub async fn update_laststart_at_by_id(
-        id: u128,
-        laststart_at: u128,
-    ) -> Result<(), Box<dyn Error>> {
-        let mut tasks = TASKS.lock().await;
-        let pos = tasks.iter().position(|task| task.id == id);
-        if let Some(pos) = pos {
-            tasks[pos].laststart_at = laststart_at;
-            save_tasks(tasks.clone()).await?;
-        }
-        Ok(())
-    }
-
-    pub async fn update_exit_code_by_name(
+    pub async fn update(
         name: String,
-        exit_code: u32,
+        pid: Option<Option<u32>>,
+        status: Option<Option<String>>,
     ) -> Result<(), Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        let pos = tasks.iter().position(|task| task.name == name);
-        if let Some(pos) = pos {
-            tasks[pos].exit_code = exit_code;
-            save_tasks(tasks.clone()).await?;
+        if !tasks.contains_key(&name) {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] not exists", name),
+            )));
+        }
+        let mut tp = tasks.get_mut(&name).unwrap();
+        if let Some(pid) = pid {
+            tp.task.pid = pid;
+        }
+        if let Some(status) = status {
+            tp.task.status = status;
         }
         Ok(())
     }
-}
 
-pub mod constants {
-    pub enum ExitCode {
-        SUCCESS = 0,
-        ERROR = 255,
+    pub async fn add(task: Task) -> Result<(), Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        let name = task.name.clone();
+        if tasks.contains_key(&name) {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] already exists", task.name),
+            )));
+        }
+        let tp = TaskProcess {
+            task,
+            joinhandle: None,
+            tx: None,
+        };
+        tasks.insert(name, tp);
+        Ok(())
+    }
+
+    pub async fn remove(name: String) -> Result<(), Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        if !tasks.contains_key(&name) {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] not exists", name),
+            )));
+        }
+        let tp = tasks.get(&name).unwrap();
+        if tp.task.pid.is_some() {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] is running", name),
+            )));
+        }
+        if tp.joinhandle.is_some() {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] is running", name),
+            )));
+        }
+        tasks.remove(&name);
+        Ok(())
+    }
+
+    pub async fn delete(name: String) -> Result<(), Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        if !tasks.contains_key(&name) {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] not exists", name),
+            )));
+        }
+        let tp = tasks.get(&name).unwrap();
+        if tp.task.pid.is_some() {
+            stop(name.clone()).await?;
+        }
+        if let Some(jh) = &tp.joinhandle {
+            jh.abort();
+        }
+        tasks.remove(&name);
+        Ok(())
+    }
+
+    pub async fn start(name: String) -> Result<(), Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        if !tasks.contains_key(&name) {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] not exists", name),
+            )));
+        }
+        let mut tp = tasks.get_mut(&name).unwrap();
+
+        let child = tp.task.start().await?;
+
+        let rx = if Some(true) == tp.task.stdin {
+            let (tx, rx) = mpsc::channel::<Vec<u8>>(CHANNEL_SIZE);
+            tp.tx = Some(tx);
+            Some(rx)
+        } else {
+            None
+        };
+
+        let task_name = tp.task.name.clone();
+        let pid = child.id();
+        let status = Some("running".to_string());
+
+        let jh: JoinHandle<Option<i32>> = tokio::spawn(async move {
+            let mut child = child;
+
+            let cjh = if let Some(mut rx) = rx {
+                let mut child_stdin = child.stdin.take().unwrap();
+                let cjh = tokio::spawn(async move {
+                    while let Some(message) = rx.recv().await {
+                        child_stdin.write_all(&message).await.unwrap();
+                    }
+                });
+                Some(cjh)
+            } else {
+                None
+            };
+
+            let res = child.wait().await.unwrap();
+
+            update(name, Some(None), Some(Some("stopped".to_string())))
+                .await
+                .unwrap();
+
+            if let Some(cjh) = cjh {
+                cjh.await.unwrap();
+            }
+
+            return res.code();
+        });
+
+        tp.joinhandle = Some(jh);
+
+        tokio::spawn(async move {
+            update(task_name, Some(pid), Some(status)).await.unwrap();
+        });
+
+        Ok(())
+    }
+
+    pub async fn run(task: Task) -> Result<(), Box<dyn Error>> {
+        let name = task.name.clone();
+        add(task).await?;
+        start(name).await
+    }
+
+    pub async fn stop(name: String) -> Result<(), Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        if !tasks.contains_key(&name) {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] not exists", name),
+            )));
+        }
+        let tp = tasks.get_mut(&name).unwrap();
+
+        let pid = tp.task.pid;
+
+        if let Some(pid) = pid {
+            let mut child: Child = Command::new("kill")
+                .arg("-9")
+                .arg(pid.to_string())
+                .envs(std::env::vars())
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn()?;
+            child.wait().await?;
+            Ok(())
+        } else {
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] not running", name),
+            )))
+        }
     }
 }

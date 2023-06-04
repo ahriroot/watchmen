@@ -1,26 +1,9 @@
-use std::{error::Error, fs::File, io::Read, path::Path};
+use std::{error::Error, fs::File, io::Read, path::Path, process::Stdio};
 
 use configparser::ini::Ini;
-use serde::{Deserialize, Serialize};
+use tokio::process::{Child, Command};
 
-use crate::task::{AsyncTask, PeriodicTask, ScheduledTask, Task, TaskType};
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct NotTask {
-    pub name: String,
-    pub error: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum IsTask {
-    Task(Task),
-    Error(NotTask),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct Tasks {
-    pub task: Vec<Task>,
-}
+use crate::task::{AsyncTask, PeriodicTask, ScheduledTask, Task, TaskType, Tasks};
 
 impl Task {
     pub fn from_ini(path: &Path) -> Result<Tasks, Box<dyn Error>> {
@@ -40,16 +23,17 @@ impl Task {
                 .split(" ")
                 .map(|s| s.to_string())
                 .collect();
-            task.dir = ini
-                .get(section, "dir")
-                .unwrap_or(std::env::current_dir()?.to_str().unwrap().to_string());
+            task.dir = ini.get(section, "dir");
+            if task.dir.is_none() {
+                task.dir = Some(std::env::current_dir()?.to_str().unwrap().to_string());
+            }
             for env in ini.get(section, "env").unwrap_or("".to_string()).split(" ") {
                 let kv: Vec<&str> = env.split("=").collect();
                 if kv.len() == 2 {
                     task.env.insert(kv[0].to_string(), kv[1].to_string());
                 }
             }
-            task.stdin = ini.get(section, "stdin");
+            task.stdin = ini.getbool(section, "stdin").unwrap();
             task.stdout = ini.get(section, "stdout");
             task.stderr = ini.get(section, "stderr");
 
@@ -67,10 +51,6 @@ impl Task {
                     };
                     if let Some(year) = ini.getint(section, "year")? {
                         if year < 1970 {
-                            NotTask {
-                                name: task.name.clone(),
-                                error: format!("Invalid year: {}", year),
-                            };
                             return Err(Box::new(std::io::Error::new(
                                 std::io::ErrorKind::Other,
                                 format!("Invalid year: {}", year),
@@ -190,4 +170,52 @@ impl Task {
     }
 }
 
-impl Task {}
+impl Task {
+    pub async fn start(&self) -> Result<Child, Box<dyn Error>> {
+        let mut command = Command::new(&self.command);
+        let command = command.args(&self.args);
+        let command = command.envs(std::env::vars());
+        let mut command = command.kill_on_drop(false);
+        for (key, value) in &self.env {
+            command = command.env(key, value);
+        }
+        if let Some(dir) = &self.dir {
+            command = command.current_dir(&dir);
+        }
+        if let Some(stdout) = &self.stdout {
+            let dir = Path::new(stdout).parent().unwrap();
+            if !dir.exists() {
+                std::fs::create_dir_all(dir)?;
+            }
+            let file = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(stdout)?;
+            command = command.stdout(Stdio::from(file));
+        }
+        if let Some(stderr) = &self.stderr {
+            let dir = Path::new(stderr).parent().unwrap();
+            if !dir.exists() {
+                std::fs::create_dir_all(dir)?;
+            }
+            let file = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(stderr)?;
+            command = command.stderr(Stdio::from(file));
+        }
+        if let Some(_stdin) = &self.stdin {
+            command = command.stdin(Stdio::piped());
+        }
+
+        let child = command.spawn()?;
+
+        Ok(child)
+    }
+}
+
+impl Tasks {
+    pub fn new() -> Self {
+        Tasks { task: Vec::new() }
+    }
+}

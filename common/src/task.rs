@@ -3,8 +3,7 @@ use std::{
     collections::HashMap,
     time::{SystemTime, UNIX_EPOCH},
 };
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScheduledTask {
     pub year: Option<u64>,
     pub month: Option<u64>,
@@ -14,20 +13,20 @@ pub struct ScheduledTask {
     pub second: Option<u64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AsyncTask {
     pub started_at: u64,
     pub stopped_at: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PeriodicTask {
     pub started_after: u64,
     pub interval: u64,
     pub last_run: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TaskType {
     Scheduled(ScheduledTask),
     Async(AsyncTask),
@@ -35,7 +34,7 @@ pub enum TaskType {
     None,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {
     /// Task id (unique)
     pub id: i64,
@@ -50,17 +49,21 @@ pub struct Task {
     pub args: Vec<String>,
 
     /// Task working directory
-    pub dir: String,
+    pub dir: Option<String>,
 
     /// Task environment variables
     pub env: HashMap<String, String>,
 
-    pub stdin: Option<String>,
+    pub stdin: Option<bool>,
     pub stdout: Option<String>,
     pub stderr: Option<String>,
 
     pub created_at: u64,
     pub task_type: TaskType,
+
+    pub pid: Option<u32>,
+    pub status: Option<String>,
+    pub code: Option<i32>,
 }
 
 impl Default for Task {
@@ -72,19 +75,27 @@ impl Default for Task {
             .as_secs();
         Task {
             id: 0,
-            name: "".to_string(),
+            name: "Default".to_string(),
             command: "".to_string(),
             args: vec![],
-            dir: "".to_string(),
+            dir: None,
             env: HashMap::new(),
             stdin: None,
             stdout: None,
             stderr: None,
             created_at: timestamp,
             task_type: TaskType::None,
+            pid: None,
+            status: None,
+            code: None,
         }
     }
 }
 
 unsafe impl Send for Task {}
 unsafe impl Sync for Task {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Tasks {
+    pub task: Vec<Task>,
+}

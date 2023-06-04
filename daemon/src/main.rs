@@ -18,6 +18,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let config: Config = Config::init(clargs.config.clone())?;
     engine::start(config).await;
-    // println!("{:#?}", config);
+
     return Ok(());
 }
