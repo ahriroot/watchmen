@@ -11,6 +11,7 @@ pub mod stop;
 use std::error::Error;
 
 use chrono::Local;
+use common::handle::{Command, Request, Response};
 
 use crate::{
     command,
@@ -18,7 +19,21 @@ use crate::{
     utils::get_id,
 };
 
-pub async fn handle_exec(command: entity::Command) -> Result<entity::Response, Box<dyn Error>> {
+pub async fn handle_exec(request: Request) -> Result<Response<String>, Box<dyn Error>> {
+    match request.command {
+        Command::Run => {
+            // command::run::run(req.body).await?;
+        }
+    }
+    let response = Response::<String> {
+        code: 10,
+        msg: "Daemon terminated.".to_string(),
+        data: None,
+    };
+    return Ok(response);
+}
+
+pub async fn handle_exec2(command: entity::Command) -> Result<entity::Response, Box<dyn Error>> {
     crate::info!("COMMAND\t{:?}", command);
     match command.name.as_str() {
         "terminated" => {

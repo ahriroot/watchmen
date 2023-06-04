@@ -1,5 +1,5 @@
 [package]
-name = "guard"
+name = "common"
 version = "0.1.0"
 authors = ["ahriknow <ahriknow@ahriknow.com>"]
 edition = "2021"
@@ -7,10 +7,16 @@ description = "Watchmen is a daemon process manager that for you manage and keep
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[[bin]]
-name = "guard"
-path = "src/main.rs"
+[lib]
+name = "common"
+path = "src/lib.rs"
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.20.1", features = ["full"] }
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
 chrono = "0.4.22"
+clap = { version = "4.3.0", features = ["derive"] }
+dirs = "4"
+configparser = "3.0.2"
+toml = "0.5"

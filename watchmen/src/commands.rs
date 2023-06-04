@@ -8,13 +8,20 @@ pub mod run;
 pub mod start;
 pub mod stop;
 
+use common::arg::Commands;
 use std::fs::remove_file;
 use std::io::Write;
 use std::process::Stdio;
 use std::{collections::HashMap, error::Error};
 use tokio::process::Command;
 
-use crate::{command, entity, socket};
+use crate::{commands, entity, socket};
+
+pub fn command(commands: Commands) {
+    match commands {
+        Commands::Run(args) => {}
+    }
+}
 
 const HELP: &str = r#"Usage: watchmen [OPTION|SUBCOMMAND] ...
     -h, --help        display this help
@@ -95,15 +102,15 @@ pub async fn exec(
             msg: VERSION.to_string(),
             data: None,
         },
-        "run" => command::run::run(&args[2..], home_path).await?,
-        "add" => command::add::run(&args[2..], home_path).await?,
-        "exit" | "rm" | "drop" => command::exit::run(&args[2..], home_path).await?,
-        "start" => command::start::run(&args[2..], home_path).await?,
-        "restart" => command::restart::run(&args[2..], home_path).await?,
-        "stop" => command::stop::run(&args[2..], home_path).await?,
-        "pause" => command::pause::run(&args[2..], home_path).await?,
-        "resume" => command::resume::run(&args[2..], home_path).await?,
-        "list" => command::list::run(&args[2..], home_path).await?,
+        "run" => commands::run::run(&args[2..], home_path).await?,
+        "add" => commands::add::run(&args[2..], home_path).await?,
+        "exit" | "rm" | "drop" => commands::exit::run(&args[2..], home_path).await?,
+        "start" => commands::start::run(&args[2..], home_path).await?,
+        "restart" => commands::restart::run(&args[2..], home_path).await?,
+        "stop" => commands::stop::run(&args[2..], home_path).await?,
+        "pause" => commands::pause::run(&args[2..], home_path).await?,
+        "resume" => commands::resume::run(&args[2..], home_path).await?,
+        "list" => commands::list::run(&args[2..], home_path).await?,
         "-d" | "--daemon" => start_daemon(&args[2..], home_path).await?,
         "-t" | "--terminated" => terminated_daemon(&args[2..], home_path).await?,
         "-gd" | "--guard-daemon" => start_guard_daemon(&args[2..], home_path).await?,

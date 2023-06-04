@@ -1,0 +1,44 @@
+[watchmen]
+# The engine to use for the watchmen server
+# Valid values are "sock", "socket", "redis"
+# sock: Unix socket
+# socket: TCP socket
+# redis: Redis pub/sub
+engines = ["sock"]
+
+# The standard output of the watchmen server
+# Default is None if not set
+stdout = "$HOME/.watchmen/watchmen.stdout.log"
+
+# The standard error of the watchmen server
+# Default is None if not set
+stderr = "$HOME/.watchmen/watchmen.stderr.log"
+
+# The pid file of the watchmen server
+# Default is `$HOME/.watchmen/watchmen.pid` if not set
+pid = "$HOME/.watchmen/watchmen.pid"
+
+
+[sock]
+path = "/tmp/watchmen.sock"
+
+
+[socket]
+host = "localhost"
+port = 1949
+
+
+[http]
+host = "localhost"
+port = 1949
+
+
+[redis]
+host = "localhost"
+port = 6379
+username = ""
+password = ""
+queue_index = 0
+queue_name = "watchmen"
+subscribe_channels = ["watchmen"]
+subscribe_name = "watchmen"

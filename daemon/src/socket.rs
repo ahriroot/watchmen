@@ -14,7 +14,7 @@ async fn handle_connection(mut stream: UnixStream) -> Result<(), Box<dyn Error>>
 
     let req: entity::Request = serde_json::from_slice(&buf[..n])?;
 
-    let res = command::handle_exec(req.command).await?;
+    let res = command::handle_exec2(req.command).await?;
 
     writer.write_all(&serde_json::to_vec(&res)?).await?;
 

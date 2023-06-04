@@ -1,0 +1,17 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./common/Cargo.toml",
+        "./watchmen/Cargo.toml",
+        "./daemon/Cargo.toml"
+    ],
+    "files.exclude": {
+        "**/*.profraw": true,
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true
+    },
+    "rust-analyzer.showUnlinkedFileNotification": false
+}
