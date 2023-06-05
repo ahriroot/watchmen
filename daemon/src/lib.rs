@@ -10,6 +10,7 @@ pub mod global {
     use std::{collections::HashMap, error::Error, process::Stdio};
 
     use common::{
+        config::{get_with_home_path, get_with_home},
         handle::{Data, Response, Status},
         task::Task,
     };
@@ -55,7 +56,30 @@ pub mod global {
         Ok(Response::success(None))
     }
 
-    pub async fn add(task: Task) -> Result<Response, Box<dyn Error>> {
+    pub async fn add(mut task: Task) -> Result<Response, Box<dyn Error>> {
+        if let Some(so) = &task.stdout {
+            let stdout = get_with_home_path(so);
+            let parent = stdout.parent().unwrap();
+            if parent.exists() {
+                std::fs::create_dir_all(parent).unwrap();
+            }
+            task.stdout = Some(stdout.to_str().unwrap().to_string());
+        }
+        if let Some(se) = &task.stderr {
+            let stderr = get_with_home_path(se);
+            let parent = stderr.parent().unwrap();
+            if parent.exists() {
+                std::fs::create_dir_all(parent).unwrap();
+            }
+            task.stderr = Some(stderr.to_str().unwrap().to_string());
+        }
+
+        let mut args = task.args.clone();
+        for i in 0..args.len() {
+            args[i] = get_with_home(&args[i]);
+        }
+        task.args = args;
+
         let mut tasks = TASKS.lock().await;
         let name = task.name.clone();
         if tasks.contains_key(&name) {

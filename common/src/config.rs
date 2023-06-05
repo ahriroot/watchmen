@@ -35,11 +35,22 @@ impl Config {
     }
 }
 
-pub fn get_with_home_path(input: String) -> PathBuf {
+pub fn get_with_home(input: &str) -> String {
     let home_dir = dirs::home_dir().unwrap();
     let home_dir_str = home_dir.to_string_lossy().into_owned();
-    let replaced = input.replace("$HOME", &home_dir_str);
-    PathBuf::from(replaced)
+    if input.starts_with("$HOME") {
+        let replaced = input.replace("$HOME", &home_dir_str);
+        replaced
+    } else if input.starts_with("~/") {
+        let replaced = input.replace("~/", &home_dir_str);
+        replaced
+    } else {
+        input.to_string()
+    }
+}
+
+pub fn get_with_home_path(input: &str) -> PathBuf {
+    PathBuf::from(get_with_home(input))
 }
 
 impl From<PathBuf> for Config {
@@ -47,14 +58,12 @@ impl From<PathBuf> for Config {
         let config_str = std::fs::read_to_string(s).unwrap();
         let mut config: Config = toml::from_str(&config_str).unwrap();
         if let Some(log_dir) = &config.watchmen.log_dir {
-            if log_dir.starts_with("$HOME") {
-                let log_dir = get_with_home_path(log_dir.to_string());
-                let parent = log_dir.parent().unwrap();
-                if parent.exists() {
-                    std::fs::create_dir_all(parent).unwrap();
-                }
-                config.watchmen.log_dir = Some(log_dir.to_str().unwrap().to_string());
+            let log_dir = get_with_home_path(log_dir);
+            let parent = log_dir.parent().unwrap();
+            if parent.exists() {
+                std::fs::create_dir_all(parent).unwrap();
             }
+            config.watchmen.log_dir = Some(log_dir.to_str().unwrap().to_string());
         }
         if let Some(log_level) = &config.watchmen.log_level {
             let allowed = ["debug", "info", "warn", "error"];
@@ -65,43 +74,35 @@ impl From<PathBuf> for Config {
             }
         }
         if let Some(stdout) = &config.watchmen.stdout {
-            if stdout.starts_with("$HOME") {
-                let stdout = get_with_home_path(stdout.to_string());
-                let parent = stdout.parent().unwrap();
-                if parent.exists() {
-                    std::fs::create_dir_all(parent).unwrap();
-                }
-                config.watchmen.stdout = Some(stdout.to_str().unwrap().to_string());
-            }
-        }
-        if let Some(stderr) = &config.watchmen.stderr {
-            if stderr.starts_with("$HOME") {
-                let stderr = get_with_home_path(stderr.to_string());
-                let parent = stderr.parent().unwrap();
-                if parent.exists() {
-                    std::fs::create_dir_all(parent).unwrap();
-                }
-                config.watchmen.stderr = Some(stderr.to_str().unwrap().to_string());
-            }
-        }
-        if let Some(pid) = &config.watchmen.pid {
-            if pid.starts_with("$HOME") {
-                let pid = get_with_home_path(pid.to_string());
-                let parent = pid.parent().unwrap();
-                if parent.exists() {
-                    std::fs::create_dir_all(parent).unwrap();
-                }
-                config.watchmen.pid = Some(pid.to_str().unwrap().to_string());
-            }
-        }
-        if config.sock.path.starts_with("$HOME") {
-            let path = get_with_home_path(config.sock.path.to_string());
-            let parent = path.parent().unwrap();
+            let stdout = get_with_home_path(stdout);
+            let parent = stdout.parent().unwrap();
             if parent.exists() {
                 std::fs::create_dir_all(parent).unwrap();
             }
-            config.sock.path = path.to_str().unwrap().to_string();
+            config.watchmen.stdout = Some(stdout.to_str().unwrap().to_string());
         }
+        if let Some(stderr) = &config.watchmen.stderr {
+            let stderr = get_with_home_path(stderr);
+            let parent = stderr.parent().unwrap();
+            if parent.exists() {
+                std::fs::create_dir_all(parent).unwrap();
+            }
+            config.watchmen.stderr = Some(stderr.to_str().unwrap().to_string());
+        }
+        if let Some(pid) = &config.watchmen.pid {
+            let pid = get_with_home_path(pid);
+            let parent = pid.parent().unwrap();
+            if parent.exists() {
+                std::fs::create_dir_all(parent).unwrap();
+            }
+            config.watchmen.pid = Some(pid.to_str().unwrap().to_string());
+        }
+        let path = get_with_home_path(&config.sock.path);
+        let parent = path.parent().unwrap();
+        if parent.exists() {
+            std::fs::create_dir_all(parent).unwrap();
+        }
+        config.sock.path = path.to_str().unwrap().to_string();
         config
     }
 }

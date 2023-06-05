@@ -19,6 +19,7 @@ const request = async (command) => {
 
 createApp({
     dialog: false,
+    modal: false,
     theme: {
         main: 'dark',
         second: 'secondary',
@@ -27,7 +28,7 @@ createApp({
     tasks: [],
     task: {
         "id": 0,
-        "name": "Default2",
+        "name": "Default",
         "command": "python",
         "args": "-u,$HOME/watchmen/script/task.py",
         "dir": null,
@@ -41,33 +42,17 @@ createApp({
         "status": "added",
         "code": null
     },
-    t: {
-        "command": {
-            "Run": {
-                "id": 0,
-                "name": "Default",
-                "command": "python",
-                "args": [
-                    "-u",
-                    "/home/ahri/watchmen/script/task.py"
-                ],
-                "dir": null,
-                "env": {},
-                "stdin": true,
-                "stdout": "/home/ahri/watchmen/logs/stdout.log",
-                "stderr": "/home/ahri/watchmen/logs/stderr.log",
-                "created_at": 1685957190,
-                "task_type": {
-                    "Async": {
-                        "started_at": 0,
-                        "stopped_at": 0
-                    }
-                },
-                "pid": null,
-                "status": null,
-                "code": null
-            }
-        }
+    info: '',
+    width: false,
+    async init() {
+        window.addEventListener('resize', () => {
+            this.width = window.innerWidth
+        })
+        await this.getTasks()
+    },
+    async infoTask(t) {
+        this.info = JSON.stringify(t, null, 4)
+        this.modal = true
     },
     async getTasks() {
         request({ "command": { "List": null } }).then(data => {

@@ -3,22 +3,186 @@
 
 <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
+    <title>Watchmen Web Panel</title>
+
+    <style>
+        .dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
   <script type="module" crossorigin src="/index.js"></script>
   <link rel="stylesheet" href="/index.css">
 </head>
 
-<body>
-    <div class="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4">
-        <div class="shrink-0">
-            <img class="h-12 w-12" src="/javascript.svg" alt="ChitChat Logo">
+<body class="bg-dark">
+    <div v-scope id="app" class="container" @vue:mounted="getTasks">
+
+        <div :class="`dialog text-bg-${theme.main}`" v-show="modal">
+            <div :class="`card text-bg-${theme.main} border-${theme.second}`" style="min-width: 600px">
+                <div class="card-header" style="display: flex; justify-content: space-between;">
+                    <span>Task Info</span>
+                    <button type="button" class="btn btn-sm btn-dark" @click="modal = false">x</button>
+                </div>
+                <div class="card-body">
+                    <textarea rows="28" v-model="info"
+                        :class="`form-control text-bg-${theme.main} border-${theme.second}`" id="info"
+                        placeholder="Task Info">
+                    </textarea>
+                </div>
+            </div>
         </div>
-        <div>
-            <div class="text-xl font-medium text-black">ChitChat</div>
-            <p class="text-slate-500">You have a new message!</p>
+
+        <div :class="`dialog text-bg-${theme.main}`" v-show="dialog">
+            <div :class="`card text-bg-${theme.main} border-${theme.second}`" style="min-width: 600px">
+                <div class="card-header">Add Task</div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <label for="name" class="col-sm-3 col-form-label text-end">Name</label>
+                        <div class="col-sm-8">
+                            <input v-model="task.name" type="text"
+                                :class="`form-control text-bg-${theme.main} border-${theme.second}`" id="name"
+                                placeholder="Name (unique)">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label for="command" class="col-sm-3 col-form-label text-end">Command</label>
+                        <div class="col-sm-8">
+                            <input v-model="task.command" type="text"
+                                :class="`form-control text-bg-${theme.main} border-${theme.second}`" id="command"
+                                placeholder="Command">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label for="args" class="col-sm-3 col-form-label text-end">Args</label>
+                        <div class="col-sm-8">
+                            <input v-model="task.args" type="text"
+                                :class="`form-control text-bg-${theme.main} border-${theme.second}`" id="args"
+                                placeholder="Args (split by ,)">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label text-end" for="stdin">Stdin</label>
+                        <div class="col-sm-8 mt-2">
+                            <input v-model="task.stdin" type="checkbox" class="form-check-input" id="stdin">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label for="inputEmail" class="col-sm-3 col-form-label text-end">Stdout</label>
+                        <div class="col-sm-8">
+                            <input v-model="task.stdout" type="text"
+                                :class="`form-control text-bg-${theme.main} border-${theme.second}`" id="inputEmail"
+                                placeholder="Command">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label for="inputEmail" class="col-sm-3 col-form-label text-end">Stderr</label>
+                        <div class="col-sm-8">
+                            <input v-model="task.stderr" type="text"
+                                :class="`form-control text-bg-${theme.main} border-${theme.second}`" id="inputEmail"
+                                placeholder="Command">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label text-end">Task Type</label>
+                        <div class="col-sm-9 row mt-2">
+                            <div class="form-check col-sm-3">
+                                <input v-model="task.task_type" value="async" class="form-check-input" type="radio"
+                                    name="gender" id="async" value="female">
+                                <label class="form-check-label" for="async">
+                                    Async
+                                </label>
+                            </div>
+                            <div class="form-check col-sm-4">
+                                <input v-model="task.task_type" value="scheduled" class="form-check-input" type="radio"
+                                    name="gender" id="scheduled" value="male">
+                                <label class="form-check-label" for="scheduled">
+                                    Scheduled
+                                </label>
+                            </div>
+                            <div class="form-check col-sm-4">
+                                <input v-model="task.task_type" value="periodic" class="form-check-input" type="radio"
+                                    name="gender" id="periodic" value="male">
+                                <label class="form-check-label" for="periodic">
+                                    Periodic
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-9 offset-sm-3">
+                            <button class="btn btn-primary" @click="addTask">Add Task</button>
+                            <button class="btn btn-secondary" @click="dialog = false">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div :class="`card text-bg-${theme.main} border-${theme.second}`">
+            <div class="card-header">Watchmen</div>
+            <div class="card-body">
+                Watchmen is a daemon process manager that for you manage and keep your application online 24/7
+            </div>
+        </div>
+        <table :class="`table table-${theme.main} table-bordered border-${theme.second}`">
+            <thead>
+                <tr>
+                    <th scope="col" style="width: 60px">#</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Command</th>
+                    <th scope="col" class="d-none d-xxl-block">Args</th>
+                    <th scope="col">Type</th>
+                    <th scope="col" style="min-width: 200px">
+                        <div class="row text-center">
+                            <div class="col">
+                                <button type="button" class="btn btn-sm btn-primary" @click="dialog = true">+</button>
+                            </div>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="(i, index) in tasks.filter(task => task.name.includes(filter))">
+                    <th scope="row">{{index}}</th>
+                    <td class="">{{i.name}}</td>
+                    <td>{{i.status}}</td>
+                    <td>{{i.command}}</td>
+                    <th scope="col" class="d-none d-xxl-block">{{i.args}}</th>
+                    <td>{{Object.keys(i.task_type).length > 0 ?Object.keys(i.task_type)[0] : ''}}</td>
+                    <td>
+                        <div class="row text-center">
+                            <div class="col" v-if="i.status == 'running'">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                    @click="stopTask(i.name)">&#x25A2;</button>
+                            </div>
+                            <div class="col" v-else>
+                                <button type="button" class="btn btn-sm btn-outline-success"
+                                    @click="startTask(i.name)">&#x25B7;</button>
+                            </div>
+                            <div class="col">
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    @click="removeTask(i.name)">&#x2717;</button>
+                            </div>
+                            <div class="col">
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    @click="infoTask(i)">&nbsp;!&nbsp;</button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
     
 </body>

@@ -58,6 +58,14 @@ async fn handle_connection(req: Request<Body>) -> Result<Response<Body>, Infalli
                 .unwrap();
             Ok(response)
         }
+        (&Method::GET, "/favicon.svg") => {
+            let body = include_str!("../../http-panel/dist/favicon.svg");
+            let response = Response::builder()
+                .header("Content-Type", "image/svg+xml")
+                .body(Body::from(body))
+                .unwrap();
+            Ok(response)
+        }
         (&Method::GET, "/index.css") => {
             // return index.html
             let body = include_str!("../../http-panel/dist/index.css");
