@@ -1,5 +1,6 @@
 use common::config::Config;
 use tokio::sync::mpsc;
+use tracing::info;
 
 #[cfg(feature = "sock")]
 pub mod sock;
@@ -32,13 +33,35 @@ pub async fn start(config: Config) {
     });
 
     #[cfg(feature = "sock")]
-    let joinhandle_sock = sock::start(config.clone()).await;
+    // sock in config.watchmen.engines ?
+    let joinhandle_sock = if config.watchmen.engines.contains(&"sock".to_string()) {
+        info!("Starting sock...");
+        println!("Starting sock...");
+        Some(sock::start(config.clone()).await)
+    } else {
+        None
+    };
 
     #[cfg(feature = "socket")]
-    let joinhandle_socket = socket::start(config.clone()).await;
+    let joinhandle_socket = if config.watchmen.engines.contains(&"socket".to_string()) {
+        info!("Starting socket...");
+        println!("Starting socket...");
+        Some(socket::start(config.clone()).await)
+    } else {
+        None
+    };
 
     #[cfg(feature = "http")]
-    let joinhandle_http = http::start(config.clone()).await;
+    let joinhandle_http = if config.watchmen.engines.contains(&"http".to_string()) {
+        info!("Starting http...");
+        println!("Starting http...");
+        Some(http::start(config.clone()).await)
+    } else {
+        None
+    };
+
+    info!("All engines started.");
+    println!("All engines started.");
 
     // ================== Wait for all tasks to complete ==================
 
@@ -50,17 +73,17 @@ pub async fn start(config: Config) {
     println!("Shutting down...");
 
     #[cfg(feature = "sock")]
-    {
-        joinhandle_sock.abort();
+    if config.watchmen.engines.contains(&"sock".to_string()) && joinhandle_sock.is_some() {
+        joinhandle_sock.unwrap().abort();
     }
 
     #[cfg(feature = "socket")]
-    {
-        joinhandle_socket.abort();
+    if config.watchmen.engines.contains(&"socket".to_string()) && joinhandle_socket.is_some() {
+        joinhandle_socket.unwrap().abort();
     }
 
     #[cfg(feature = "http")]
-    {
-        joinhandle_http.abort();
+    if config.watchmen.engines.contains(&"http".to_string()) && joinhandle_http.is_some() {
+        joinhandle_http.unwrap().abort();
     }
 }

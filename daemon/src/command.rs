@@ -10,30 +10,31 @@
 
 use std::error::Error;
 
-use common::handle::{Body, Command, Request, Response};
+use common::handle::{Command, Request, Response};
+use tracing::info;
 
 use crate::global;
 
-pub async fn handle_exec(request: Request) -> Result<Response<String>, Box<dyn Error>> {
-    let r: Result<(), Box<dyn Error>> = match (request.command, request.body) {
-        (Command::Run, Body::Task(task)) => global::run(task).await,
-        (Command::Start, Body::TaskFlag(name)) => global::start(name).await,
-        (Command::Stop, Body::TaskFlag(name)) => global::stop(name).await,
-        _ => Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "command not found",
-        ))),
+pub async fn handle_exec(request: Request) -> Result<Response, Box<dyn Error>> {
+    let req = request.clone();
+    info!("Receive request: {:?}", req);
+    let r = match request.command {
+        Command::Run(task) => global::run(task).await,
+        Command::Add(task) => global::add(task).await,
+        Command::Start(name) => global::start(name).await,
+        Command::Stop(name) => global::stop(name).await,
+        Command::Remove(name) => global::remove(name).await,
+        Command::Write(name, data) => global::write(name, data).await,
+        Command::List(condition) => global::list(condition).await,
     };
     match r {
-        Ok(_) => Ok(Response::<String> {
-            code: 10000,
-            msg: "Success".to_string(),
-            data: None,
-        }),
-        Err(e) => Ok(Response::<String> {
-            code: 50000,
-            msg: "Failed".to_string(),
-            data: Some(e.to_string()),
-        }),
+        Ok(res) => {
+            info!("Request success: {:?}", req);
+            Ok(res)
+        }
+        Err(e) => {
+            info!("Request failed: {:?}, {}", req, e);
+            Ok(Response::failed(e.to_string()))
+        }
     }
 }

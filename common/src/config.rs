@@ -46,6 +46,24 @@ impl From<PathBuf> for Config {
     fn from(s: PathBuf) -> Self {
         let config_str = std::fs::read_to_string(s).unwrap();
         let mut config: Config = toml::from_str(&config_str).unwrap();
+        if let Some(log_dir) = &config.watchmen.log_dir {
+            if log_dir.starts_with("$HOME") {
+                let log_dir = get_with_home_path(log_dir.to_string());
+                let parent = log_dir.parent().unwrap();
+                if parent.exists() {
+                    std::fs::create_dir_all(parent).unwrap();
+                }
+                config.watchmen.log_dir = Some(log_dir.to_str().unwrap().to_string());
+            }
+        }
+        if let Some(log_level) = &config.watchmen.log_level {
+            let allowed = ["debug", "info", "warn", "error"];
+            if !allowed.contains(&log_level.as_str()) {
+                config.watchmen.log_level = Some("info".to_string());
+            } else {
+                config.watchmen.log_level = Some(log_level.to_string());
+            }
+        }
         if let Some(stdout) = &config.watchmen.stdout {
             if stdout.starts_with("$HOME") {
                 let stdout = get_with_home_path(stdout.to_string());
@@ -91,6 +109,8 @@ impl From<PathBuf> for Config {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Watchmen {
     pub engines: Vec<String>,
+    pub log_dir: Option<String>,
+    pub log_level: Option<String>,
     pub stdout: Option<String>,
     pub stderr: Option<String>,
     pub pid: Option<String>,

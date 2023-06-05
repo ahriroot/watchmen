@@ -2,7 +2,7 @@
 mod tests {
     use common::{
         config::Config,
-        handle::{Body, Command, Request, Response},
+        handle::{Command, Request, Response},
         task::Task,
     };
     use tokio::{
@@ -16,15 +16,14 @@ mod tests {
         let mut stream = UnixStream::connect(config.sock.path).await.unwrap();
 
         let request = Request {
-            command: Command::Run,
-            body: Body::Task(Task::default()),
+            command: Command::Run(Task::default()),
         };
         let buf = serde_json::to_vec(&request).unwrap();
         stream.write_all(&buf).await.unwrap();
 
         let mut buf: [u8; 1024] = [0; 1024];
         let n = stream.read(&mut buf).await.unwrap();
-        let res: Response<String> = serde_json::from_slice(&buf[..n]).unwrap();
+        let res: Response = serde_json::from_slice(&buf[..n]).unwrap();
         println!("{:#?}", res);
     }
 }

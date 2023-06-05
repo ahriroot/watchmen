@@ -1,6 +1,6 @@
 use common::{config::Config, handle::Request};
+use tracing::{error, info};
 
-use log::{error, info};
 use std::{error::Error, process::exit};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -31,7 +31,7 @@ pub async fn run_socket(host: &str, port: u16) -> Result<(), Box<dyn Error>> {
 
     match listener {
         Ok(listener) => {
-            info!("Listening\t{:?}", listener.local_addr().unwrap());
+            info!("socket server listen on {}:{}", host, port);
 
             loop {
                 // 等待连接 / wait connection

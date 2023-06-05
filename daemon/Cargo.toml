@@ -16,10 +16,11 @@ name = "daemon"
 path = "src/main.rs"
 
 [features]
-default = ["sock", "socket", "http"]
+default = ["sock", "socket", "http", "http-panel"]
 sock = []
 socket = []
 http = []
+http-panel = []
 redis = []
 
 [dependencies]
@@ -33,5 +34,8 @@ nanoid = "0.4.0"
 chrono = "0.4.22"
 log = "0.4"
 dirs = "4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
 common = { path = "../common" }
 logger = { path = "../library/logger" }

@@ -1,6 +1,6 @@
 use common::{config::Config, handle::Request};
+use tracing::{error, info};
 
-use log::{error, info};
 use std::{error::Error, fs::remove_file, path::Path, process::exit};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -34,7 +34,7 @@ pub async fn run_sock(path: &str) -> Result<(), Box<dyn Error>> {
 
     match listener {
         Ok(listener) => {
-            info!("Listening\t{:?}", listener.local_addr().unwrap());
+            info!("sock server listen on {}", path);
 
             loop {
                 // 等待连接 / wait connection

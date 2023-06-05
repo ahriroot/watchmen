@@ -8,6 +8,12 @@ static CONFIG: &str = r#"[watchmen]
 # redis: Redis pub/sub
 engines = ["sock"]
 
+# The log directory of the watchmen server
+log_dir = "$HOME/.watchmen/logs"
+# The log level of the watchmen server
+# Valid values are "debug", "info", "warn", "error". Default is "info"
+log_level = "info"
+
 # The standard output of the watchmen server
 # Default is None if not set
 stdout = "$HOME/.watchmen/watchmen.stdout.log"

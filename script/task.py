@@ -1,8 +1,13 @@
+import sys
 import time
 
 
 def main():
-    # while 循环 10 次
+    # print('Python task is running...')
+    # while True:
+    #     print('Python task are running...')
+    #     data = sys.stdin.readline().rstrip()
+    #     print(f'Result from python task: {data}')
     count = 0
     while True:
         count += 1
