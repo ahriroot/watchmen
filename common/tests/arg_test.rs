@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use clap::Parser;
-    use common::arg::{Commands, RunArgs, TaskArgs};
+    use common::arg::{Commands, AddArgs, TaskArgs};
 
     #[test]
     fn test_arg() {
@@ -9,11 +9,12 @@ mod tests {
         assert!(args.version);
 
         let args = TaskArgs::parse_from(["--", "run", "-n", "test", "-c", "rustc"]);
-        let cmd = Commands::Run(RunArgs {
-            all: None,
+        let cmd = Commands::Run(AddArgs {
+            path: None,
+            mat: None,
             config: None,
-            name: "test".to_string(),
-            command: "rustc".to_string(),
+            name: None,
+            command: None,
             args: None,
             dir: None,
             env: None,

@@ -13,6 +13,10 @@ pub struct TaskArgs {
     #[arg(short, long)]
     pub generate: Option<String>,
 
+    /// Engine for send message
+    #[arg(short, long, default_value = "sock")]
+    pub engine: Option<String>,
+
     /// Start watchmen server
     #[arg(short, long)]
     pub daemon: bool,
@@ -39,14 +43,23 @@ impl TaskArgs {
 #[derive(Debug, Subcommand, PartialEq)]
 pub enum Commands {
     /// Add and run a task
-    Run(RunArgs),
+    Run(AddArgs),
+    Add(AddArgs),
+    Start(FlagArgs),
+    Stop(FlagArgs),
+    Remove(FlagArgs),
+    List(FlagArgs),
 }
 
 #[derive(Args, Debug, PartialEq)]
-pub struct RunArgs {
+pub struct FlagArgs {
     /// Task config directory
-    #[arg(short = 'l', long)]
-    pub all: Option<String>,
+    #[arg(short = 'p', long)]
+    pub path: Option<String>,
+
+    /// Task config directory
+    #[arg(short = 'm', long, default_value = r"^.*\.(toml|ini|json)$")]
+    pub mat: Option<String>,
 
     /// Task config file
     #[arg(short = 'f', long)]
@@ -54,11 +67,30 @@ pub struct RunArgs {
 
     /// Task name (unique)
     #[arg(short, long)]
-    pub name: String,
+    pub name: Option<String>,
+}
+
+#[derive(Args, Debug, PartialEq)]
+pub struct AddArgs {
+    /// Task config directory
+    #[arg(short = 'p', long)]
+    pub path: Option<String>,
+
+    /// Task config directory
+    #[arg(short = 'm', long, default_value = r"^.*\.(toml|ini|json)$")]
+    pub mat: Option<String>,
+
+    /// Task config file
+    #[arg(short = 'f', long)]
+    pub config: Option<String>,
+
+    /// Task name (unique)
+    #[arg(short, long)]
+    pub name: Option<String>,
 
     /// Task command
     #[arg(short, long)]
-    pub command: String,
+    pub command: Option<String>,
 
     /// Task arguments
     #[arg(short, long)]

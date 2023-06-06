@@ -1,4 +1,4 @@
-use common::{config::Config, handle::Request};
+use common::{config::Config, handle::{Request, Response}};
 use tracing::{error, info};
 
 use std::{error::Error, process::exit};
@@ -69,11 +69,14 @@ async fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> 
         }
     }
 
-    let request: Request = serde_json::from_slice(&buf)?;
+    let requests: Vec<Request> = serde_json::from_slice(&buf)?;
+    let mut responses: Vec<Response> = Vec::new();
+    for request in requests {
+        let response = command::handle_exec(request).await?;
+        responses.push(response);
+    }
 
-    let response = command::handle_exec(request).await?;
-
-    writer.write_all(&serde_json::to_vec(&response)?).await?;
+    writer.write_all(&serde_json::to_vec(&responses)?).await?;
 
     // TODO: 根据 response.code 停止守护进程
     // exit(0);

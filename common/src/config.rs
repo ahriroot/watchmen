@@ -97,6 +97,9 @@ impl From<PathBuf> for Config {
             }
             config.watchmen.pid = Some(pid.to_str().unwrap().to_string());
         }
+        if config.watchmen.mat.is_none() {
+            config.watchmen.mat = Some(r"^.*\.(toml|ini|json)$".to_string());
+        }
         let path = get_with_home_path(&config.sock.path);
         let parent = path.parent().unwrap();
         if parent.exists() {
@@ -109,12 +112,14 @@ impl From<PathBuf> for Config {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Watchmen {
+    pub engine: String,
     pub engines: Vec<String>,
     pub log_dir: Option<String>,
     pub log_level: Option<String>,
     pub stdout: Option<String>,
     pub stderr: Option<String>,
     pub pid: Option<String>,
+    pub mat: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

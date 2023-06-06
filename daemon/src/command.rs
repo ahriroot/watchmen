@@ -21,10 +21,10 @@ pub async fn handle_exec(request: Request) -> Result<Response, Box<dyn Error>> {
     let r = match request.command {
         Command::Run(task) => global::run(task).await,
         Command::Add(task) => global::add(task).await,
-        Command::Start(name) => global::start(name).await,
-        Command::Stop(name) => global::stop(name).await,
-        Command::Remove(name) => global::remove(name).await,
-        Command::Write(name, data) => global::write(name, data).await,
+        Command::Start(tf) => global::start(tf).await,
+        Command::Stop(tf) => global::stop(tf).await,
+        Command::Remove(tf) => global::remove(tf).await,
+        Command::Write(tf, data) => global::write(tf, data).await,
         Command::List(condition) => global::list(condition).await,
     };
     match r {

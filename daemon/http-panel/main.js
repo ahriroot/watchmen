@@ -4,17 +4,12 @@ import 'bootstrap/dist/css/bootstrap.css';
 const request = async (command) => {
     let response = await fetch('http://127.0.0.1:1997/api', {
         method: 'POST',
-        body: JSON.stringify(command),
+        body: JSON.stringify([command]),
         headers: {
             'Content-Type': 'application/json'
         }
     })
-    let body = await response.json()
-    if (body.code === 10000) {
-        return body.data
-    } else {
-        throw new Error(`${body.msg} - ${body.data.String}`)
-    }
+    return await response.json()
 }
 
 createApp({
@@ -56,13 +51,18 @@ createApp({
     },
     async getTasks() {
         request({ "command": { "List": null } }).then(data => {
-            this.tasks = data.Status
+            this.tasks = []
+            let tmp = []
+            data.forEach(element => {
+                tmp = tmp.concat(element.data.Status)
+            });
+            this.tasks = tmp
         }).catch(err => {
             alert(err)
         })
     },
     async _req(opera, name) {
-        request({ "command": { [opera]: name } }).then(async _ => {
+        request({ "command": { [opera]: { name: name } } }).then(async _ => {
             await this.getTasks()
         }).catch(err => {
             alert(err)

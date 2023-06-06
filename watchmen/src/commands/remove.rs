@@ -12,7 +12,7 @@ use crate::{
     utils::{print_result, recursive_search_files},
 };
 
-pub async fn stop(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> {
+pub async fn remove(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> {
     let requests = if let Some(path) = args.path {
         let mat;
         if let Some(matc) = args.mat {
@@ -37,7 +37,7 @@ pub async fn stop(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> 
                 let ts = TaskFlag::from_ini(path)?;
                 for tf in ts {
                     let request: Request = Request {
-                        command: Command::Stop(tf),
+                        command: Command::Remove(tf),
                     };
                     reqs.push(request);
                 }
@@ -45,7 +45,7 @@ pub async fn stop(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> 
                 let ts = TaskFlag::from_toml(path)?;
                 for tf in ts {
                     let request: Request = Request {
-                        command: Command::Stop(tf),
+                        command: Command::Remove(tf),
                     };
                     reqs.push(request);
                 }
@@ -81,14 +81,14 @@ pub async fn stop(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> 
         let mut reqs = Vec::new();
         for task in ts {
             let request: Request = Request {
-                command: Command::Stop(task),
+                command: Command::Remove(task),
             };
             reqs.push(request);
         }
         reqs
     } else if let Some(name) = args.name {
         let request: Request = Request {
-            command: Command::Stop(TaskFlag { name }),
+            command: Command::Remove(TaskFlag { name }),
         };
         vec![request]
     } else {

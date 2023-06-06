@@ -96,6 +96,22 @@ unsafe impl Send for Task {}
 unsafe impl Sync for Task {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskFlag {
+    pub name: String,
+}
+
+impl Default for TaskFlag {
+    fn default() -> Self {
+        TaskFlag {
+            name: "".to_string(),
+        }
+    }
+}
+
+unsafe impl Send for TaskFlag {}
+unsafe impl Sync for TaskFlag {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tasks {
     pub task: Vec<Task>,
 }

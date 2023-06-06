@@ -1,7 +1,5 @@
 pub mod command;
 pub mod engine;
-pub mod entity;
-pub mod macros;
 // pub mod monitor;
 pub mod utils;
 
@@ -10,9 +8,9 @@ pub mod global {
     use std::{collections::HashMap, error::Error, process::Stdio};
 
     use common::{
-        config::{get_with_home_path, get_with_home},
+        config::{get_with_home, get_with_home_path},
         handle::{Data, Response, Status},
-        task::Task,
+        task::{Task, TaskFlag, TaskType},
     };
     use lazy_static::lazy_static;
     use tokio::{
@@ -38,6 +36,7 @@ pub mod global {
         name: String,
         pid: Option<Option<u32>>,
         status: Option<Option<String>>,
+        code: Option<Option<i32>>,
     ) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
         if !tasks.contains_key(&name) {
@@ -52,6 +51,9 @@ pub mod global {
         }
         if let Some(status) = status {
             tp.task.status = status;
+        }
+        if let Some(code) = code {
+            tp.task.code = code;
         }
         Ok(Response::success(None))
     }
@@ -97,122 +99,151 @@ pub mod global {
         Ok(Response::success(None))
     }
 
-    pub async fn remove(name: String) -> Result<Response, Box<dyn Error>> {
+    pub async fn remove(tf: TaskFlag) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        if !tasks.contains_key(&name) {
+        if !tasks.contains_key(&tf.name) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] not exists", name),
+                format!("Task [{}] not exists", tf.name),
             )));
         }
-        let tp = tasks.get(&name).unwrap();
+        let tp = tasks.get(&tf.name).unwrap();
         if tp.task.pid.is_some() {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] is running", name),
+                format!("Task [{}] is running", tf.name),
             )));
         }
-        tasks.remove(&name);
+        tasks.remove(&tf.name);
         Ok(Response::success(None))
     }
 
-    pub async fn delete(name: String) -> Result<Response, Box<dyn Error>> {
+    pub async fn delete(tf: TaskFlag) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        if !tasks.contains_key(&name) {
+        if !tasks.contains_key(&tf.name) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] not exists", name),
+                format!("Task [{}] not exists", tf.name),
             )));
         }
-        let tp = tasks.get(&name).unwrap();
+        let tp = tasks.get(&tf.name).unwrap();
         if tp.task.pid.is_some() {
-            stop(name.clone()).await?;
+            stop(tf.clone()).await?;
         }
         if let Some(jh) = &tp.joinhandle {
             jh.abort();
         }
-        tasks.remove(&name);
+        tasks.remove(&tf.name);
         Ok(Response::success(None))
     }
 
-    pub async fn start(name: String) -> Result<Response, Box<dyn Error>> {
+    pub async fn start(tf: TaskFlag) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        if !tasks.contains_key(&name) {
+        if !tasks.contains_key(&tf.name) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] not exists", name),
+                format!("Task [{}] not exists", tf.name),
             )));
         }
-        let mut tp = tasks.get_mut(&name).unwrap();
+        let mut tp = tasks.get_mut(&tf.name).unwrap();
 
-        let child = tp.task.start().await?;
+        match tp.task.task_type {
+            TaskType::Async(_) => {
+                if tp.task.status == Some("running".to_string()) {
+                    return Err(Box::new(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        format!("Task [{}] is running", tf.name),
+                    )));
+                }
 
-        let rx = if Some(true) == tp.task.stdin {
-            let (tx, rx) = mpsc::channel::<Vec<u8>>(CHANNEL_SIZE);
-            tp.tx = Some(tx);
-            Some(rx)
-        } else {
-            None
-        };
+                let child = tp.task.start().await?;
 
-        let task_name = tp.task.name.clone();
-        let pid = child.id();
-        let status = Some("running".to_string());
+                let rx = if Some(true) == tp.task.stdin {
+                    let (tx, rx) = mpsc::channel::<Vec<u8>>(CHANNEL_SIZE);
+                    tp.tx = Some(tx);
+                    Some(rx)
+                } else {
+                    None
+                };
 
-        let jh: JoinHandle<Option<i32>> = tokio::spawn(async move {
-            let mut child = child;
+                let task_name = tp.task.name.clone();
+                let pid = child.id();
+                let status = Some("running".to_string());
 
-            let cjh = if let Some(mut rx) = rx {
-                let mut child_stdin = child.stdin.take().unwrap();
-                // let mut stdin_writer = tokio::io::BufWriter::new(child_stdin);
-                let cjh = tokio::spawn(async move {
-                    while let Some(message) = rx.recv().await {
-                        child_stdin.write_all(&message).await.unwrap();
-                        child_stdin.flush().await.unwrap();
+                let jh: JoinHandle<Option<i32>> = tokio::spawn(async move {
+                    let mut child = child;
+
+                    let cjh = if let Some(mut rx) = rx {
+                        let mut child_stdin = child.stdin.take().unwrap();
+                        // let mut stdin_writer = tokio::io::BufWriter::new(child_stdin);
+                        let cjh = tokio::spawn(async move {
+                            while let Some(message) = rx.recv().await {
+                                child_stdin.write_all(&message).await.unwrap();
+                                child_stdin.flush().await.unwrap();
+                            }
+                        });
+                        Some(cjh)
+                    } else {
+                        None
+                    };
+
+                    let res = child.wait().await.unwrap();
+
+                    update(
+                        tf.name,
+                        Some(None),
+                        Some(Some("stopped".to_string())),
+                        Some(res.code()),
+                    )
+                    .await
+                    .unwrap();
+
+                    if let Some(cjh) = cjh {
+                        cjh.await.unwrap();
                     }
+
+                    return res.code();
                 });
-                Some(cjh)
-            } else {
-                None
-            };
 
-            let res = child.wait().await.unwrap();
+                tp.joinhandle = Some(jh);
 
-            update(name, Some(None), Some(Some("stopped".to_string())))
-                .await
-                .unwrap();
+                tokio::spawn(async move {
+                    update(task_name, Some(pid), Some(status), None)
+                        .await
+                        .unwrap();
+                });
 
-            if let Some(cjh) = cjh {
-                cjh.await.unwrap();
+                Ok(Response::success(None))
             }
-
-            return res.code();
-        });
-
-        tp.joinhandle = Some(jh);
-
-        tokio::spawn(async move {
-            update(task_name, Some(pid), Some(status)).await.unwrap();
-        });
-
-        Ok(Response::success(None))
+            _ => Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Task is not an async task",
+            ))),
+        }
     }
 
     pub async fn run(task: Task) -> Result<Response, Box<dyn Error>> {
         let name = task.name.clone();
         add(task).await?;
-        start(name).await
+        start(TaskFlag { name }).await
     }
 
-    pub async fn stop(name: String) -> Result<Response, Box<dyn Error>> {
+    pub async fn stop(tf: TaskFlag) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        if !tasks.contains_key(&name) {
+        if !tasks.contains_key(&tf.name) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] not exists", name),
+                format!("Task [{}] not exists", tf.name),
             )));
         }
-        let tp = tasks.get_mut(&name).unwrap();
+        let tp = tasks.get_mut(&tf.name).unwrap();
+
+        if tp.task.status != Some("running".to_string()) {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] is not running", tf.name),
+            )));
+        }
 
         let pid = tp.task.pid;
 
@@ -226,8 +257,8 @@ pub mod global {
                 .stderr(Stdio::null())
                 .spawn()?;
             child.wait().await?;
-            tp.task.pid = None;
             tp.task.status = Some("stopped".to_string());
+            tp.task.code = Some(9);
             tp.joinhandle = None;
             tp.tx = None;
             Ok(Response::success(None))
@@ -236,15 +267,22 @@ pub mod global {
         }
     }
 
-    pub async fn write(name: String, data: String) -> Result<Response, Box<dyn Error>> {
+    pub async fn write(tf: TaskFlag, data: String) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        if !tasks.contains_key(&name) {
+        if !tasks.contains_key(&tf.name) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] not exists", name),
+                format!("Task [{}] not exists", tf.name),
             )));
         }
-        let tp = tasks.get_mut(&name).unwrap();
+        let tp = tasks.get_mut(&tf.name).unwrap();
+
+        if tp.task.status != Some("running".to_string()) {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] is not running", tf.name),
+            )));
+        }
 
         let tx = &tp.tx.clone().unwrap();
 
@@ -255,13 +293,13 @@ pub mod global {
         Ok(Response::success(None))
     }
 
-    pub async fn list(condition: Option<String>) -> Result<Response, Box<dyn Error>> {
+    pub async fn list(condition: Option<TaskFlag>) -> Result<Response, Box<dyn Error>> {
         let tasks = TASKS.lock().await;
         let mut status: Vec<Status> = Vec::new();
         match condition {
             Some(condition) => {
                 for (name, tp) in tasks.iter() {
-                    if name.contains(&condition) {
+                    if name.contains(&condition.name) {
                         status.push(tp.task.clone().into());
                     }
                 }

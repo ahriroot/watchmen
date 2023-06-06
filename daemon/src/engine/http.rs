@@ -1,6 +1,7 @@
 use std::{convert::Infallible, error::Error};
 
 use common::config::Config;
+use common::handle;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server};
 use tokio::task::JoinHandle;
@@ -86,43 +87,26 @@ async fn handle_connection(req: Request<Body>) -> Result<Response<Body>, Infalli
         }
         (&Method::POST, "/api") => {
             let body = hyper::body::to_bytes(req.into_body()).await.unwrap();
-
-            match serde_json::from_slice(&body) {
-                Ok(request) => match command::handle_exec(request).await {
-                    Ok(response) => {
-                        let body = serde_json::to_vec(&response).unwrap();
-                        let mut response = Response::new(Body::empty());
-                        let headers = response.headers_mut();
-                        headers.insert("Access-Control-Allow-Origin", "*".parse().unwrap());
-                        headers.insert(
-                            "Access-Control-Allow-Methods",
-                            "GET, POST, PUT, DELETE".parse().unwrap(),
-                        );
-                        headers.insert(
-                            "Access-Control-Allow-Headers",
-                            "Content-Type".parse().unwrap(),
-                        );
-                        *response.body_mut() = Body::from(body);
-                        Ok(response)
-                    }
-                    Err(e) => {
-                        let body = format!("command exec error: {}", e);
-                        let response = Response::builder()
-                            .status(500)
-                            .body(Body::from(body))
-                            .unwrap();
-                        Ok(response)
-                    }
-                },
-                Err(e) => {
-                    let body = format!("json parse error: {}", e);
-                    let response = Response::builder()
-                        .status(400)
-                        .body(Body::from(body))
-                        .unwrap();
-                    Ok(response)
-                }
+            let requests: Vec<handle::Request> = serde_json::from_slice(&body).unwrap();
+            let mut responses: Vec<handle::Response> = Vec::new();
+            for request in requests {
+                let response = command::handle_exec(request).await.unwrap();
+                responses.push(response);
             }
+            let body = serde_json::to_vec(&responses).unwrap();
+            let mut response = Response::new(Body::empty());
+            let headers = response.headers_mut();
+            headers.insert("Access-Control-Allow-Origin", "*".parse().unwrap());
+            headers.insert(
+                "Access-Control-Allow-Methods",
+                "GET, POST, PUT, DELETE".parse().unwrap(),
+            );
+            headers.insert(
+                "Access-Control-Allow-Headers",
+                "Content-Type".parse().unwrap(),
+            );
+            *response.body_mut() = Body::from(body);
+            Ok(response)
         }
         _ => {
             // Return a 404 Not Found response for all other paths

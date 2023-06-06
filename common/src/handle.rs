@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use serde::{Deserialize, Serialize};
 
-use crate::task::{Task, TaskType};
+use crate::task::{Task, TaskType, TaskFlag};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Request {
@@ -13,11 +13,11 @@ pub struct Request {
 pub enum Command {
     Run(Task),
     Add(Task),
-    Stop(String),
-    Start(String),
-    Remove(String),
-    Write(String, String),
-    List(Option<String>),
+    Stop(TaskFlag),
+    Start(TaskFlag),
+    Remove(TaskFlag),
+    Write(TaskFlag, String),
+    List(Option<TaskFlag>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,8 +64,30 @@ pub enum Data {
     Status(Vec<Status>),
 }
 
+impl Default for Data {
+    fn default() -> Self {
+        Data::None
+    }
+}
+
+impl Display for Data {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Data::None => write!(f, "None"),
+            Data::String(s) => write!(f, "{}", s),
+            Data::Status(status) => {
+                for s in status {
+                    write!(f, "{:?}", s)?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Status {
+    pub id: i64,
     pub name: String,
     pub command: String,
     pub args: Vec<String>,
@@ -84,6 +106,7 @@ pub struct Status {
 impl From<crate::task::Task> for Status {
     fn from(task: crate::task::Task) -> Self {
         Self {
+            id: task.id,
             name: task.name,
             command: task.command,
             args: task.args,

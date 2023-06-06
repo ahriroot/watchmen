@@ -1,0 +1,13 @@
+[[task]]
+id = 2
+name = "Async Task"
+command = "python"
+args = ["-u", "/home/ahri/watchmen/script/task.py"]
+dir = "/home/ahri/watchmen"
+env = {}
+stdin = false
+stdout = "./logs/output.txt"
+stderr = "./logs/error.txt"
+created_at = 1654345600
+task_type = { Async = { started_at = 0, stopped_at = 0 } }
+

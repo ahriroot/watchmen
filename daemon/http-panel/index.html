@@ -138,10 +138,12 @@
                     <th scope="col" style="width: 60px">#</th>
                     <th scope="col">Name</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Command</th>
+                    <th scope="col" style="min-width: 100px">Command</th>
                     <th scope="col" class="d-none d-xxl-block">Args</th>
+                    <th scope="col">Pid</th>
+                    <th scope="col" style="min-width: 94px">Exit Code</th>
                     <th scope="col">Type</th>
-                    <th scope="col" style="min-width: 200px">
+                    <th scope="col" style="width: 200px">
                         <div class="row text-center">
                             <div class="col">
                                 <button type="button" class="btn btn-sm btn-primary" @click="dialog = true">+</button>
@@ -157,6 +159,8 @@
                     <td>{{i.status}}</td>
                     <td>{{i.command}}</td>
                     <th scope="col" class="d-none d-xxl-block">{{i.args}}</th>
+                    <td>{{i.pid}}</td>
+                    <td>{{i.code}}</td>
                     <td>{{Object.keys(i.task_type).length > 0 ?Object.keys(i.task_type)[0] : ''}}</td>
                     <td>
                         <div class="row text-center">

@@ -1,337 +1,230 @@
-use chrono::{Local, TimeZone};
 use colored::Colorize;
-use std::{collections::HashMap, error::Error};
-
-use crate::{
-    entity::{self, Opt, Task},
-    socket,
+use common::{
+    arg::FlagArgs,
+    config::Config,
+    handle::{Command, Request, Response, Status},
+    task::TaskFlag,
 };
+use regex::Regex;
+use std::{error::Error, path::Path};
 
-const LIST_HELP: &str = r#"Usage: watchmen list [OPTION...] ...
-    -h, --help      display this help of 'list' command
+use crate::{engine::send, utils::recursive_search_files};
 
-    -n, --name      tasks name with regular expression
-    -s, --status    task status
-    -p, --pid       task pid
-
-    -m, --more      show more details
-
-Report bugs to ahriknow@ahriknow.com
-Issues: https://git.ahriknow.com/ahriknow/watchmen/issues"#;
-
-pub async fn run(args: &[String], home_path: String) -> Result<entity::Response, Box<dyn Error>> {
-    let len = args.len();
-    let mut more = false;
-    if len == 1 {
-        if args[0] == "-h" || args[0] == "--help" {
-            return Ok(entity::Response::ok(LIST_HELP));
-        } else if args[0] == "-m" || args[0] == "--more" {
-            more = true;
-        }
-    }
-    let mut options: HashMap<String, Opt> = HashMap::new();
-
-    let mut args: Vec<String> = args.to_vec();
-    while args.len() > 1 {
-        if args[0] == "-n" || args[0] == "--name" {
-            options.insert("name".to_string(), Opt::Str(args[1].clone()));
-            args.remove(0);
-            args.remove(0);
-        } else if args[0] == "-s" || args[0] == "--status" {
-            options.insert("status".to_string(), Opt::Str(args[1].clone()));
-            args.remove(0);
-            args.remove(0);
-        } else if args[0] == "-p" || args[0] == "--pid" {
-            let pid = args[1].parse::<u32>();
-            match pid {
-                Ok(p) => {
-                    options.insert("pid".to_string(), Opt::U32(p));
-                }
-                Err(_) => {
-                    return Ok(entity::Response::f(format!(
-                        "Arg '{}' must be a number",
-                        args[0]
-                    )));
-                }
-            }
-            args.remove(0);
-            args.remove(0);
-        } else if args[0] == "-m" || args[0] == "--more" {
-            more = true;
-            args.remove(0);
+pub async fn list(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> {
+    let requests = if let Some(path) = args.path {
+        let mat;
+        if let Some(matc) = args.mat {
+            // 优先使用命令行参数
+            mat = matc;
+        } else if let Some(matc) = config.watchmen.mat.clone() {
+            // 其次使用配置文件参数
+            mat = matc;
         } else {
-            break;
+            // 最后使用默认参数
+            mat = String::from(r"^.*\.(toml|ini|json)$");
         }
-    }
+        let regex: Regex = Regex::new(&mat).unwrap();
+        let mut matched_files = Vec::new();
+        recursive_search_files(&path, &regex, &mut matched_files);
 
-    let req = entity::Request {
-        name: "list".to_string(),
-        command: entity::Command {
-            name: "list".to_string(),
-            options: options,
-            args: args,
-        },
-    };
-    let res = socket::request(&req, home_path).await?;
-    if let Some(data) = res.data {
-        match data {
-            entity::Data::TaskList(tasks) => print_format(tasks, more).await,
-            _ => {}
+        let mut reqs = Vec::new();
+
+        for file in matched_files {
+            let path = Path::new(&file);
+            if path.is_file() && path.extension().unwrap().to_str().unwrap() == "ini" {
+                let ts = TaskFlag::from_ini(path)?;
+                for tf in ts {
+                    let request: Request = Request {
+                        command: Command::List(Some(tf)),
+                    };
+                    reqs.push(request);
+                }
+            } else if path.is_file() && path.extension().unwrap().to_str().unwrap() == "toml" {
+                let ts = TaskFlag::from_toml(path)?;
+                for tf in ts {
+                    let request: Request = Request {
+                        command: Command::List(Some(tf)),
+                    };
+                    reqs.push(request);
+                }
+            } else if path.is_file() && path.extension().unwrap().to_str().unwrap() == "json" {
+                // tasks.push(Task::from_json(path)?);
+                // TODO: 读取 JSON 格式的配置文件
+            } else {
+                return Err(Box::from(format!(
+                    "File {} is not a TOML or INI or JSON file",
+                    path.to_str().unwrap()
+                )));
+            }
         }
-    }
-    Ok(entity::Response::ok("list success"))
+        reqs
+    } else if let Some(file) = args.config {
+        let path = Path::new(&file);
+        let tfs = if path.is_file() && path.extension().unwrap().to_str().unwrap() == "ini" {
+            TaskFlag::from_ini(path)?
+        } else if path.is_file() && path.extension().unwrap().to_str().unwrap() == "toml" {
+            TaskFlag::from_toml(path)?
+        } else if path.is_file() && path.extension().unwrap().to_str().unwrap() == "json" {
+            // TODO: 读取 JSON 格式的配置文件
+            return Err(Box::from(format!(
+                "File {} is not a TOML or INI or JSON file",
+                path.to_str().unwrap()
+            )));
+        } else {
+            return Err(Box::from(format!(
+                "File {} is not a TOML or INI or JSON file",
+                path.to_str().unwrap()
+            )));
+        };
+        let mut reqs = Vec::new();
+        for tf in tfs {
+            let request: Request = Request {
+                command: Command::List(Some(tf)),
+            };
+            reqs.push(request);
+        }
+        reqs
+    } else if let Some(name) = args.name {
+        let request: Request = Request {
+            command: Command::List(Some(TaskFlag { name })),
+        };
+        vec![request]
+    } else {
+        let request: Request = Request {
+            command: Command::List(None),
+        };
+        vec![request]
+    };
+    print_result(send(config.clone(), requests).await?).await;
+    Ok(())
 }
 
-async fn print_format(res: Vec<Task>, more: bool) {
-    let sum_all = res.len();
-    let len_id = res
-        .iter()
-        .map(|x| x.id.to_string().len())
-        .max()
-        .unwrap_or_else(|| 0);
-    let len_name = res.iter().map(|x| x.name.len()).max().unwrap_or_else(|| 0);
-    let len_status = res
-        .iter()
-        .map(|x| x.status.len())
-        .max()
-        .unwrap_or_else(|| 0);
-    let len_pid = res
-        .iter()
-        .map(|x| x.pid.to_string().len())
-        .max()
-        .unwrap_or_else(|| 0);
-    let len_created_at = 19;
-    let len_started_at = 19;
-    let len_exited_at = 19;
-    let len_stopped_at = 19;
-    let len_exit_code = 5;
-
-    let title_id = "ID".bold();
-    let len_id = if len_id > title_id.len() {
-        len_id
-    } else {
-        title_id.len()
-    };
-    let title_name = "NAME".bold();
-    let len_name = if len_name > title_name.len() {
-        len_name
-    } else {
-        title_name.len()
-    };
-    let title_status = "·STATUS".bold();
-    let len_status = if len_status > title_status.len() {
-        len_status
-    } else {
-        title_status.len()
-    };
-    let title_pid = "PID".bold();
-    let len_pid = if len_pid > title_pid.len() {
-        len_pid
-    } else {
-        title_pid.len()
-    };
-    let title_created_at = "CREATED_AT".bold();
-    let len_created_at = if len_created_at > title_created_at.len() {
-        len_created_at
-    } else {
-        title_created_at.len()
-    };
-    let title_started_at = "STARTED_AT".bold();
-    let len_started_at = if len_started_at > title_started_at.len() {
-        len_started_at
-    } else {
-        title_started_at.len()
-    };
-    let title_exited_at = "EXITED_AT".bold();
-    let len_exited_at = if len_exited_at > title_exited_at.len() {
-        len_exited_at
-    } else {
-        title_exited_at.len()
-    };
-    let title_stopped_at = "STOPPED_AT".bold();
-    let len_stopped_at = if len_stopped_at > title_stopped_at.len() {
-        len_stopped_at
-    } else {
-        title_stopped_at.len()
-    };
-    let title_exit_code = "EXIT_CODE".bold();
-    let len_exit_code = if len_exit_code > title_exit_code.len() {
-        len_exit_code
-    } else {
-        title_exit_code.len()
-    };
-
-    if more {
-        let len_sum = len_id
-            + len_name
-            + len_status
-            + len_pid
-            + len_created_at
-            + len_started_at
-            + len_exited_at
-            + len_stopped_at
-            + len_exit_code
-            + 9 * 2
-            + 11;
-        println!("{:-<len_sum$}", "", len_sum = len_sum);
-        println!(
-            "| {: <len_id$} | {: <len_name$} | {: <len_status$} | {: <len_pid$} | {: <len_created_at$} | {: <len_started_at$} | {: <len_exited_at$} | {: <len_stopped_at$} | {: <len_exit_code$} |",
-            title_id, title_name, title_status, title_pid, title_created_at, title_started_at, title_exited_at, title_stopped_at, title_exit_code,
-            len_id = len_id, len_name = len_name, len_status = len_status + 1, len_pid = len_pid, len_created_at = len_created_at, len_started_at = len_started_at, len_exited_at = len_exited_at, len_stopped_at = len_stopped_at, len_exit_code = len_exit_code
-        );
-        let mut sum_running = 0;
-        let mut sum_stopped = 0;
-        let mut sum_waiting = 0;
-        let mut sum_added = 0;
-        let mut sum_interval = 0;
-        println!("{:-<len_sum$}", "", len_sum = len_sum);
-        for task in res {
-            let mut ling = "·".to_string();
-            if task.status == "running" {
-                ling = ling.green().to_string();
-                sum_running += 1;
-            } else if task.status == "stopped" {
-                ling = ling.red().to_string();
-                sum_stopped += 1;
-            } else if task.status == "waiting" {
-                ling = ling.blue().to_string();
-                sum_waiting += 1;
-            } else if task.status == "added" {
-                ling = ling.magenta().to_string();
-                sum_added += 1;
-            } else if task.status == "interval" {
-                ling = ling.cyan().to_string();
-                sum_interval += 1;
+pub async fn print_result(res: Vec<Response>) {
+    let mut status: Vec<Status> = Vec::new();
+    for r in res {
+        if let Some(data) = r.data {
+            match data {
+                common::handle::Data::None => {}
+                common::handle::Data::String(_) => {}
+                common::handle::Data::Status(s) => {
+                    for i in &s {
+                        status.push(i.clone());
+                    }
+                }
             }
-            let created_at = if task.created_at > 0 {
-                Local
-                    .timestamp_millis(task.created_at as i64)
-                    .format("%Y-%m-%d %H:%M:%S")
-                    .to_string()
-            } else {
-                "".to_string()
-            };
-            let started_at = if task.started_at > 0 {
-                Local
-                    .timestamp_millis(task.started_at as i64)
-                    .format("%Y-%m-%d %H:%M:%S")
-                    .to_string()
-            } else {
-                "".to_string()
-            };
-            let exited_at = if task.exited_at > 0 {
-                Local
-                    .timestamp_millis(task.exited_at as i64)
-                    .format("%Y-%m-%d %H:%M:%S")
-                    .to_string()
-            } else {
-                "".to_string()
-            };
-            let stopped_at = if task.stopped_at > 0 {
-                Local
-                    .timestamp_millis(task.stopped_at as i64)
-                    .format("%Y-%m-%d %H:%M:%S")
-                    .to_string()
-            } else {
-                "".to_string()
-            };
-            let exit_code = if task.exit_code != 100 {
-                task.exit_code.to_string()
-            } else {
-                "".to_string()
-            };
-            println!(
-                "| {: <len_id$} | {: <len_name$} | {}{: <len_status$} | {: <len_pid$} | {: <len_created_at$} | {: <len_started_at$} | {: <len_exited_at$} | {: <len_stopped_at$} | {: <len_exit_code$} |",
-                task.id, task.name, ling, task.status, task.pid, created_at, started_at, exited_at, stopped_at, exit_code,
-                len_id = len_id, len_name = len_name, len_status = len_status, len_pid = len_pid, len_created_at = len_created_at, len_started_at = len_started_at, len_exited_at = len_exited_at, len_stopped_at = len_stopped_at, len_exit_code = len_exit_code
-            );
-            println!("{:-<len_sum$}", "", len_sum = len_sum);
         }
-        println!(
-            "{} Total: {} running, {} stopped, {} added, {} waiting, {} interval",
-            sum_all,
-            sum_running.to_string().green().to_string(),
-            sum_stopped.to_string().red().to_string(),
-            sum_added.to_string().magenta().to_string(),
-            sum_waiting.to_string().blue().to_string(),
-            sum_interval.to_string().cyan().to_string()
-        );
-    } else {
-        let len_sum = len_id
-            + len_name
-            + len_status
-            + len_pid
-            + len_started_at
-            + len_stopped_at
-            + len_exit_code
-            + 7 * 2
-            + 9;
-        println!("{:-<len_sum$}", "", len_sum = len_sum);
-        println!(
-            "| {: <len_id$} | {: <len_name$} | {: <len_status$} | {: <len_pid$} | {: <len_started_at$} | {: <len_stopped_at$} | {: <len_exit_code$} |",
-            title_id, title_name, title_status, title_pid, title_started_at, title_stopped_at, title_exit_code,
-            len_id = len_id, len_name = len_name, len_status = len_status + 1, len_pid = len_pid, len_started_at = len_started_at, len_stopped_at = len_stopped_at, len_exit_code = len_exit_code
-        );
-        let mut sum_running = 0;
-        let mut sum_stopped = 0;
-        let mut sum_waiting = 0;
-        let mut sum_added = 0;
-        let mut sum_interval = 0;
-        println!("{:-<len_sum$}", "", len_sum = len_sum);
-        for task in res {
-            let mut ling = "·".to_string();
-            if task.status == "running" {
-                ling = ling.green().to_string();
-                sum_running += 1;
-            } else if task.status == "stopped" {
-                ling = ling.red().to_string();
-                sum_stopped += 1;
-            } else if task.status == "waiting" {
-                ling = ling.blue().to_string();
-                sum_waiting += 1;
-            } else if task.status == "added" {
-                ling = ling.magenta().to_string();
-                sum_added += 1;
-            } else if task.status == "interval" {
-                ling = ling.cyan().to_string();
-                sum_interval += 1;
-            }
-            let started_at = if task.started_at > 0 {
-                Local
-                    .timestamp_millis(task.started_at as i64)
-                    .format("%Y-%m-%d %H:%M:%S")
-                    .to_string()
-            } else {
-                "".to_string()
-            };
-            let stopped_at = if task.stopped_at > 0 {
-                Local
-                    .timestamp_millis(task.stopped_at as i64)
-                    .format("%Y-%m-%d %H:%M:%S")
-                    .to_string()
-            } else {
-                "".to_string()
-            };
-            let exit_code = if task.exit_code != 100 {
-                task.exit_code.to_string()
-            } else {
-                "".to_string()
-            };
-            println!(
-                "| {: <len_id$} | {: <len_name$} | {}{: <len_status$} | {: <len_pid$} | {: <len_started_at$} | {: <len_stopped_at$} | {: <len_exit_code$} |",
-                task.id, task.name, ling, task.status, task.pid, started_at, stopped_at, exit_code,
-                len_id = len_id, len_name = len_name, len_status = len_status, len_pid = len_pid, len_started_at = len_started_at, len_stopped_at = len_stopped_at, len_exit_code = len_exit_code
-            );
-            println!("{:-<len_sum$}", "", len_sum = len_sum);
+    }
+
+    let mut total = 0;
+    let mut total_added = 0;
+    let mut total_running = 0;
+    let mut total_stopped = 0;
+
+    let mut column_id = Vec::new();
+    column_id.push("ID".bold());
+
+    let mut column_name = Vec::new();
+    column_name.push("Name".bold());
+
+    let mut column_status = Vec::new();
+    column_status.push("Status".bold());
+
+    let mut column_command = Vec::new();
+    column_command.push("Command".bold());
+
+    let mut column_pid = Vec::new();
+    column_pid.push("Pid".bold());
+
+    let mut column_code = Vec::new();
+    column_code.push("ExitCode".bold());
+
+    let mut column_type = Vec::new();
+    column_type.push("Type".bold());
+
+    for s in status {
+        total += 1;
+        column_id.push(s.id.to_string().italic());
+        column_name.push(s.name.normal());
+        match s.status {
+            Some(t) => match t.as_str() {
+                "added" => {
+                    total_added += 1;
+                    column_status.push(t.magenta())
+                }
+                "running" => {
+                    total_running += 1;
+                    column_status.push(t.green())
+                }
+                "stopped" => {
+                    total_stopped += 1;
+                    column_status.push(t.red())
+                }
+                _ => column_status.push(t.normal()),
+            },
+            None => column_status.push("".normal()),
         }
+        column_command.push(s.command.normal());
+        match s.pid {
+            Some(t) => column_pid.push(t.to_string().normal()),
+            None => column_pid.push("".normal()),
+        }
+        match s.code {
+            Some(t) => column_code.push(t.to_string().normal()),
+            None => column_code.push("".normal()),
+        }
+        match s.task_type {
+            common::task::TaskType::Scheduled(_) => column_type.push("Scheduled".normal()),
+            common::task::TaskType::Async(_) => column_type.push("Async".normal()),
+            common::task::TaskType::Periodic(_) => column_type.push("Periodic".normal()),
+            common::task::TaskType::None => column_type.push("".normal()),
+        }
+    }
+    let max_id = column_id.iter().map(|s| s.len()).max().unwrap();
+    let max_name = column_name.iter().map(|s| s.len()).max().unwrap();
+    let max_status = column_status.iter().map(|s| s.len()).max().unwrap();
+    let max_command = column_command.iter().map(|s| s.len()).max().unwrap();
+    let max_pid = column_pid.iter().map(|s| s.len()).max().unwrap();
+    let max_code = column_code.iter().map(|s| s.len()).max().unwrap();
+    let max_type = column_type.iter().map(|s| s.len()).max().unwrap();
+
+    let max_sum = max_id
+        + max_name
+        + max_status
+        + max_command
+        + max_pid
+        + max_code
+        + max_type
+        + 3 * (7 - 1)
+        + 4;
+
+    for i in 0..column_id.len() {
+        println!("{:-<max_sum$}", "", max_sum = max_sum);
         println!(
-            "{} Total: {} running, {} stopped, {} added, {} waiting, {} interval",
-            sum_all,
-            sum_running.to_string().green().to_string(),
-            sum_stopped.to_string().red().to_string(),
-            sum_added.to_string().magenta().to_string(),
-            sum_waiting.to_string().blue().to_string(),
-            sum_interval.to_string().cyan().to_string()
+            "| {: <max_id$} | {: <max_name$} | {: <max_status$} | {: <max_command$} | {: <max_pid$} | {: <max_code$} | {: <max_type$} |",
+            column_id[i],
+            column_name[i],
+            column_status[i],
+            column_command[i],
+            column_pid[i],
+            column_code[i],
+            column_type[i],
+            max_id = max_id,
+            max_name = max_name,
+            max_status = max_status,
+            max_command = max_command,
+            max_pid = max_pid,
+            max_code = max_code,
+            max_type = max_type,
         );
     }
+    println!("{:-<max_sum$}", "", max_sum = max_sum);
+    println!(
+        "{} Total: {} running, {} stopped, {} added, {} waiting, {} interval",
+        total.to_string().bold().yellow(),
+        total_running.to_string().green(),
+        total_stopped.to_string().red(),
+        total_added.to_string().magenta(),
+        0.to_string().blue(),
+        0.to_string().cyan(),
+    );
 }

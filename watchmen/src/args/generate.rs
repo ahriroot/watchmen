@@ -6,6 +6,7 @@ static CONFIG: &str = r#"[watchmen]
 # sock: Unix socket
 # socket: TCP socket
 # redis: Redis pub/sub
+engine = "sock"
 engines = ["sock"]
 
 # The log directory of the watchmen server
@@ -15,16 +16,20 @@ log_dir = "$HOME/.watchmen/logs"
 log_level = "info"
 
 # The standard output of the watchmen server
-# Default is None if not set
+# Default is None
 stdout = "$HOME/.watchmen/watchmen.stdout.log"
 
 # The standard error of the watchmen server
-# Default is None if not set
+# Default is None
 stderr = "$HOME/.watchmen/watchmen.stderr.log"
 
 # The pid file of the watchmen server
-# Default is `$HOME/.watchmen/watchmen.pid` if not set
+# Default is `$HOME/.watchmen/watchmen.pid`
 pid = "$HOME/.watchmen/watchmen.pid"
+
+# The task config file name matching pattern
+# Default is `^.*\\.(toml|ini|json)$`
+mat = "^.*\\.(toml|ini|json)$"
 
 
 [sock]

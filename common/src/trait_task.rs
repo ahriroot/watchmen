@@ -3,9 +3,58 @@ use std::{error::Error, fs::File, io::Read, path::Path, process::Stdio};
 use configparser::ini::Ini;
 use tokio::process::{Child, Command};
 
-use crate::task::{AsyncTask, PeriodicTask, ScheduledTask, Task, TaskType, Tasks};
+use crate::task::{AsyncTask, PeriodicTask, ScheduledTask, Task, TaskFlag, TaskType, Tasks};
+
+impl TaskFlag {
+    pub fn from_file(path: &Path) -> Result<Vec<TaskFlag>, Box<dyn Error>> {
+        let ext = path.extension().unwrap().to_str().unwrap();
+        match ext {
+            "ini" => TaskFlag::from_ini(path),
+            "toml" => TaskFlag::from_toml(path),
+            _ => Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Invalid file extension: {}", ext),
+            ))),
+        }
+    }
+
+    pub fn from_ini(path: &Path) -> Result<Vec<TaskFlag>, Box<dyn Error>> {
+        let mut ini = Ini::new();
+        ini.load(&path)?;
+        let mut tasks = Vec::new();
+
+        for section in ini.sections() {
+            tasks.push(TaskFlag::new(ini.get(section.as_str(), "name").unwrap()));
+        }
+
+        Ok(tasks)
+    }
+
+    pub fn from_toml(path: &Path) -> Result<Vec<TaskFlag>, Box<dyn Error>> {
+        let mut file = File::open(path)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+        let mut tasks = Vec::new();
+        for i in toml::from_str::<Tasks>(&contents)?.task {
+            tasks.push(TaskFlag { name: i.name });
+        }
+        Ok(tasks)
+    }
+}
 
 impl Task {
+    pub fn from_file(path: &Path) -> Result<Tasks, Box<dyn Error>> {
+        let ext = path.extension().unwrap().to_str().unwrap();
+        match ext {
+            "ini" => Task::from_ini(path),
+            "toml" => Task::from_toml(path),
+            _ => Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Invalid file extension: {}", ext),
+            ))),
+        }
+    }
+
     pub fn from_ini(path: &Path) -> Result<Tasks, Box<dyn Error>> {
         let mut ini = Ini::new();
         ini.load(&path)?;
@@ -217,5 +266,11 @@ impl Task {
 impl Tasks {
     pub fn new() -> Self {
         Tasks { task: Vec::new() }
+    }
+}
+
+impl TaskFlag {
+    pub fn new(name: String) -> Self {
+        TaskFlag { name }
     }
 }
