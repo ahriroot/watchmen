@@ -120,6 +120,7 @@ pub struct Watchmen {
     pub stderr: Option<String>,
     pub pid: Option<String>,
     pub mat: Option<String>,
+    pub cache: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

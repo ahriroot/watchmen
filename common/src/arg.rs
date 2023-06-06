@@ -126,6 +126,10 @@ pub struct DaemonArgs {
     #[arg(short, long)]
     pub config: Option<String>,
 
+    /// Load cached tasks
+    #[arg(short, long, default_value = "true")]
+    pub load: bool,
+
     /// Print version
     #[arg(short, long)]
     pub version: bool,

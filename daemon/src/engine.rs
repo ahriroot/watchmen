@@ -2,6 +2,8 @@ use common::config::Config;
 use tokio::sync::mpsc;
 use tracing::info;
 
+use crate::global;
+
 #[cfg(feature = "sock")]
 pub mod sock;
 
@@ -11,7 +13,26 @@ pub mod socket;
 #[cfg(feature = "http")]
 pub mod http;
 
-pub async fn start(config: Config) {
+pub async fn start(config: Config, load: bool) {
+    if load {
+        if let Some(path) = config.watchmen.cache.clone() {
+            global::set_cache(path.clone()).await;
+            match global::load(&path).await {
+                Ok(_) => {
+                    info!("Cache tasks loaded.");
+                    println!("Cache tasks loaded.");
+                }
+                Err(e) => {
+                    info!("Cache tasks load failed: {}", e);
+                    println!("Cache tasks load failed: {}", e);
+                }
+            }
+        } else {
+            info!("Cache tasks load failed: cache file not set in config.");
+            println!("Cache tasks load failed: cache file not set in config.");
+        }
+    }
+
     let (tx, mut rx) = mpsc::channel::<i32>(12);
 
     let tx_ctrl_c = tx.clone(); // 监听到 ctrl c 通信管道

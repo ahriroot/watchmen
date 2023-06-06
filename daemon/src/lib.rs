@@ -5,7 +5,7 @@ pub mod utils;
 
 pub mod global {
 
-    use std::{collections::HashMap, error::Error, process::Stdio};
+    use std::{collections::HashMap, error::Error, path::Path, process::Stdio};
 
     use common::{
         config::{get_with_home, get_with_home_path},
@@ -29,7 +29,114 @@ pub mod global {
     }
 
     lazy_static! {
+        static ref CACHE: Mutex<Option<String>> = Mutex::new(None);
         static ref TASKS: Mutex<HashMap<String, TaskProcess>> = Mutex::new(HashMap::new());
+    }
+
+    pub async fn set_cache(path: String) {
+        let mut cache = CACHE.lock().await;
+        *cache = Some(path);
+    }
+
+    pub async fn cache() -> Result<(), Box<dyn Error>> {
+        tokio::spawn(async move {
+            let path_mutex = CACHE.lock().await;
+            let path = path_mutex.clone();
+            drop(path_mutex);
+            if let Some(path) = path {
+                let path = get_with_home(path.as_str());
+                let path = Path::new(path.as_str());
+                let parent = path.parent().unwrap();
+                if !parent.exists() {
+                    std::fs::create_dir_all(parent).unwrap();
+                }
+                let tasks = TASKS.lock().await;
+                let tasks_cache: Vec<Task> = tasks.values().map(|tp| tp.task.clone()).collect();
+                drop(tasks);
+                let tasks_cache_str = serde_json::to_string(&tasks_cache).unwrap();
+                tokio::fs::write(path, tasks_cache_str).await.unwrap();
+            }
+        });
+        Ok(())
+    }
+
+    pub async fn load(path: &str) -> Result<(), Box<dyn Error>> {
+        let path = get_with_home(path);
+        let path = Path::new(path.as_str());
+        if !path.exists() || !path.is_file() {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Config file [{}] not a valid file", path.to_str().unwrap()),
+            )));
+        }
+        let tasks_cache: Vec<Task> = serde_json::from_str(&std::fs::read_to_string(path).unwrap())?;
+        let mut tasks = TASKS.lock().await;
+        for task in tasks_cache {
+            let name = task.name.clone();
+            let mut tp = TaskProcess {
+                task: task.clone(),
+                joinhandle: None,
+                tx: None,
+            };
+            match tp.task.task_type {
+                TaskType::Async(_) => {
+                    if tp.task.status == Some("running".to_string()) {
+                        let child = tp.task.start().await?;
+
+                        let rx = if Some(true) == tp.task.stdin {
+                            let (tx, rx) = mpsc::channel::<Vec<u8>>(CHANNEL_SIZE);
+                            tp.tx = Some(tx);
+                            Some(rx)
+                        } else {
+                            None
+                        };
+
+                        tp.task.pid = child.id();
+                        tp.task.status = Some("running".to_string());
+
+                        let jh: JoinHandle<Option<i32>> = tokio::spawn(async move {
+                            let mut child = child;
+
+                            let cjh = if let Some(mut rx) = rx {
+                                let mut child_stdin = child.stdin.take().unwrap();
+                                // let mut stdin_writer = tokio::io::BufWriter::new(child_stdin);
+                                let cjh = tokio::spawn(async move {
+                                    while let Some(message) = rx.recv().await {
+                                        child_stdin.write_all(&message).await.unwrap();
+                                        child_stdin.flush().await.unwrap();
+                                    }
+                                });
+                                Some(cjh)
+                            } else {
+                                None
+                            };
+
+                            let res = child.wait().await.unwrap();
+
+                            update(
+                                task.name,
+                                Some(None),
+                                Some(Some("stopped".to_string())),
+                                Some(res.code()),
+                            )
+                            .await
+                            .unwrap();
+
+                            if let Some(cjh) = cjh {
+                                cjh.await.unwrap();
+                            }
+
+                            return res.code();
+                        });
+
+                        tp.joinhandle = Some(jh);
+                    }
+                }
+                _ => {}
+            }
+            tasks.insert(name, tp);
+        }
+        Ok(())
     }
 
     pub async fn update(
@@ -96,6 +203,7 @@ pub mod global {
             tx: None,
         };
         tasks.insert(name, tp);
+        cache().await?;
         Ok(Response::success(None))
     }
 
@@ -115,6 +223,7 @@ pub mod global {
             )));
         }
         tasks.remove(&tf.name);
+        cache().await?;
         Ok(Response::success(None))
     }
 
@@ -213,6 +322,7 @@ pub mod global {
                         .unwrap();
                 });
 
+                cache().await?;
                 Ok(Response::success(None))
             }
             _ => Err(Box::new(std::io::Error::new(
@@ -261,6 +371,8 @@ pub mod global {
             tp.task.code = Some(9);
             tp.joinhandle = None;
             tp.tx = None;
+            drop(tasks);
+            cache().await?;
             Ok(Response::success(None))
         } else {
             Ok(Response::wrong("Task is not running".to_string()))

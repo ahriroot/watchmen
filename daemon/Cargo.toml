@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["ahriknow <ahriknow@ahriknow.com>"]
 edition = "2021"
 description = "Watchmen is a daemon process manager that for you manage and keep your application online 24/7"
+license = "Apache-2.0"
+documentation = "https://docs.ahriknow.com/watchmen"
+homepage = "https://docs.ahriknow.com/watchmen"
+repository = "https://git.ahriknow.com/ahriknow/watchmen.git"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -37,5 +41,5 @@ dirs = "4"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
-common = { path = "../common" }
-logger = { path = "../library/logger" }
+common = { path = "../common", version = "*" }
+logger = { path = "../library/logger", version = "*" }

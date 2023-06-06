@@ -1,7 +1,4 @@
-use common::{
-    config::Config,
-    handle::{Request, Response},
-};
+use common::{config::Config, handle::{Request, Response}};
 use tracing::{error, info};
 
 use std::{error::Error, fs::remove_file, path::Path, process::exit};

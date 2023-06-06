@@ -1,13 +1,3 @@
-// pub mod add;
-// pub mod exit;
-// pub mod list;
-// pub mod pause;
-// pub mod restart;
-// pub mod resume;
-// pub mod run;
-// pub mod start;
-// pub mod stop;
-
 use std::error::Error;
 
 use common::handle::{Command, Request, Response};

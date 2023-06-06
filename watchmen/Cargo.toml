@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["ahriknow <ahriknow@ahriknow.com>"]
 edition = "2021"
 description = "Watchmen is a daemon process manager that for you manage and keep your application online 24/7"
+license = "Apache-2.0"
+documentation = "https://docs.ahriknow.com/watchmen"
+homepage = "https://docs.ahriknow.com/watchmen"
+repository = "https://git.ahriknow.com/ahriknow/watchmen.git"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -26,4 +30,4 @@ clap = { version = "4.3.0", features = ["derive"] }
 dirs = "4"
 configparser = "3.0.2"
 regex = "1.6"
-common = { path = "../common" }
+common = { path = "../common", version = "*" }

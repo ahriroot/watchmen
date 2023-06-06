@@ -18,6 +18,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
 
+    let load = clargs.load;
+
     let config: Config = Config::init(clargs.config.clone())?;
 
     // ====================================================
@@ -67,7 +69,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         config.watchmen.engines
     );
 
-    engine::start(config).await;
+    engine::start(config, load).await;
 
     return Ok(());
 }

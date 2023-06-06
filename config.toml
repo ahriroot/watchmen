@@ -29,6 +29,9 @@ pid = "$HOME/.watchmen/watchmen.pid"
 # Default is `^.*\\.(toml|ini|json)$`
 mat = "^.*\\.(toml|ini|json)$"
 
+# Tasks cache file
+cache = "$HOME/.watchmen/cache.json"
+
 
 [sock]
 path = "/tmp/watchmen.sock"
