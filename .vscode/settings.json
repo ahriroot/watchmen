@@ -5,7 +5,6 @@
         "./daemon/Cargo.toml"
     ],
     "files.exclude": {
-        "**/*.profraw": true,
         "**/.git": true,
         "**/.svn": true,
         "**/.hg": true,
