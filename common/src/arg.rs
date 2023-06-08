@@ -29,7 +29,7 @@ pub struct TaskArgs {
     #[arg(short, long)]
     pub version: bool,
 
-    /// SubCommands
+    /// Sub Commands
     #[command(subcommand)]
     pub commands: Option<Commands>,
 }
@@ -44,10 +44,15 @@ impl TaskArgs {
 pub enum Commands {
     /// Add and run a task
     Run(AddArgs),
+    /// Add a task
     Add(AddArgs),
+    /// Start a task
     Start(FlagArgs),
+    /// Stop a task
     Stop(FlagArgs),
+    /// Remove a task
     Remove(FlagArgs),
+    /// Get tasks list
     List(FlagArgs),
 }
 
@@ -57,7 +62,7 @@ pub struct FlagArgs {
     #[arg(short = 'p', long)]
     pub path: Option<String>,
 
-    /// Task config directory
+    /// Task config filename regex pattern
     #[arg(short = 'm', long, default_value = r"^.*\.(toml|ini|json)$")]
     pub mat: Option<String>,
 
@@ -105,8 +110,8 @@ pub struct AddArgs {
     pub env: Option<Vec<String>>,
 
     /// Task standard input
-    #[arg(short = 'i', long)]
-    pub stdin: Option<String>,
+    #[arg(short = 'i', long, default_value = "false")]
+    pub stdin: bool,
 
     /// Task standard output
     #[arg(short = 'o', long)]

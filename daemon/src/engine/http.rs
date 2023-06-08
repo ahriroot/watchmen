@@ -86,13 +86,33 @@ async fn handle_connection(req: Request<Body>) -> Result<Response<Body>, Infalli
             Ok(response)
         }
         (&Method::POST, "/api") => {
-            let body = hyper::body::to_bytes(req.into_body()).await.unwrap();
-            let requests: Vec<handle::Request> = serde_json::from_slice(&body).unwrap();
-            let mut responses: Vec<handle::Response> = Vec::new();
-            for request in requests {
-                let response = command::handle_exec(request).await.unwrap();
-                responses.push(response);
-            }
+            let responses = match hyper::body::to_bytes(req.into_body()).await {
+                Ok(body) => match serde_json::from_slice::<Vec<handle::Request>>(&body) {
+                    Ok(requests) => {
+                        let mut responses: Vec<handle::Response> = Vec::new();
+                        for request in requests {
+                            match command::handle_exec(request).await {
+                                Ok(response) => {
+                                    responses.push(response);
+                                }
+                                Err(e) => {
+                                    let response = handle::Response::failed(e.to_string());
+                                    responses.push(response);
+                                }
+                            }
+                        }
+                        responses
+                    }
+                    Err(e) => {
+                        let response = handle::Response::failed(e.to_string());
+                        vec![response]
+                    }
+                },
+                Err(e) => {
+                    let response = handle::Response::failed(e.to_string());
+                    vec![response]
+                }
+            };
             let body = serde_json::to_vec(&responses).unwrap();
             let mut response = Response::new(Body::empty());
             let headers = response.headers_mut();

@@ -29,7 +29,7 @@ mod tests {
         let request = Request {
             command: Command::Run(task),
         };
-        let req_str = serde_json::to_string(&request).unwrap();
+        let req_str = serde_json::to_string(&[request]).unwrap();
         println!("{}", req_str);
     }
 
@@ -44,12 +44,12 @@ mod tests {
             command: Command::Start(TaskFlag { name: task.name }),
         };
         
-        let buf = serde_json::to_vec(&request).unwrap();
+        let buf = serde_json::to_vec(&[request]).unwrap();
         stream.write_all(&buf).await.unwrap();
 
         let mut buf: [u8; 1024] = [0; 1024];
         let n = stream.read(&mut buf).await.unwrap();
-        let res: Response = serde_json::from_slice(&buf[..n]).unwrap();
+        let res: Vec<Response> = serde_json::from_slice(&buf[..n]).unwrap();
         println!("{:#?}", res);
     }
 
@@ -63,12 +63,12 @@ mod tests {
                 name: "Default".to_string(),
             }),
         };
-        let buf = serde_json::to_vec(&request).unwrap();
+        let buf = serde_json::to_vec(&[request]).unwrap();
         stream.write_all(&buf).await.unwrap();
 
         let mut buf: [u8; 1024] = [0; 1024];
         let n = stream.read(&mut buf).await.unwrap();
-        let res: Response = serde_json::from_slice(&buf[..n]).unwrap();
+        let res: Vec<Response> = serde_json::from_slice(&buf[..n]).unwrap();
         println!("{:#?}", res);
     }
 
@@ -82,12 +82,12 @@ mod tests {
                 name: "Default".to_string(),
             }, "{\"key\": \"value\"}\n".to_string()),
         };
-        let buf = serde_json::to_vec(&request).unwrap();
+        let buf = serde_json::to_vec(&[request]).unwrap();
         stream.write_all(&buf).await.unwrap();
 
         let mut buf: [u8; 1024] = [0; 1024];
         let n = stream.read(&mut buf).await.unwrap();
-        let res: Response = serde_json::from_slice(&buf[..n]).unwrap();
+        let res: Vec<Response> = serde_json::from_slice(&buf[..n]).unwrap();
         println!("{:#?}", res);
     }
 
@@ -99,12 +99,12 @@ mod tests {
         let request = Request {
             command: Command::List(None),
         };
-        let buf = serde_json::to_vec(&request).unwrap();
+        let buf = serde_json::to_vec(&[request]).unwrap();
         stream.write_all(&buf).await.unwrap();
 
         let mut buf: [u8; 1024] = [0; 1024];
         let n = stream.read(&mut buf).await.unwrap();
-        let res: Response = serde_json::from_slice(&buf[..n]).unwrap();
+        let res: Vec<Response> = serde_json::from_slice(&buf[..n]).unwrap();
         println!("{:#?}", res);
     }
 }

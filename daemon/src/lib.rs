@@ -216,7 +216,7 @@ pub mod global {
             )));
         }
         let tp = tasks.get(&tf.name).unwrap();
-        if tp.task.pid.is_some() {
+        if Some("running".to_string()) == tp.task.status {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 format!("Task [{}] is running", tf.name),

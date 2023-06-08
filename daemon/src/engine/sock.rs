@@ -72,17 +72,28 @@ async fn handle_connection(mut stream: UnixStream) -> Result<(), Box<dyn Error>>
         }
     }
 
-    let requests: Vec<Request> = serde_json::from_slice(&buf)?;
-    let mut responses: Vec<Response> = Vec::new();
-    for request in requests {
-        let response = command::handle_exec(request).await?;
-        responses.push(response);
+    match serde_json::from_slice::<Vec<Request>>(&buf) {
+        Ok(requests) => {
+            let mut responses: Vec<Response> = Vec::new();
+            for request in requests {
+                match command::handle_exec(request).await {
+                    Ok(response) => {
+                        responses.push(response);
+                    }
+                    Err(e) => {
+                        let response = Response::failed(e.to_string());
+                        responses.push(response);
+                    }
+                }
+            }
+
+            writer.write_all(&serde_json::to_vec(&responses)?).await?;
+            Ok(())
+        }
+        Err(e) => {
+            let response = Response::failed(e.to_string());
+            writer.write_all(&serde_json::to_vec(&[response])?).await?;
+            Ok(())
+        }
     }
-
-    writer.write_all(&serde_json::to_vec(&responses)?).await?;
-
-    // TODO: 根据 response.code 停止守护进程
-    // exit(0);
-
-    Ok(())
 }

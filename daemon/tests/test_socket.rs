@@ -20,12 +20,12 @@ mod tests {
         let request = Request {
             command: Command::Run(Task::default()),
         };
-        let buf = serde_json::to_vec(&request).unwrap();
+        let buf = serde_json::to_vec(&[request]).unwrap();
         stream.write_all(&buf).await.unwrap();
 
         let mut buf: [u8; 1024] = [0; 1024];
         let n = stream.read(&mut buf).await.unwrap();
-        let res: Response = serde_json::from_slice(&buf[..n]).unwrap();
+        let res: Vec<Response> = serde_json::from_slice(&buf[..n]).unwrap();
         println!("{:#?}", res);
     }
 }

@@ -12,7 +12,7 @@ mod tests {
         let request = handle::Request {
             command: handle::Command::Run(Task::default()),
         };
-        let buf = serde_json::to_vec(&request).unwrap();
+        let buf = serde_json::to_vec(&[request]).unwrap();
 
         let uri = format!("http://{}:{}/api", host, port);
         let request = Request::builder()
@@ -26,7 +26,7 @@ mod tests {
 
         let data = hyper::body::to_bytes(response.into_body()).await.unwrap();
 
-        let res: handle::Response = serde_json::from_slice(&data).unwrap();
+        let res: Vec<handle::Response> = serde_json::from_slice(&data).unwrap();
         println!("{:#?}", res);
     }
 }

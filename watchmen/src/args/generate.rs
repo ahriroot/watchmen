@@ -6,11 +6,14 @@ static CONFIG: &str = r#"[watchmen]
 # sock: Unix socket
 # socket: TCP socket
 # redis: Redis pub/sub
-engine = "sock"
 engines = ["sock"]
+
+# The default engine to use for connecting to the watchmen server
+engine = "sock"
 
 # The log directory of the watchmen server
 log_dir = "$HOME/.watchmen/logs"
+
 # The log level of the watchmen server
 # Valid values are "debug", "info", "warn", "error". Default is "info"
 log_level = "info"
@@ -78,7 +81,9 @@ pub fn generate(path: &str) -> Result<(), Box<dyn Error>> {
         }
     };
     let parent = path.parent().unwrap();
-    std::fs::create_dir_all(parent)?;
+    if !parent.exists() {
+        std::fs::create_dir_all(parent)?;
+    }
     std::fs::write(path, CONFIG)?;
     Ok(())
 }

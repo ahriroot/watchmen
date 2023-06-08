@@ -18,7 +18,7 @@ mod tests {
             args: None,
             dir: None,
             env: None,
-            stdin: None,
+            stdin: false,
             stdout: None,
             stderr: None,
         });

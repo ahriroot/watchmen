@@ -241,6 +241,8 @@ impl Task {
                 .append(true)
                 .open(stdout)?;
             command = command.stdout(Stdio::from(file));
+        } else {
+            command = command.stdout(Stdio::null());
         }
         if let Some(stderr) = &self.stderr {
             let dir = Path::new(stderr).parent().unwrap();
@@ -252,9 +254,13 @@ impl Task {
                 .append(true)
                 .open(stderr)?;
             command = command.stderr(Stdio::from(file));
+        } else {
+            command = command.stderr(Stdio::null());
         }
         if let Some(_stdin) = &self.stdin {
             command = command.stdin(Stdio::piped());
+        } else {
+            command = command.stdin(Stdio::null());
         }
 
         let child = command.spawn()?;

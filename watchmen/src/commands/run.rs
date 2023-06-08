@@ -54,7 +54,7 @@ pub async fn run(args: AddArgs, config: Config) -> Result<(), Box<dyn Error>> {
                 // TODO: 读取 JSON 格式的配置文件
             } else {
                 return Err(Box::from(format!(
-                    "File {} is not a TOML or INI or JSON file",
+                    "File [{}] is not a TOML or INI or JSON file",
                     path.to_str().unwrap()
                 )));
             }
