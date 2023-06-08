@@ -2,7 +2,7 @@
     "rust-analyzer.linkedProjects": [
         "./common/Cargo.toml",
         "./watchmen/Cargo.toml",
-        "./daemon/Cargo.toml"
+        "./watchmend/Cargo.toml"
     ],
     "files.exclude": {
         "**/.git": true,

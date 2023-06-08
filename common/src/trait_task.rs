@@ -67,7 +67,7 @@ impl Task {
             task.name = ini.get(section, "name").unwrap();
             task.command = ini.get(section, "command").unwrap();
             task.args = ini
-                .get(section, "ini")
+                .get(section, "args")
                 .unwrap_or("".to_string())
                 .split(" ")
                 .map(|s| s.to_string())
@@ -220,7 +220,7 @@ impl Task {
 }
 
 impl Task {
-    pub async fn start(&self) -> Result<Child, Box<dyn Error>> {
+    pub async fn start(&self) -> Result<Child, Box<dyn Error>> {        
         let mut command = Command::new(&self.command);
         let command = command.args(&self.args);
         let command = command.envs(std::env::vars());

@@ -19,8 +19,16 @@ pub async fn send(path: &str, requests: Vec<Request>) -> Result<Vec<Response>, B
     let buf = serde_json::to_vec(&requests).unwrap();
     stream.write_all(&buf).await.unwrap();
 
-    let mut buf: [u8; 1024] = [0; 1024];
-    let n = stream.read(&mut buf).await.unwrap();
-    let res: Vec<Response> = serde_json::from_slice(&buf[..n]).unwrap();
+    let mut buf: Vec<u8> = Vec::new();
+    loop {
+        let mut b = vec![0; 1024];
+        let n = stream.read(&mut b).await?;
+        buf.extend_from_slice(&b[..n]);
+        if n < 1024 {
+            break;
+        }
+    }
+
+    let res: Vec<Response> = serde_json::from_slice(&buf).unwrap();
     Ok(res)
 }

@@ -4,7 +4,7 @@ use std::{error::Error, path::Path};
 use tracing::{info, Level};
 use tracing_subscriber::{fmt, EnvFilter};
 
-use daemon::engine;
+use watchmend::engine;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

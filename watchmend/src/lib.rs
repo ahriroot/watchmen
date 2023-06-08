@@ -217,10 +217,9 @@ pub mod global {
         }
         let tp = tasks.get(&tf.name).unwrap();
         if Some("running".to_string()) == tp.task.status {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Task [{}] is running", tf.name),
-            )));
+            return Ok(Response::wrong(
+                "Task is running, please stop it first".to_string(),
+            ));
         }
         tasks.remove(&tf.name);
         cache().await?;
@@ -306,6 +305,7 @@ pub mod global {
                     )
                     .await
                     .unwrap();
+                    cache().await.unwrap();
 
                     if let Some(cjh) = cjh {
                         cjh.await.unwrap();
