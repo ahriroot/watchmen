@@ -2,7 +2,7 @@ import { createApp } from 'petite-vue';
 import 'bootstrap/dist/css/bootstrap.css';
 
 const request = async (command) => {
-    let response = await fetch('http://127.0.0.1:1997/api', {
+    let response = await fetch('/api', {
         method: 'POST',
         body: JSON.stringify([command]),
         headers: {
