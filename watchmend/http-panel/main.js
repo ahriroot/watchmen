@@ -15,6 +15,7 @@ const request = async (command) => {
 createApp({
     dialog: false,
     modal: false,
+    loading: false,
     theme: {
         main: 'dark',
         second: 'secondary',
@@ -39,6 +40,24 @@ createApp({
     },
     info: '',
     width: false,
+    timer: null,
+    async startLoading() {
+        this.loading = true
+        this.timer = setTimeout(() => {
+            this.loading = false
+            if (this.timer) {
+                clearTimeout(this.timer)
+                this.timer = null
+            }
+        }, 5000)
+    },
+    async stopLoading() {
+        this.loading = false
+        if (this.timer) {
+            clearTimeout(this.timer)
+            this.timer = null
+        }
+    },
     async init() {
         window.addEventListener('resize', () => {
             this.width = window.innerWidth
@@ -50,6 +69,7 @@ createApp({
         this.modal = true
     },
     async getTasks() {
+        await this.startLoading()
         request({ "command": { "List": null } }).then(data => {
             this.tasks = []
             let tmp = []
@@ -59,13 +79,18 @@ createApp({
             this.tasks = tmp
         }).catch(err => {
             alert(err)
+        }).finally(async _ => {
+            await this.stopLoading()
         })
     },
     async _req(opera, name) {
+        await this.startLoading()
         request({ "command": { [opera]: { name: name } } }).then(async _ => {
             await this.getTasks()
         }).catch(err => {
             alert(err)
+        }).finally(async _ => {
+            await this.stopLoading()
         })
     },
     async startTask(name) {
