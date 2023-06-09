@@ -1,4 +1,4 @@
-use std::fs;
+use std::{error::Error, fs, path::Path};
 
 use colored::Colorize;
 use common::handle::Response;
@@ -34,4 +34,21 @@ pub async fn print_result(res: Vec<Response>) {
             _ => println!("{}", result),
         }
     }
+}
+
+pub async fn get_ext(path: &Path) -> Result<&str, Box<dyn Error>> {
+    let ext = match path.extension() {
+        Some(ex) => match ex.to_str() {
+            Some(e) => e,
+            None => {
+                return Err(
+                    format!("Cannot convert extension {:?} to string", path.extension()).into(),
+                )
+            }
+        },
+        None => {
+            return Err(format!("Cannot get extension from {:?}", path).into());
+        }
+    };
+    Ok(ext)
 }

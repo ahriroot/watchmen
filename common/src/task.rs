@@ -63,8 +63,14 @@ pub struct Task {
     pub task_type: TaskType,
 
     pub pid: Option<u32>,
+
+    #[serde(default = "default_status")]
     pub status: Option<String>,
     pub code: Option<i32>,
+}
+
+fn default_status() -> Option<String> {
+    Some("added".to_owned())
 }
 
 impl Default for Task {
@@ -99,12 +105,14 @@ unsafe impl Sync for Task {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskFlag {
     pub name: String,
+    pub mat: bool,
 }
 
 impl Default for TaskFlag {
     fn default() -> Self {
         TaskFlag {
             name: "".to_string(),
+            mat: false
         }
     }
 }

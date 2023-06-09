@@ -7,7 +7,23 @@ use crate::task::{AsyncTask, PeriodicTask, ScheduledTask, Task, TaskFlag, TaskTy
 
 impl TaskFlag {
     pub fn from_file(path: &Path) -> Result<Vec<TaskFlag>, Box<dyn Error>> {
-        let ext = path.extension().unwrap().to_str().unwrap();
+        let ext = match path.extension() {
+            Some(ext) => match ext.to_str() {
+                Some(ext) => ext,
+                None => {
+                    return Err(Box::new(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Config file extension is none",
+                    )));
+                }
+            },
+            None => {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Invalid config file extension",
+                )));
+            }
+        };
         match ext {
             "ini" => TaskFlag::from_ini(path),
             "toml" => TaskFlag::from_toml(path),
@@ -24,7 +40,16 @@ impl TaskFlag {
         let mut tasks = Vec::new();
 
         for section in ini.sections() {
-            tasks.push(TaskFlag::new(ini.get(section.as_str(), "name").unwrap()));
+            let name = match ini.get(section.as_str(), "name") {
+                Some(name) => name,
+                None => {
+                    return Err(Box::new(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Invalid config file",
+                    )))
+                }
+            };
+            tasks.push(TaskFlag::new(name));
         }
 
         Ok(tasks)
@@ -36,7 +61,10 @@ impl TaskFlag {
         file.read_to_string(&mut contents)?;
         let mut tasks = Vec::new();
         for i in toml::from_str::<Tasks>(&contents)?.task {
-            tasks.push(TaskFlag { name: i.name });
+            tasks.push(TaskFlag {
+                name: i.name,
+                mat: false,
+            });
         }
         Ok(tasks)
     }
@@ -44,7 +72,23 @@ impl TaskFlag {
 
 impl Task {
     pub fn from_file(path: &Path) -> Result<Tasks, Box<dyn Error>> {
-        let ext = path.extension().unwrap().to_str().unwrap();
+        let ext = match path.extension() {
+            Some(ext) => match ext.to_str() {
+                Some(ext) => ext,
+                None => {
+                    return Err(Box::new(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Config file extension is none",
+                    )));
+                }
+            },
+            None => {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Invalid config file extension",
+                )));
+            }
+        };
         match ext {
             "ini" => Task::from_ini(path),
             "toml" => Task::from_toml(path),
@@ -63,9 +107,30 @@ impl Task {
         for section in ini.sections() {
             let section = section.as_str();
             let mut task = Task::default();
-            task.id = ini.getint(section, "id")?.unwrap();
-            task.name = ini.get(section, "name").unwrap();
-            task.command = ini.get(section, "command").unwrap();
+            task.id = if let Some(id) = ini.getint(section, "id")? {
+                id
+            } else {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Invalid config file, id is none",
+                )));
+            };
+            task.name = if let Some(name) = ini.get(section, "name") {
+                name
+            } else {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Invalid config file, name is none",
+                )));
+            };
+            task.command = if let Some(command) = ini.get(section, "command") {
+                command
+            } else {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Invalid config file, command is none",
+                )));
+            };
             task.args = ini
                 .get(section, "args")
                 .unwrap_or("".to_string())
@@ -82,9 +147,10 @@ impl Task {
                     task.env.insert(kv[0].to_string(), kv[1].to_string());
                 }
             }
-            task.stdin = ini.getbool(section, "stdin").unwrap();
+            task.stdin = ini.getbool(section, "stdin")?;
             task.stdout = ini.get(section, "stdout");
             task.stderr = ini.get(section, "stderr");
+            task.status = Some("added".to_string());
 
             let task_type = ini.get(section, "task_type").unwrap_or("none".to_string());
 
@@ -220,7 +286,7 @@ impl Task {
 }
 
 impl Task {
-    pub async fn start(&self) -> Result<Child, Box<dyn Error>> {        
+    pub async fn start(&self) -> Result<Child, Box<dyn Error>> {
         let mut command = Command::new(&self.command);
         let command = command.args(&self.args);
         let command = command.envs(std::env::vars());
@@ -232,28 +298,36 @@ impl Task {
             command = command.current_dir(&dir);
         }
         if let Some(stdout) = &self.stdout {
-            let dir = Path::new(stdout).parent().unwrap();
-            if !dir.exists() {
-                std::fs::create_dir_all(dir)?;
+            if stdout != "" {
+                let dir = Path::new(stdout).parent().unwrap();
+                if !dir.exists() {
+                    std::fs::create_dir_all(dir)?;
+                }
+                let file = std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(stdout)?;
+                command = command.stdout(Stdio::from(file));
+            } else {
+                command = command.stdout(Stdio::piped());
             }
-            let file = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(stdout)?;
-            command = command.stdout(Stdio::from(file));
         } else {
             command = command.stdout(Stdio::null());
         }
         if let Some(stderr) = &self.stderr {
-            let dir = Path::new(stderr).parent().unwrap();
-            if !dir.exists() {
-                std::fs::create_dir_all(dir)?;
+            if stderr != "" {
+                let dir = Path::new(stderr).parent().unwrap();
+                if !dir.exists() {
+                    std::fs::create_dir_all(dir)?;
+                }
+                let file = std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(stderr)?;
+                command = command.stderr(Stdio::from(file));
+            } else {
+                command = command.stderr(Stdio::piped());
             }
-            let file = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(stderr)?;
-            command = command.stderr(Stdio::from(file));
         } else {
             command = command.stderr(Stdio::null());
         }
@@ -277,6 +351,6 @@ impl Tasks {
 
 impl TaskFlag {
     pub fn new(name: String) -> Self {
-        TaskFlag { name }
+        TaskFlag { name, mat: false }
     }
 }

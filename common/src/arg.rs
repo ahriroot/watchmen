@@ -42,15 +42,17 @@ impl TaskArgs {
 
 #[derive(Debug, Subcommand, PartialEq)]
 pub enum Commands {
-    /// Add and run a task
+    /// Add and run tasks
     Run(AddArgs),
-    /// Add a task
+    /// Add tasks
     Add(AddArgs),
-    /// Start a task
+    /// Start tasks
     Start(FlagArgs),
-    /// Stop a task
+    /// Restart tasks
+    Restart(FlagArgs),
+    /// Stop tasks
     Stop(FlagArgs),
-    /// Remove a task
+    /// Remove tasks
     Remove(FlagArgs),
     /// Get tasks list
     List(FlagArgs),
@@ -64,7 +66,7 @@ pub struct FlagArgs {
 
     /// Task config filename regex pattern
     #[arg(short = 'm', long, default_value = r"^.*\.(toml|ini|json)$")]
-    pub mat: Option<String>,
+    pub pattern: Option<String>,
 
     /// Task config file
     #[arg(short = 'f', long)]
@@ -73,6 +75,10 @@ pub struct FlagArgs {
     /// Task name (unique)
     #[arg(short, long)]
     pub name: Option<String>,
+
+    /// Is match regex pattern by namae
+    #[arg(short, long)]
+    pub mat: bool,
 }
 
 #[derive(Args, Debug, PartialEq)]

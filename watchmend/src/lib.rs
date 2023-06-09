@@ -5,14 +5,21 @@ pub mod utils;
 
 pub mod global {
 
-    use std::{collections::HashMap, error::Error, path::Path, process::Stdio};
+    use std::{
+        collections::HashMap,
+        error::Error,
+        path::Path,
+        process::Stdio,
+        time::{SystemTime, UNIX_EPOCH},
+    };
 
     use common::{
         config::{get_with_home, get_with_home_path},
         handle::{Data, Response, Status},
-        task::{Task, TaskFlag, TaskType},
+        task::{AsyncTask, Task, TaskFlag, TaskType},
     };
     use lazy_static::lazy_static;
+    use regex::Regex;
     use tokio::{
         io::AsyncWriteExt,
         process::{Child, Command},
@@ -33,16 +40,39 @@ pub mod global {
         static ref TASKS: Mutex<HashMap<String, TaskProcess>> = Mutex::new(HashMap::new());
     }
 
+    /// 设置缓存路径。
+    ///
+    /// # 参数
+    ///
+    /// - `path`: 缓存路径的字符串。
+    ///
+    /// # 示例
+    ///
+    /// ```
+    /// use tokio::runtime::Runtime;
+    ///
+    /// let mut rt = Runtime::new().unwrap();
+    /// rt.block_on(async {
+    ///     let path = "/path/to/cache".to_string();
+    ///     set_cache(path).await;
+    /// });
+    /// ```
+    ///
+    /// # 注意事项
+    ///
+    /// - 该函数会阻塞当前的异步任务执行线程。
+    /// - 在调用该函数前，必须先初始化全局的缓存锁（CACHE）。
     pub async fn set_cache(path: String) {
         let mut cache = CACHE.lock().await;
         *cache = Some(path);
     }
 
     pub async fn cache() -> Result<(), Box<dyn Error>> {
+        // 启动协程写入缓存文件，避免阻塞对其他任务的操作
         tokio::spawn(async move {
             let path_mutex = CACHE.lock().await;
             let path = path_mutex.clone();
-            drop(path_mutex);
+            drop(path_mutex); // 释放锁，避免阻塞对其他任务的操作
             if let Some(path) = path {
                 let path = get_with_home(path.as_str());
                 let path = Path::new(path.as_str());
@@ -52,7 +82,7 @@ pub mod global {
                 }
                 let tasks = TASKS.lock().await;
                 let tasks_cache: Vec<Task> = tasks.values().map(|tp| tp.task.clone()).collect();
-                drop(tasks);
+                drop(tasks); // 释放锁，避免阻塞对其他任务的操作
                 let tasks_cache_str = serde_json::to_string(&tasks_cache).unwrap();
                 tokio::fs::write(path, tasks_cache_str).await.unwrap();
             }
@@ -69,6 +99,8 @@ pub mod global {
                 format!("Config file [{}] not a valid file", path.to_str().unwrap()),
             )));
         }
+
+        // 读取缓存文件序列化成任务列表
         let tasks_cache: Vec<Task> = serde_json::from_str(&std::fs::read_to_string(path).unwrap())?;
         let mut tasks = TASKS.lock().await;
         for task in tasks_cache {
@@ -80,9 +112,11 @@ pub mod global {
             };
             match tp.task.task_type {
                 TaskType::Async(_) => {
+                    // 上次运行状态为 running 的染污加载后直接启动
                     if tp.task.status == Some("running".to_string()) {
                         let child = tp.task.start().await?;
 
+                        // 配置了 stdin 时，启动一个协程用于向子进程 stdin 写入数据
                         let rx = if Some(true) == tp.task.stdin {
                             let (tx, rx) = mpsc::channel::<Vec<u8>>(CHANNEL_SIZE);
                             tp.tx = Some(tx);
@@ -91,12 +125,23 @@ pub mod global {
                             None
                         };
 
+                        // 更新任务状态等数据
                         tp.task.pid = child.id();
                         tp.task.status = Some("running".to_string());
+                        let now: u64 = SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .expect("Failed to get timestamp")
+                            .as_secs();
+                        tp.task.task_type = TaskType::Async(AsyncTask {
+                            started_at: now,
+                            stopped_at: 0,
+                        });
 
+                        // 启动协程等待子进程退出
                         let jh: JoinHandle<Option<i32>> = tokio::spawn(async move {
                             let mut child = child;
 
+                            // 接收到数据时写入子进程 stdin
                             let cjh = if let Some(mut rx) = rx {
                                 let mut child_stdin = child.stdin.take().unwrap();
                                 // let mut stdin_writer = tokio::io::BufWriter::new(child_stdin);
@@ -111,6 +156,7 @@ pub mod global {
                                 None
                             };
 
+                            // 等待子进程退出
                             let res = child.wait().await.unwrap();
 
                             update(
@@ -122,6 +168,7 @@ pub mod global {
                             .await
                             .unwrap();
 
+                            // 等待 stdin 写入协程退出
                             if let Some(cjh) = cjh {
                                 cjh.await.unwrap();
                             }
@@ -129,6 +176,7 @@ pub mod global {
                             return res.code();
                         });
 
+                        // 保存监控进程结束协程的句柄
                         tp.joinhandle = Some(jh);
                     }
                 }
@@ -157,6 +205,24 @@ pub mod global {
             tp.task.pid = pid;
         }
         if let Some(status) = status {
+            match status.clone() {
+                Some(s) => match s.as_str() {
+                    "running" => match tp.task.task_type.clone() {
+                        TaskType::Async(tmp) => {
+                            tp.task.task_type = TaskType::Async(AsyncTask {
+                                started_at: tmp.started_at,
+                                stopped_at: SystemTime::now()
+                                    .duration_since(UNIX_EPOCH)
+                                    .expect("Failed to get timestamp")
+                                    .as_secs(),
+                            });
+                        }
+                        _ => {}
+                    },
+                    _ => {}
+                },
+                None => {}
+            }
             tp.task.status = status;
         }
         if let Some(code) = code {
@@ -236,7 +302,7 @@ pub mod global {
         }
         let tp = tasks.get(&tf.name).unwrap();
         if tp.task.pid.is_some() {
-            stop(tf.clone()).await?;
+            stop(tf.clone(), true).await?;
         }
         if let Some(jh) = &tp.joinhandle {
             jh.abort();
@@ -332,13 +398,18 @@ pub mod global {
         }
     }
 
+    pub async fn restart(tf: TaskFlag) -> Result<Response, Box<dyn Error>> {
+        stop(tf.clone(), false).await?;
+        start(tf).await
+    }
+
     pub async fn run(task: Task) -> Result<Response, Box<dyn Error>> {
         let name = task.name.clone();
         add(task).await?;
-        start(TaskFlag { name }).await
+        start(TaskFlag { name, mat: false }).await
     }
 
-    pub async fn stop(tf: TaskFlag) -> Result<Response, Box<dyn Error>> {
+    pub async fn stop(tf: TaskFlag, to_cache: bool) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
         if !tasks.contains_key(&tf.name) {
             return Err(Box::new(std::io::Error::new(
@@ -372,7 +443,9 @@ pub mod global {
             tp.joinhandle = None;
             tp.tx = None;
             drop(tasks);
-            cache().await?;
+            if to_cache {
+                cache().await?;
+            }
             Ok(Response::success(None))
         } else {
             Ok(Response::wrong("Task is not running".to_string()))
@@ -410,13 +483,26 @@ pub mod global {
         let mut status: Vec<Status> = Vec::new();
         match condition {
             Some(condition) => {
-                for (name, tp) in tasks.iter() {
-                    if name.contains(&condition.name) {
+                if condition.mat {
+                    for (name, tp) in tasks.iter() {
+                        let regex: Regex = Regex::new(&condition.name)?;
+                        if regex.is_match(name) {
+                            status.push(tp.task.clone().into());
+                        }
+                    }
+                    let response = Response::success(Some(Data::Status(status)));
+                    Ok(response)
+                } else {
+                    if tasks.contains_key(&condition.name) {
+                        let tp = tasks.get(&condition.name).unwrap();
                         status.push(tp.task.clone().into());
+                        let response = Response::success(Some(Data::Status(status)));
+                        Ok(response)
+                    } else {
+                        let response = Response::success(Some(Data::Status(status)));
+                        Ok(response)
                     }
                 }
-                let response = Response::success(Some(Data::Status(status)));
-                Ok(response)
             }
             None => {
                 for (_, tp) in tasks.iter() {
@@ -426,5 +512,15 @@ pub mod global {
                 Ok(response)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn reg() {
+        let regex: regex::Regex = regex::Regex::new("Test").unwrap();
+        assert!(regex.is_match("TestPython"));
     }
 }

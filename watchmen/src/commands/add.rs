@@ -9,7 +9,7 @@ use std::{error::Error, path::Path};
 
 use crate::{
     engine::send,
-    utils::{print_result, recursive_search_files},
+    utils::{print_result, recursive_search_files, get_ext},
 };
 
 pub async fn add(args: AddArgs, config: Config) -> Result<(), Box<dyn Error>> {
@@ -25,7 +25,7 @@ pub async fn add(args: AddArgs, config: Config) -> Result<(), Box<dyn Error>> {
             // 最后使用默认参数
             mat = String::from(r"^.*\.(toml|ini|json)$");
         }
-        let regex: Regex = Regex::new(&mat).unwrap();
+        let regex: Regex = Regex::new(&mat)?;
         let mut matched_files = Vec::new();
         recursive_search_files(&path, &regex, &mut matched_files);
 
@@ -33,7 +33,7 @@ pub async fn add(args: AddArgs, config: Config) -> Result<(), Box<dyn Error>> {
 
         for file in matched_files {
             let path = Path::new(&file);
-            if path.is_file() && path.extension().unwrap().to_str().unwrap() == "ini" {
+            if path.is_file() && get_ext(path).await? == "ini" {
                 let ts = Task::from_ini(path)?;
                 for task in ts.task {
                     let request: Request = Request {
@@ -41,7 +41,7 @@ pub async fn add(args: AddArgs, config: Config) -> Result<(), Box<dyn Error>> {
                     };
                     reqs.push(request);
                 }
-            } else if path.is_file() && path.extension().unwrap().to_str().unwrap() == "toml" {
+            } else if path.is_file() && get_ext(path).await? == "toml" {
                 let ts = Task::from_toml(path)?;
                 for task in ts.task {
                     let request: Request = Request {
@@ -49,7 +49,7 @@ pub async fn add(args: AddArgs, config: Config) -> Result<(), Box<dyn Error>> {
                     };
                     reqs.push(request);
                 }
-            } else if path.is_file() && path.extension().unwrap().to_str().unwrap() == "json" {
+            } else if path.is_file() && get_ext(path).await? == "json" {
                 // tasks.push(Task::from_json(path)?);
                 // TODO: 读取 JSON 格式的配置文件
             } else {

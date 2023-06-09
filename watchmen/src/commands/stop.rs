@@ -16,7 +16,7 @@ pub async fn stop(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> 
     let requests = match args.path {
         Some(path) => {
             let mat;
-            if let Some(matc) = args.mat {
+            if let Some(matc) = args.pattern {
                 // 优先使用命令行参数
                 mat = matc;
             } else if let Some(matc) = config.watchmen.mat.clone() {
@@ -93,7 +93,7 @@ pub async fn stop(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> 
             None => match args.name {
                 Some(name) => {
                     let request: Request = Request {
-                        command: Command::Stop(TaskFlag { name }),
+                        command: Command::Stop(TaskFlag { name, mat: args.mat }),
                     };
                     vec![request]
                 }

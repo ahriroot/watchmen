@@ -41,9 +41,12 @@ mod tests {
         let task = Task::default();
 
         let request = Request {
-            command: Command::Start(TaskFlag { name: task.name }),
+            command: Command::Start(TaskFlag {
+                name: task.name,
+                mat: false,
+            }),
         };
-        
+
         let buf = serde_json::to_vec(&[request]).unwrap();
         stream.write_all(&buf).await.unwrap();
 
@@ -61,6 +64,7 @@ mod tests {
         let request = Request {
             command: Command::Stop(TaskFlag {
                 name: "Default".to_string(),
+                mat: false,
             }),
         };
         let buf = serde_json::to_vec(&[request]).unwrap();
@@ -78,9 +82,13 @@ mod tests {
         let mut stream = UnixStream::connect(config.sock.path).await.unwrap();
 
         let request = Request {
-            command: Command::Write(TaskFlag {
-                name: "Default".to_string(),
-            }, "{\"key\": \"value\"}\n".to_string()),
+            command: Command::Write(
+                TaskFlag {
+                    name: "Default".to_string(),
+                    mat: false,
+                },
+                "{\"key\": \"value\"}\n".to_string(),
+            ),
         };
         let buf = serde_json::to_vec(&[request]).unwrap();
         stream.write_all(&buf).await.unwrap();

@@ -15,6 +15,7 @@ pub enum Command {
     Add(Task),
     Stop(TaskFlag),
     Start(TaskFlag),
+    Restart(TaskFlag),
     Remove(TaskFlag),
     Write(TaskFlag, String),
     List(Option<TaskFlag>),

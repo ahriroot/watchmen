@@ -8,12 +8,15 @@ use common::{
 use regex::Regex;
 use std::{error::Error, path::Path};
 
-use crate::{engine::send, utils::recursive_search_files};
+use crate::{
+    engine::send,
+    utils::{print_result as pr, recursive_search_files},
+};
 
 pub async fn list(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> {
     let requests = if let Some(path) = args.path {
         let mat;
-        if let Some(matc) = args.mat {
+        if let Some(matc) = args.pattern {
             // 优先使用命令行参数
             mat = matc;
         } else if let Some(matc) = config.watchmen.mat.clone() {
@@ -86,7 +89,7 @@ pub async fn list(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> 
         reqs
     } else if let Some(name) = args.name {
         let request: Request = Request {
-            command: Command::List(Some(TaskFlag { name })),
+            command: Command::List(Some(TaskFlag { name, mat: args.mat })),
         };
         vec![request]
     } else {
@@ -102,6 +105,10 @@ pub async fn list(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> 
 pub async fn print_result(res: Vec<Response>) {
     let mut status: Vec<Status> = Vec::new();
     for r in res {
+        if r.code != 10000 {
+            pr(vec![r]).await;
+            return;
+        }
         if let Some(data) = r.data {
             match data {
                 common::handle::Data::None => {}

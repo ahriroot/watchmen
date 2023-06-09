@@ -15,7 +15,7 @@ use crate::{
 pub async fn start(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>> {
     let requests = if let Some(path) = args.path {
         let mat;
-        if let Some(matc) = args.mat {
+        if let Some(matc) = args.pattern {
             // 优先使用命令行参数
             mat = matc;
         } else if let Some(matc) = config.watchmen.mat.clone() {
@@ -88,7 +88,7 @@ pub async fn start(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>>
         reqs
     } else if let Some(name) = args.name {
         let request: Request = Request {
-            command: Command::Start(TaskFlag { name }),
+            command: Command::Start(TaskFlag { name, mat: args.mat }),
         };
         vec![request]
     } else {

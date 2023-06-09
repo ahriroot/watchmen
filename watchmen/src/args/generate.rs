@@ -65,14 +65,17 @@ subscribe_name = "watchmen"
 
 pub fn generate(path: &str) -> Result<(), Box<dyn Error>> {
     let path: PathBuf = if path == "" {
-        let home: PathBuf = dirs::home_dir().unwrap();
+        let home: PathBuf = match dirs::home_dir() {
+            Some(home) => home,
+            None => return Err("Cannot find home directory".into()),
+        };
         home.join(".watchmen/config.toml")
     } else {
         let path: PathBuf = PathBuf::from(path);
         if path.is_dir() {
             path.join("config.toml")
         } else {
-            let ext: &OsStr = path.extension().unwrap();
+            let ext: &OsStr = path.extension().unwrap_or(OsStr::new(""));
             if ext == "toml" {
                 path
             } else {
@@ -80,7 +83,10 @@ pub fn generate(path: &str) -> Result<(), Box<dyn Error>> {
             }
         }
     };
-    let parent = path.parent().unwrap();
+    let parent = match path.parent() {
+        Some(parent) => parent,
+        None => return Err(format!("Cannot find parent directory of {}", path.display()).into()),
+    };
     if !parent.exists() {
         std::fs::create_dir_all(parent)?;
     }
