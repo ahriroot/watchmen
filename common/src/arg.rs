@@ -77,7 +77,7 @@ pub struct FlagArgs {
     pub name: Option<String>,
 
     /// Is match regex pattern by namae
-    #[arg(short, long)]
+    #[arg(short = 'r', long)]
     pub mat: bool,
 }
 
@@ -87,7 +87,7 @@ pub struct AddArgs {
     #[arg(short = 'p', long)]
     pub path: Option<String>,
 
-    /// Task config directory
+    /// Task config filename regex pattern
     #[arg(short = 'm', long, default_value = r"^.*\.(toml|ini|json)$")]
     pub mat: Option<String>,
 
