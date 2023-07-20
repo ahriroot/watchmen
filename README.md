@@ -6,264 +6,227 @@ Watchmen 是一个守护进程管理器，可为您全天候管理和保持应�
 
 [中文简体](README.md) | [English](README_EN.md)
 
-## 二进制文件
+## 安装
 
-watchmen
+### 源码构建
 
-用于执行命令的命令行界面
+```shell
+# 获取源码
+git clone https://git.ahriknow.com/ahriknow/watchmen.git
 
-daemon
-
-使应用程序保持在线的守护进程
-
-guard (非必须)
-
-防止 daemon 意外退出的守护进程
-
-## 命令 
-
-`watchmen [OPTIONS|SUBCOMMAND] ...`
-
-### 选项或子命令
-| Option                   | Description          |
-| ------------------------ | -------------------- |
-| -h, --help               | 帮助信息             |
-| -v, --version            | 版本信息             |
-| -i, --info               | 软件信息             |
-| -d, --daemon             | 启动守护进程         |
-| -t, --terminated         | 终止守护进程         |
-| -gd, --guard-daemon      | 启动被守护的守护进程 |
-| -gt, --guardt-terminated | 终止被守护的守护进程 |
-| run [oprions...]         | 创建并运行任务       |
-| add [oprions...]         | 添加任务             |
-| drop [oprions...]        | 停止并删除任务       |
-| start [oprions...]       | 开始任务             |
-| restart [oprions...]     | 重启任务             |
-| stop [oprions...]        | 停止任务             |
-| pause [oprions...]       | 暂停定时任务         |
-| resume [oprions...]      | 继续定时任务         |
-| list [oprions...]        | 查看任务             |
-
-
-## 子命令
-
-### run
-
-`watchmen run [OPTIONS] ...`
-
-| Option         | Description     |
-| -------------- | --------------- |
-| -h, --help     | 帮助信息        |
-| -n, --name     | 任务名          |
-| -o, --origin   | 任务开始时间    |
-| -i, --interval | 任务执行周期 ms |
-
-### add
-
-`watchmen add [OPTIONS] ...`
-
-| Option         | Description      |
-| -------------- | ---------------- |
-| -h, --help     | 帮助信息         |
-| -n, --name     | 任务名           |
-| -o, --origin   | 任务开始时间     |
-| -i, --interval | 任务执行周期 ms  |
-| -t, --timing   | 定时任务执行时间 |
-
-> -o, --origin
-> 
-> 格式: YYYYMMDD.HHMMSS | YYYYMMDD | MMDD | MMDD.HHMMSS | HHMMSS
->
-> 示例: 20201231.235959 | 20201231 | 1231 | 1231.235959 | 235959
-> 
-> 输入 => 自动转换为\
-> 20201231.235959 => 20201231.235959\
-> 20201231 => 20201231.000000\
-> 1231 => [当前年]1231.000000\
-> 1231.235959 => [当前年]1231.235959\
-> 235959 => [当前年][当前月][当前日].235959
-
-> -i, --interval
-> 
-> 格式: 1d2h3m4s5 | 3m4s5 | 4s5 | 5 ...
-
-> -t, --timing
-> 
-> 格式: 以半角 ',' 分割的 YYYYMMDD.HHMMSS | YYYYMMDD | MMDD | MMDD.HHMMSS | HHMMSS
-> 
-> 示例: 20210101.000000,20210102.000000,20210103
-
-### drop
-
-`watchmen drop [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | 帮助信息    |
-| -n, --name | 任务名      |
-| -p, --pid  | 任务 pid    |
-
-### start
-
-`watchmen start [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | 帮助信息    |
-| -n, --name | 任务名      |
-| -p, --pid  | 任务 pid    |
-
-### restart
-
-`watchmen restart [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | 帮助信息    |
-| -i, --id   | 任务 id     |
-| -n, --name | 任务名      |
-| -p, --pid  | 任务 pid    |
-
-### stop
-
-`watchmen stop [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | 帮助信息    |
-| -n, --name | 任务名      |
-| -p, --pid  | 任务 pid    |
-
-### pause
-
-`watchmen stop [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | 帮助信息    |
-| -n, --name | 任务名      |
-| -p, --pid  | 任务 pid    |
-
-### resume
-
-`watchmen stop [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | 帮助信息    |
-| -n, --name | 任务名      |
-
-### list
-
-`watchmen list [OPTIONS] ...`
-
-| Option       | Description |
-| ------------ | ----------- |
-| -h, --help   | 帮助信息    |
-| -n, --name   | 任务名      |
-| -s, --status | 任务状态    |
-| -p, --pid    | 任务 pid    |
-| -m, --more   | 更过信息    |
-
-# 任务状态
-
-- added: 新添加的任务
-- running: 正在运行的任务
-- stopped: 已停止的任务
-- interval: 正在运行的定时任务
-- paused: 已暂停的定时任务
-
-## 输出文件
-
-默认输出路径: /tmp/watchmen (或 读取环境变量: WATCHMEN_PATH)
-|--/tmp/watchmen/
-    |--stdout/
-        |--[task name].log ==> 任务日志
-    |--daemon_stdout.log ==> daemon 进程输出日志
-    |--daemon_stderr.log ==> daemon 进程错误日志
-    |--guard.log ==> guard 进程输出日志
-    |--tasks.json ==> 所有任务列表
-    |--daemon.pid ==> daemon 进程 pid
-    |--guard.pid => guard 进程 id
-    |--watchmen.sock ==> watchmen daemon 通信 sock 文件
-
-## 从源码构建并运行示例程序
-
-```bash
-# 下载源码
-git clone https://git.ahriknow.com/ahriknow/watchmen
+# 进入项目目录
 cd watchmen
-cargo build --release
 
-cd ./target/release
+# 安装守护进程
+cargo install --path watchmend
 
-# 启动守护进程
-./watchmen -d
-Start daemon pid: 65535
+# 安装 cli 工具
+cargo install --path watchmen
+```
 
-# 查询任务
-./watchmen list
-------------------------------------------------------------------------------------
-| ID | NAME | STATUS | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
-------------------------------------------------------------------------------------
-0 Total: 0 running, 0 stopped, 0 waiting
+### 从 crates.io 安装
 
-# 创建并运行一个任务
-./watchmen run -n test sh ${watchmen_project_path}/script/task.sh
+```shell
+# 安装守护进程
+cargo install watchmend
 
-# 查询任务
-./watchmen list
-------------------------------------------------------------------------------------------------
-| ID            | NAME | STATUS  | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
-------------------------------------------------------------------------------------------------
-| 1663924559448 | test | running | 399 | 2022-01-01 00:00:00 |                     |           |
-------------------------------------------------------------------------------------------------
-1 Total: 1 running, 0 stopped, 0 waiting
+# 安装 cli 工具
+cargo install watchmen
+```
 
-# 停止任务
-./watchmen stop test
+## 开始
 
-# 查询任务
-./watchmen list
-------------------------------------------------------------------------------------------------
-| ID            | NAME | STATUS  | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
-------------------------------------------------------------------------------------------------
-| 1663924559448 | test | stopped | 0   | 2022-01-01 00:00:00 | 2022-01-01 00:00:05 | 0         |
-------------------------------------------------------------------------------------------------
-1 Total: 0 running, 1 stopped, 0 waiting
+### 生成配置文件
 
-# 删除任务
-./watchmen drop test
+> "" 默认位置 ${HOME}/.watchmen/config.toml
 
-# 查询任务
-./watchmen list
-------------------------------------------------------------------------------------
-| ID | NAME | STATUS | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
-------------------------------------------------------------------------------------
-0 Total: 0 running, 0 stopped, 0 waiting
+`watchmen -g ""`
 
-# 停止守护进程
-./watchmen -t
-Terminated daemon pid: 65535
+### 启动守护进程
 
-# 查看输出
-# 默认输出路径是 /tmp/watchmen (或 读取环境变量: WATCHMEN_PATH)
-ls /tmp/watchmen
--rw-r--r-- 1 user user    0 Sep 01 00:00 daemon_stdout.log
--rw-r--r-- 1 user user    0 Sep 01 00:00 daemon_stderr.log
-drwxr-xr-x 2 user user 4096 Sep 01 00:00 stdout
--rw-r--r-- 1 user user    5 Sep 01 00:00 daemon.pid
-srwxr-xr-x 1 user user    0 Sep 01 00:00 watchmen.sock
+`watchmend`
 
-ls /tmp/watchmen/stdout
--rw-r--r-- 1 user user 130 Sep 01 00:00 test.log
+### 任务配置文件
 
-cat /tmp/watchmen/stdout/test.log
-Result from shell task: 1
-Result from shell task: 2
-Result from shell task: 3
-Result from shell task: 4
-Result from shell task: 5
+```toml
+[[task]]
+id = 2
+name = "Async Task"
+command = "command"
+args = ["arg1", "arg2"]
+dir = "/path/to/directory"
+env = { key1 = "value1", key2 = "value2" }
+stdin = true
+stdout = "output.txt"
+stderr = "error.txt"
+task_type = { Async = { started_at = 0, stopped_at = 0 } }
+```
+
+```ini
+[Async Task]
+id = 2
+name = Async Task
+command = command
+args = arg1 arg2
+dir = /path/to/directory
+env = key1=value1 key2=value2
+stdin = true
+stdout = "output.txt"
+stderr = "error.txt"
+task_type = async
+```
+
+## 命令
+
+### watchmen -h
+
+```shell
+Watchmen is a daemon process manager that for you manage and keep your application online 24/7
+
+Usage: watchmen [OPTIONS] [COMMAND]
+
+Commands:
+  run      Add and run tasks
+  add      Add tasks
+  start    Start tasks
+  restart  Restart tasks
+  stop     Stop tasks
+  remove   Remove tasks
+  list     Get tasks list
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -c, --config <CONFIG>      Config file path. Default: $HOME/.watchmen/config.toml
+  -g, --generate <GENERATE>  Generate config file
+  -e, --engine <ENGINE>      Engine for send message [default: sock]
+  -d, --daemon               Start watchmen server
+  -w, --guard <GUARD>        Start watchmen server with guard [possible values: true, false]
+  -v, --version              Print version
+  -h, --help                 Print help
+```
+
+### watchmen run -h
+
+```shell
+Add and run tasks
+
+Usage: watchmen run [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --mat <MAT>          Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -c, --command <COMMAND>  Task command
+  -a, --args <ARGS>        Task arguments
+  -d, --dir <DIR>          Task working directory
+  -e, --env <ENV>          Task environment variables
+  -i, --stdin              Task standard input
+  -o, --stdout <STDOUT>    Task standard output
+  -r, --stderr <STDERR>    Task standard error
+  -h, --help               Print help
+```
+
+### watchmen add -h
+
+```shell
+Add tasks
+
+Usage: watchmen add [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --mat <MAT>          Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -c, --command <COMMAND>  Task command
+  -a, --args <ARGS>        Task arguments
+  -d, --dir <DIR>          Task working directory
+  -e, --env <ENV>          Task environment variables
+  -i, --stdin              Task standard input
+  -o, --stdout <STDOUT>    Task standard output
+  -r, --stderr <STDERR>    Task standard error
+  -h, --help               Print help
+```
+
+### watchmen start -h
+
+```shell
+Start tasks
+
+Usage: watchmen start [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -r, --mat                Is match regex pattern by namae
+  -h, --help               Print help
+```
+
+### watchmen restart -h
+
+```shell
+Restart tasks
+
+Usage: watchmen restart [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -r, --mat                Is match regex pattern by namae
+  -h, --help               Print help
+```
+
+### watchmen stop -h
+
+```shell
+Stop tasks
+
+Usage: watchmen stop [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -r, --mat                Is match regex pattern by namae
+  -h, --help               Print help
+```
+
+### watchmen remove -h
+
+```shell
+Remove tasks
+
+Usage: watchmen remove [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -r, --mat                Is match regex pattern by namae
+  -h, --help               Print help
+```
+
+### watchmen list -h
+
+```shell
+Get tasks list
+
+Usage: watchmen list [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -r, --mat                Is match regex pattern by namae
+  -h, --help               Print help
 ```
 
 ## License Apache Licence 2.0

@@ -6,264 +6,227 @@ Watchmen is a daemon process manager that for you manage and keep your applicati
 
 [中文简体](README.md) | [English](README_EN.md)
 
-## Binaries
+## Install
 
-`watchmen`
+### Build from source
 
-The cli to execute commands
+```shell
+# Clone the repository
+git clone https://git.ahriknow.com/ahriknow/watchmen.git
 
-`daemon`
-
-The daemon process that will keep your application online
-
-`guard` (Not required)
-
-The guard process that will the daemon process online
-
-### Command 
-
-`watchmen [OPTIONS|SUBCOMMAND] ...`
-
-## Options
-| Option                   | Description             |
-| ------------------------ | ----------------------- |
-| -h, --help               | show help               |
-| -v, --version            | Show version            |
-| -i, --info               | Show info               |
-| -d, --daemon             | startup daemon          |
-| -t, --terminated         | terminated daemon       |
-| -gd, --guard-daemon      | startup guard daemon    |
-| -gt, --guardt-terminated | terminated guard daemon |
-| run [oprions...]         | create and run task     |
-| add [oprions...]         | add task                |
-| drop [oprions...]        | stop and drop task      |
-| start [oprions...]       | start task              |
-| restart [oprions...]     | restart task            |
-| stop [oprions...]        | stop task               |
-| pause [oprions...]       | pause scheduled task    |
-| resume [oprions...]      | resume scheduled task   |
-| list [oprions...]        | list tasks              |
-
-
-## SubCommands
-
-### run
-
-`watchmen run [OPTIONS] ...`
-
-| Option         | Description         |
-| -------------- | ------------------- |
-| -h, --help     | show help           |
-| -n, --name     | task name           |
-| -o, --origin   | task start datetime |
-| -i, --interval | task time interval  |
-
-### add
-
-`watchmen add [OPTIONS] ...`
-
-| Option         | Description              |
-| -------------- | ------------------------ |
-| -h, --help     | show help                |
-| -n, --name     | task name                |
-| -o, --origin   | task start datetime      |
-| -i, --interval | task time interval       |
-| -t, --timing   | exec time of timing task |
-
-> -o, --origin
-> 
-> format: YYYYMMDD.HHMMSS | YYYYMMDD | MMDD | MMDD.HHMMSS | HHMMSS
->
-> example: 20201231.235959 | 20201231 | 1231 | 1231.235959 | 235959
-> 
-> input => auto into\
-> 20201231.235959 => 20201231.235959\
-> 20201231 => 20201231.000000\
-> 1231 => [current year]1231.000000\
-> 1231.235959 => [current year]1231.235959\
-> 235959 => [current year][current month][today].235959
-
-> -i, --interval
-> 
-> format: 1d2h3m4s5 | 3m4s5 | 4s5 | 5 ...
-
-> -t, --timing
-> 
-> format: split by ',' YYYYMMDD.HHMMSS | YYYYMMDD | MMDD | MMDD.HHMMSS | HHMMSS
-> 
-> example: 20210101.000000,20210102.000000,20210103
-
-### drop
-
-`watchmen drop [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | show help   |
-| -n, --name | task name   |
-| -p, --pid  | task pid    |
-
-### start
-
-`watchmen start [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | show help   |
-| -n, --name | task name   |
-| -p, --pid  | task pid    |
-
-### restart
-
-`watchmen restart [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | show help   |
-| -i, --id   | task id     |
-| -n, --name | task name   |
-| -p, --pid  | task pid    |
-
-### stop
-
-`watchmen stop [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | show help   |
-| -n, --name | task name   |
-| -p, --pid  | task pid    |
-
-### pause
-
-`watchmen stop [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | show help   |
-| -n, --name | task name   |
-| -p, --pid  | task pid    |
-
-### resume
-
-`watchmen stop [OPTIONS] ...`
-
-| Option     | Description |
-| ---------- | ----------- |
-| -h, --help | show help   |
-| -n, --name | task name   |
-
-### list
-
-`watchmen list [OPTIONS] ...`
-
-| Option       | Description |
-| ------------ | ----------- |
-| -h, --help   | show help   |
-| -n, --name   | task name   |
-| -s, --status | task status |
-| -p, --pid    | task pid    |
-| -m, --more   | more info   |
-
-## Task status
-
-- added: task added
-- running: task running
-- stopped: task stopped
-- interval: task interval
-- paused: task paused
-
-## Output files
-
-Default output directory: /tmp/watchmen (OR environment name: WATCHMEN_PATH)
-|--/tmp/watchmen/
-    |--stdout/
-        |--[task name].log ==> tasks log
-    |--daemon_stdout.log ==> daemon process output log
-    |--daemon_stderr.log ==> daemon process error log
-    |--guard.log ==> guard process output log
-    |--tasks.json ==> all tasks list
-    |--daemon.pid ==> daemon process id
-    |--guard.pid => guard process id
-    |--watchmen.sock ==> sock file of watchmen / daemon process
-
-## Build and run Examples
-
-```bash
-# download source code
-git clone https://git.ahriknow.com/ahriknow/watchmen
+# Go into the repository
 cd watchmen
-cargo build --release
 
-cd ./target/release
+# Install watchmen daemon
+cargo install --path watchmend
 
-# start the daemon
-./watchmen -d
-Start daemon pid: 65535
+# Install cli tool
+cargo install --path watchmen
+```
 
-# show tasks
-./watchmen list
-------------------------------------------------------------------------------------
-| ID | NAME | STATUS | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
-------------------------------------------------------------------------------------
-0 Total: 0 running, 0 stopped, 0 waiting
+### Install from crates.io
 
-# create a task
-./watchmen run -n test sh ${watchmen_project_path}/script/task.sh
+```shell
+# Install watchmen daemon
+cargo install watchmend
 
-# show tasks
-./watchmen list
-------------------------------------------------------------------------------------------------
-| ID            | NAME | STATUS  | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
-------------------------------------------------------------------------------------------------
-| 1663924559448 | test | running | 399 | 2022-01-01 00:00:00 |                     |           |
-------------------------------------------------------------------------------------------------
-1 Total: 1 running, 0 stopped, 0 waiting
+# Install cli tool
+cargo install watchmen
+```
 
-# stop the task
-./watchmen stop test
+## Getting Started
 
-# show tasks
-./watchmen list
-------------------------------------------------------------------------------------------------
-| ID            | NAME | STATUS  | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
-------------------------------------------------------------------------------------------------
-| 1663924559448 | test | stopped | 0   | 2022-01-01 00:00:00 | 2022-01-01 00:00:05 | 0         |
-------------------------------------------------------------------------------------------------
-1 Total: 0 running, 1 stopped, 0 waiting
+### Generate config file
 
-# drop the task
-./watchmen drop test
+> "" Default is ${HOME}/.watchmen/config.toml
 
-# show tasks
-./watchmen list
-------------------------------------------------------------------------------------
-| ID | NAME | STATUS | PID | STARTED_AT          | STOPPED_AT          | EXIT_CODE |
-------------------------------------------------------------------------------------
-0 Total: 0 running, 0 stopped, 0 waiting
+`watchmen -g ""`
 
-# terminated the daemon
-./watchmen -t
-Terminated daemon pid: 65535
+### Start watchmen daemon
 
-# show output
-# the default output path is /tmp/watchmen (or environment: WATCHMEN_PATH)
-ls /tmp/watchmen
--rw-r--r-- 1 user user    0 Sep 01 00:00 daemon_stdout.log
--rw-r--r-- 1 user user    0 Sep 01 00:00 daemon_stderr.log
-drwxr-xr-x 2 user user 4096 Sep 01 00:00 stdout
--rw-r--r-- 1 user user    5 Sep 01 00:00 daemon.pid
-srwxr-xr-x 1 user user    0 Sep 01 00:00 watchmen.sock
+`watchmend`
 
-ls /tmp/watchmen/stdout
--rw-r--r-- 1 user user 130 Sep 01 00:00 test.log
+### Task Config file
 
-cat /tmp/watchmen/stdout/test.log
-Result from shell task: 1
-Result from shell task: 2
-Result from shell task: 3
-Result from shell task: 4
-Result from shell task: 5
+```toml
+[[task]]
+id = 2
+name = "Async Task"
+command = "command"
+args = ["arg1", "arg2"]
+dir = "/path/to/directory"
+env = { key1 = "value1", key2 = "value2" }
+stdin = true
+stdout = "output.txt"
+stderr = "error.txt"
+task_type = { Async = { started_at = 0, stopped_at = 0 } }
+```
+
+```ini
+[Async Task]
+id = 2
+name = Async Task
+command = command
+args = arg1 arg2
+dir = /path/to/directory
+env = key1=value1 key2=value2
+stdin = true
+stdout = "output.txt"
+stderr = "error.txt"
+task_type = async
+```
+
+## Command
+
+### watchmen -h
+
+```shell
+Watchmen is a daemon process manager that for you manage and keep your application online 24/7
+
+Usage: watchmen [OPTIONS] [COMMAND]
+
+Commands:
+  run      Add and run tasks
+  add      Add tasks
+  start    Start tasks
+  restart  Restart tasks
+  stop     Stop tasks
+  remove   Remove tasks
+  list     Get tasks list
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -c, --config <CONFIG>      Config file path. Default: $HOME/.watchmen/config.toml
+  -g, --generate <GENERATE>  Generate config file
+  -e, --engine <ENGINE>      Engine for send message [default: sock]
+  -d, --daemon               Start watchmen server
+  -w, --guard <GUARD>        Start watchmen server with guard [possible values: true, false]
+  -v, --version              Print version
+  -h, --help                 Print help
+```
+
+### watchmen run -h
+
+```shell
+Add and run tasks
+
+Usage: watchmen run [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --mat <MAT>          Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -c, --command <COMMAND>  Task command
+  -a, --args <ARGS>        Task arguments
+  -d, --dir <DIR>          Task working directory
+  -e, --env <ENV>          Task environment variables
+  -i, --stdin              Task standard input
+  -o, --stdout <STDOUT>    Task standard output
+  -r, --stderr <STDERR>    Task standard error
+  -h, --help               Print help
+```
+
+### watchmen add -h
+
+```shell
+Add tasks
+
+Usage: watchmen add [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --mat <MAT>          Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -c, --command <COMMAND>  Task command
+  -a, --args <ARGS>        Task arguments
+  -d, --dir <DIR>          Task working directory
+  -e, --env <ENV>          Task environment variables
+  -i, --stdin              Task standard input
+  -o, --stdout <STDOUT>    Task standard output
+  -r, --stderr <STDERR>    Task standard error
+  -h, --help               Print help
+```
+
+### watchmen start -h
+
+```shell
+Start tasks
+
+Usage: watchmen start [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -r, --mat                Is match regex pattern by namae
+  -h, --help               Print help
+```
+
+### watchmen restart -h
+
+```shell
+Restart tasks
+
+Usage: watchmen restart [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -r, --mat                Is match regex pattern by namae
+  -h, --help               Print help
+```
+
+### watchmen stop -h
+
+```shell
+Stop tasks
+
+Usage: watchmen stop [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -r, --mat                Is match regex pattern by namae
+  -h, --help               Print help
+```
+
+### watchmen remove -h
+
+```shell
+Remove tasks
+
+Usage: watchmen remove [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -r, --mat                Is match regex pattern by namae
+  -h, --help               Print help
+```
+
+### watchmen list -h
+
+```shell
+Get tasks list
+
+Usage: watchmen list [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -r, --mat                Is match regex pattern by namae
+  -h, --help               Print help
 ```
 
 ## License Apache Licence 2.0

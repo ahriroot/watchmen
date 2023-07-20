@@ -9,7 +9,7 @@ use std::{error::Error, path::Path};
 
 use crate::{
     engine::send,
-    utils::{print_result, recursive_search_files, get_ext},
+    utils::{get_ext, print_result, recursive_search_files},
 };
 
 pub async fn add(args: AddArgs, config: Config) -> Result<(), Box<dyn Error>> {
@@ -87,9 +87,15 @@ pub async fn add(args: AddArgs, config: Config) -> Result<(), Box<dyn Error>> {
         }
         reqs
     } else {
-        return Err(Box::from(format!(
-            "Please specify a configuration file or a folder"
-        )));
+        let ts = Task::from_args(args)?;
+        let mut reqs = Vec::new();
+        for task in ts.task {
+            let request: Request = Request {
+                command: Command::Add(task),
+            };
+            reqs.push(request);
+        }
+        reqs
     };
     print_result(send(config.clone(), requests).await?).await;
     Ok(())

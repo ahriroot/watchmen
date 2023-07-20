@@ -3,9 +3,25 @@ use std::{error::Error, fs::File, io::Read, path::Path, process::Stdio};
 use configparser::ini::Ini;
 use tokio::process::{Child, Command};
 
-use crate::task::{AsyncTask, PeriodicTask, ScheduledTask, Task, TaskFlag, TaskType, Tasks};
+use crate::{
+    arg::{AddArgs, FlagArgs},
+    task::{AsyncTask, PeriodicTask, ScheduledTask, Task, TaskFlag, TaskType, Tasks},
+};
 
 impl TaskFlag {
+    pub fn from_args(args: FlagArgs) -> Result<Vec<TaskFlag>, Box<dyn Error>> {
+        let mut tasks = Vec::new();
+        if let Some(name) = args.name {
+            tasks.push(TaskFlag::new(name));
+        } else {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Task name is none",
+            )));
+        }
+        Ok(tasks)
+    }
+
     pub fn from_file(path: &Path) -> Result<Vec<TaskFlag>, Box<dyn Error>> {
         let ext = match path.extension() {
             Some(ext) => match ext.to_str() {
@@ -71,6 +87,46 @@ impl TaskFlag {
 }
 
 impl Task {
+    pub fn from_args(args: AddArgs) -> Result<Tasks, Box<dyn Error>> {
+        let mut task = Task::default();
+
+        if let Some(name) = args.name {
+            task.name = name;
+        } else {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Task name is none",
+            )));
+        }
+
+        if let Some(command) = args.command {
+            task.command = command;
+        } else {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Task command is none",
+            )));
+        }
+
+        if let Some(ags) = args.args {
+            task.args = ags;
+        } else {
+            task.args = Vec::new();
+        }
+
+        task.dir = args.dir;
+
+        if args.stdin {
+            task.stdin = Some(true);
+        }
+
+        task.stdout = args.stdout;
+        task.stderr = args.stderr;
+
+        let tasks = Tasks { task: vec![task] };
+        Ok(tasks)
+    }
+
     pub fn from_file(path: &Path) -> Result<Tasks, Box<dyn Error>> {
         let ext = match path.extension() {
             Some(ext) => match ext.to_str() {

@@ -2,9 +2,10 @@ use std::{error::Error, ffi::OsStr, path::PathBuf};
 
 static CONFIG: &str = r#"[watchmen]
 # The engine to use for the watchmen server
-# Valid values are "sock", "socket", "redis"
+# Valid values are "sock", "socket", "http", "redis"
 # sock: Unix socket
 # socket: TCP socket
+# http: HTTP Api (Include Web panel)
 # redis: Redis pub/sub
 engines = ["sock"]
 
@@ -34,11 +35,12 @@ pid = "$HOME/.watchmen/watchmen.pid"
 # Default is `^.*\\.(toml|ini|json)$`
 mat = "^.*\\.(toml|ini|json)$"
 
-# Tasks cache file
+# Tasks cache file, json format
 cache = "$HOME/.watchmen/cache.json"
 
 
 [sock]
+# The unix socket path of the watchmen server
 path = "/tmp/watchmen.sock"
 
 

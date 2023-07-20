@@ -86,15 +86,16 @@ pub async fn remove(args: FlagArgs, config: Config) -> Result<(), Box<dyn Error>
             reqs.push(request);
         }
         reqs
-    } else if let Some(name) = args.name {
-        let request: Request = Request {
-            command: Command::Remove(TaskFlag { name, mat: args.mat }),
-        };
-        vec![request]
     } else {
-        return Err(Box::from(format!(
-            "Please specify a configuration file or a folder"
-        )));
+        let ts = TaskFlag::from_args(args)?;
+        let mut reqs = Vec::new();
+        for task in ts {
+            let request: Request = Request {
+                command: Command::Remove(task),
+            };
+            reqs.push(request);
+        }
+        reqs
     };
     print_result(send(config.clone(), requests).await?).await;
     Ok(())
