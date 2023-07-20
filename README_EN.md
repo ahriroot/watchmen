@@ -1,4 +1,4 @@
-# Watchmen
+# Watchmen (0.1.0)
 
 `
 Watchmen is a daemon process manager that for you manage and keep your application online 24/7
@@ -41,6 +41,72 @@ cargo install watchmen
 > "" Default is ${HOME}/.watchmen/config.toml
 
 `watchmen -g ""`
+
+```toml
+[watchmen]
+# The engine to use for the watchmen server
+# Valid values are "sock", "socket", "http", "redis"
+# sock: Unix socket
+# socket: TCP socket
+# http: HTTP Api (Include Web panel)
+# redis: Redis pub/sub
+engines = ["sock"]
+
+# The default engine to use for connecting to the watchmen server
+engine = "sock"
+
+# The log directory of the watchmen server
+log_dir = "$HOME/.watchmen/logs"
+
+# The log level of the watchmen server
+# Valid values are "debug", "info", "warn", "error". Default is "info"
+log_level = "info"
+
+# The standard output of the watchmen server
+# Default is None
+stdout = "$HOME/.watchmen/watchmen.stdout.log"
+
+# The standard error of the watchmen server
+# Default is None
+stderr = "$HOME/.watchmen/watchmen.stderr.log"
+
+# The pid file of the watchmen server
+# Default is `$HOME/.watchmen/watchmen.pid`
+pid = "$HOME/.watchmen/watchmen.pid"
+
+# The task config file name matching pattern
+# Default is `^.*\\.(toml|ini|json)$`
+mat = "^.*\\.(toml|ini|json)$"
+
+# Tasks cache file, json format
+cache = "$HOME/.watchmen/cache.json"
+
+
+[sock]
+# The unix socket path of the watchmen server
+path = "/tmp/watchmen.sock"
+
+
+[socket]
+host = "127.0.0.1"
+port = 1949
+
+
+[http]
+host = "127.0.0.1"
+port = 1997
+
+
+[redis]
+host = "localhost"
+port = 6379
+username = ""
+password = ""
+queue_index = 0
+queue_name = "watchmen"
+subscribe_channels = ["watchmen"]
+subscribe_name = "watchmen"
+```
 
 ### Start watchmen daemon
 
