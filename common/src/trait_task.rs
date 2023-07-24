@@ -277,6 +277,8 @@ impl Task {
                     TaskType::Scheduled(tt)
                 }
                 "async" => TaskType::Async(AsyncTask {
+                    max_restart: 0,
+                    has_restart: 0,
                     started_at: 0,
                     stopped_at: 0,
                 }),

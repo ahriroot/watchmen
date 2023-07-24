@@ -1,6 +1,6 @@
 pub mod command;
 pub mod engine;
-// pub mod monitor;
+pub mod monitor;
 pub mod utils;
 
 pub mod global {
@@ -65,6 +65,15 @@ pub mod global {
     pub async fn set_cache(path: String) {
         let mut cache = CACHE.lock().await;
         *cache = Some(path);
+    }
+
+    pub async fn get_all() -> Result<HashMap<String, Task>, Box<dyn Error>> {
+        let tasks = TASKS.lock().await;
+        let mut tasks_map: HashMap<String, Task> = HashMap::new();
+        for (name, tp) in tasks.iter() {
+            tasks_map.insert(name.clone(), tp.task.clone());
+        }
+        Ok(tasks_map)
     }
 
     pub async fn cache() -> Result<(), Box<dyn Error>> {
@@ -133,6 +142,8 @@ pub mod global {
                             .expect("Failed to get timestamp")
                             .as_secs();
                         tp.task.task_type = TaskType::Async(AsyncTask {
+                            max_restart: 0,
+                            has_restart: 0,
                             started_at: now,
                             stopped_at: 0,
                         });
@@ -164,6 +175,7 @@ pub mod global {
                                 Some(None),
                                 Some(Some("stopped".to_string())),
                                 Some(res.code()),
+                                None,
                             )
                             .await
                             .unwrap();
@@ -192,6 +204,7 @@ pub mod global {
         pid: Option<Option<u32>>,
         status: Option<Option<String>>,
         code: Option<Option<i32>>,
+        restart: Option<bool>,
     ) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
         if !tasks.contains_key(&name) {
@@ -210,11 +223,24 @@ pub mod global {
                     "running" => match tp.task.task_type.clone() {
                         TaskType::Async(tmp) => {
                             tp.task.task_type = TaskType::Async(AsyncTask {
+                                max_restart: tmp.max_restart,
+                                has_restart: tmp.has_restart,
                                 started_at: tmp.started_at,
                                 stopped_at: SystemTime::now()
                                     .duration_since(UNIX_EPOCH)
                                     .expect("Failed to get timestamp")
                                     .as_secs(),
+                            });
+                        }
+                        TaskType::Periodic(tmp) => {
+                            let now = SystemTime::now()
+                                .duration_since(UNIX_EPOCH)
+                                .expect("Failed to get timestamp")
+                                .as_secs();
+                            tp.task.task_type = TaskType::Periodic(common::task::PeriodicTask {
+                                interval: tmp.interval,
+                                last_run: now,
+                                started_after: tmp.started_after,
                             });
                         }
                         _ => {}
@@ -224,6 +250,30 @@ pub mod global {
                 None => {}
             }
             tp.task.status = status;
+        }
+        if let Some(restart) = restart {
+            match tp.task.task_type.clone() {
+                TaskType::Async(tmp) => {
+                    let has = if restart {
+                        if tmp.has_restart >= tmp.max_restart {
+                            tp.task.status = Some("stopped".to_string());
+                            tmp.has_restart
+                        } else {
+                            tmp.has_restart + 1
+                        }
+                    } else {
+                        tp.task.status = Some("stopped".to_string());
+                        tmp.has_restart
+                    };
+                    tp.task.task_type = TaskType::Async(AsyncTask {
+                        max_restart: tmp.max_restart,
+                        has_restart: has,
+                        started_at: tmp.started_at,
+                        stopped_at: tmp.stopped_at,
+                    });
+                }
+                _ => {}
+            }
         }
         if let Some(code) = code {
             tp.task.code = code;
@@ -321,8 +371,9 @@ pub mod global {
         }
         let mut tp = tasks.get_mut(&tf.name).unwrap();
 
-        match tp.task.task_type {
-            TaskType::Async(_) => {
+        match &tp.task.task_type {
+            TaskType::Async(tt) => {
+                let max = tt.max_restart;
                 if tp.task.status == Some("running".to_string()) {
                     return Err(Box::new(std::io::Error::new(
                         std::io::ErrorKind::Other,
@@ -362,19 +413,46 @@ pub mod global {
                     };
 
                     let res = child.wait().await.unwrap();
+                    let code = res.code();
+                    let exit = if let Some(code) = code {
+                        if code == 0 {
+                            true
+                        } else {
+                            max == 0
+                        }
+                    } else {
+                        true
+                    };
+                    if exit {
+                        update(
+                            tf.name,
+                            Some(None),
+                            Some(Some("stopped".to_string())),
+                            Some(res.code()),
+                            None,
+                        )
+                        .await
+                        .unwrap();
+                        cache().await.unwrap();
 
-                    update(
-                        tf.name,
-                        Some(None),
-                        Some(Some("stopped".to_string())),
-                        Some(res.code()),
-                    )
-                    .await
-                    .unwrap();
-                    cache().await.unwrap();
+                        if let Some(cjh) = cjh {
+                            cjh.await.unwrap();
+                        }
+                    } else {
+                        update(
+                            tf.name,
+                            Some(None),
+                            Some(Some("auto restart".to_string())),
+                            Some(res.code()),
+                            Some(true),
+                        )
+                        .await
+                        .unwrap();
+                        cache().await.unwrap();
 
-                    if let Some(cjh) = cjh {
-                        cjh.await.unwrap();
+                        if let Some(cjh) = cjh {
+                            cjh.await.unwrap();
+                        }
                     }
 
                     return res.code();
@@ -383,7 +461,7 @@ pub mod global {
                 tp.joinhandle = Some(jh);
 
                 tokio::spawn(async move {
-                    update(task_name, Some(pid), Some(status), None)
+                    update(task_name, Some(pid), Some(status), None, None)
                         .await
                         .unwrap();
                 });
@@ -419,7 +497,9 @@ pub mod global {
         }
         let tp = tasks.get_mut(&tf.name).unwrap();
 
-        if tp.task.status != Some("running".to_string()) {
+        if tp.task.status != Some("running".to_string())
+            && tp.task.status != Some("auto restart".to_string())
+        {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 format!("Task [{}] is not running", tf.name),

@@ -16,6 +16,8 @@ pub struct ScheduledTask {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AsyncTask {
+    pub max_restart: u64,
+    pub has_restart: u64,
     pub started_at: u64,
     pub stopped_at: u64,
 }
@@ -112,7 +114,7 @@ impl Default for TaskFlag {
     fn default() -> Self {
         TaskFlag {
             name: "".to_string(),
-            mat: false
+            mat: false,
         }
     }
 }

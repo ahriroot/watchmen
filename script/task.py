@@ -12,8 +12,8 @@ def main():
     while True:
         count += 1
         print(f'Result from python task: {count}')
-        if count >= 100:
-            break
+        if count >= 5:
+            raise Exception('Python task error')
         time.sleep(1)
 
 

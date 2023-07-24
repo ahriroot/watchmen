@@ -4,7 +4,7 @@ use std::{error::Error, path::Path};
 use tracing::{info, Level};
 use tracing_subscriber::{fmt, EnvFilter};
 
-use watchmend::engine;
+use watchmend::{engine, monitor::run_monitor};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -68,6 +68,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "Watchmen daemon start by engines {:?}",
         config.watchmen.engines
     );
+
+    tokio::spawn(async move {
+        let _ = run_monitor().await;
+    });
 
     engine::start(config, load).await;
 
