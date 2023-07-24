@@ -84,6 +84,20 @@ impl TaskFlag {
         }
         Ok(tasks)
     }
+
+    pub fn from_json(path: &Path) -> Result<Vec<TaskFlag>, Box<dyn Error>> {
+        let mut file = File::open(path)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+        let mut tasks = Vec::new();
+        for i in Task::deserialize(&contents)? {
+            tasks.push(TaskFlag {
+                name: i.name,
+                mat: false,
+            });
+        }
+        Ok(tasks)
+    }
 }
 
 impl Task {
@@ -277,7 +291,10 @@ impl Task {
                     TaskType::Scheduled(tt)
                 }
                 "async" => TaskType::Async(AsyncTask {
-                    max_restart: 0,
+                    max_restart: ini
+                        .get(section, "max_restart")
+                        .unwrap_or("0".to_string())
+                        .parse::<u64>()?,
                     has_restart: 0,
                     started_at: 0,
                     stopped_at: 0,
@@ -328,6 +345,14 @@ impl Task {
         file.read_to_string(&mut contents)?;
         let config: Tasks = toml::from_str(&contents)?;
         Ok(config)
+    }
+
+    pub fn from_json(path: &Path) -> Result<Tasks, Box<dyn Error>> {
+        let mut file = File::open(path)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+        let tasks = Task::deserialize(&contents)?;
+        Ok(Tasks { task: tasks })
     }
 }
 

@@ -116,8 +116,8 @@ subscribe_name = "watchmen"
 
 ```toml
 [[task]]
-id = 2
-name = "Async Task"
+id = 1
+name = "Async Task 1"
 command = "command"
 args = ["arg1", "arg2"]
 dir = "/path/to/directory"
@@ -125,13 +125,13 @@ env = { key1 = "value1", key2 = "value2" }
 stdin = true
 stdout = "output.txt"
 stderr = "error.txt"
-task_type = { Async = { started_at = 0, stopped_at = 0 } }
+task_type = { Async = { max_restart = 2, has_restart = 0, started_at = 0, stopped_at = 0 } }
 ```
 
 ```ini
 [Async Task]
 id = 2
-name = Async Task
+name = Async Task 2
 command = command
 args = arg1 arg2
 dir = /path/to/directory
@@ -140,6 +140,25 @@ stdin = true
 stdout = "output.txt"
 stderr = "error.txt"
 task_type = async
+max_restart = 2
+```
+
+```json
+[
+    {
+        "id": 3,
+        "name": "Async Task 3",
+        "command": "command",
+        "args": ["arg1", "arg2"],
+        "dir": "/path/to/directory",
+        "env": {},
+        "stdin": true,
+        "stdout": "output.txt",
+        "stderr": "error.txt",
+        "created_at": 0,
+        "task_type": { "Async": { "max_restart": 2, "has_restart": 0, "started_at": 0, "stopped_at": 0 } }
+    }
+]
 ```
 
 ## Command
