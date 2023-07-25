@@ -7,15 +7,16 @@ use crate::global::{get_all, start};
 
 pub async fn rerun_tasks() -> Result<(), Box<dyn std::error::Error>> {
     let tasks = get_all().await?;
-    for (name, task) in tasks {
+    for (id, task) in tasks {
         match task.task_type {
             common::task::TaskType::Scheduled(_) => {}
             common::task::TaskType::Async(_) => {
                 if let Some(status) = task.status {
                     if status == "auto restart" {
-                        info!("Restart task: {}", name);
+                        info!("Restart task: {}", id);
                         start(TaskFlag {
-                            name: name.clone(),
+                            id,
+                            name: "".to_string(),
                             mat: false,
                         })
                         .await?;
@@ -28,9 +29,10 @@ pub async fn rerun_tasks() -> Result<(), Box<dyn std::error::Error>> {
                     .expect("Failed to get timestamp")
                     .as_secs();
                 if now >= tt.started_after && now - tt.last_run >= tt.interval {
-                    info!("Run periodic task: {}", name);
+                    info!("Run periodic task: {}", id);
                     start(TaskFlag {
-                        name: name.clone(),
+                        id,
+                        name: "".to_string(),
                         mat: false,
                     })
                     .await?;

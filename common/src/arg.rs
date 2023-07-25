@@ -46,6 +46,8 @@ pub enum Commands {
     Run(AddArgs),
     /// Add tasks
     Add(AddArgs),
+    /// Reload tasks
+    Reload(AddArgs),
     /// Start tasks
     Start(FlagArgs),
     /// Restart tasks
@@ -55,7 +57,42 @@ pub enum Commands {
     /// Remove tasks
     Remove(FlagArgs),
     /// Get tasks list
-    List(FlagArgs),
+    List(ListArgs),
+}
+
+#[derive(Args, Debug, PartialEq)]
+pub struct ListArgs {
+    /// Task config directory
+    #[arg(short = 'p', long)]
+    pub path: Option<String>,
+
+    /// Task config filename regex pattern
+    #[arg(short = 'm', long, default_value = r"^.*\.(toml|ini|json)$")]
+    pub pattern: Option<String>,
+
+    /// Task config file
+    #[arg(short = 'f', long)]
+    pub config: Option<String>,
+
+    ///  Task id (unique)
+    #[arg(short = 'i', long)]
+    pub id: Option<i64>,
+
+    /// Task name (unique)
+    #[arg(short = 'n', long)]
+    pub name: Option<String>,
+
+    /// Is match regex pattern by namae
+    #[arg(short = 'r', long)]
+    pub mat: bool,
+
+    /// Show more info
+    #[arg(short = 'd', long, default_value = "false")]
+    pub more: bool,
+
+    /// Show less info
+    #[arg(short = 'l', long, default_value = "false")]
+    pub less: bool,
 }
 
 #[derive(Args, Debug, PartialEq)]
@@ -71,6 +108,10 @@ pub struct FlagArgs {
     /// Task config file
     #[arg(short = 'f', long)]
     pub config: Option<String>,
+
+    /// Task id (unique)
+    #[arg(short, long)]
+    pub id: Option<i64>,
 
     /// Task name (unique)
     #[arg(short, long)]

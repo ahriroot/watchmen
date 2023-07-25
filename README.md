@@ -234,6 +234,28 @@ Options:
   -h, --help               Print help
 ```
 
+### watchmen reload -h
+
+```shell
+Reload tasks
+
+Usage: watchmen reload [OPTIONS]
+
+Options:
+  -p, --path <PATH>        Task config directory
+  -m, --mat <MAT>          Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>    Task config file
+  -n, --name <NAME>        Task name (unique)
+  -c, --command <COMMAND>  Task command
+  -a, --args <ARGS>        Task arguments
+  -d, --dir <DIR>          Task working directory
+  -e, --env <ENV>          Task environment variables
+  -i, --stdin              Task standard input
+  -o, --stdout <STDOUT>    Task standard output
+  -r, --stderr <STDERR>    Task standard error
+  -h, --help               Print help
+```
+
 ### watchmen start -h
 
 ```shell
@@ -309,9 +331,12 @@ Options:
   -p, --path <PATH>        Task config directory
   -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
   -f, --config <CONFIG>    Task config file
+  -i, --id <ID>            Task id (unique)
   -n, --name <NAME>        Task name (unique)
   -r, --mat                Is match regex pattern by namae
-  -h, --help               Print help
+  -d, --more               Show more info
+  -l, --less               Show less info
+  -h, --help               Print hel
 ```
 
 ## License Apache Licence 2.0

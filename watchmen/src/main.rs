@@ -1,8 +1,8 @@
 use colored::Colorize;
 use std::{env, error::Error};
 
-use common::{arg::TaskArgs, config::Config};
-use watchmen::{args, commands::handle_exec};
+use common::{arg::TaskArgs, config::Config, handle::Response};
+use watchmen::{args, commands::handle_exec, utils::print_result};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -30,7 +30,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         if let Some(engine) = clargs.engine {
             config.watchmen.engine = engine;
         }
-        return handle_exec(commands, config).await;
+        let res = handle_exec(commands, config).await;
+        if let Err(e) = res {
+            print_result(vec![Response::failed(e.to_string())]).await;
+        }
     }
     return Ok(());
 }

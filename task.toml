@@ -1,6 +1,6 @@
 [[task]]
 id = 2
-name = "Async Task"
+name = "Async Task2"
 command = "python"
 args = ["-u", "/home/ahriknow/project/watchmen/script/task.py"]
 dir = "/home/ahriknow/project/watchmen"

@@ -11,8 +11,14 @@ use crate::{
 impl TaskFlag {
     pub fn from_args(args: FlagArgs) -> Result<Vec<TaskFlag>, Box<dyn Error>> {
         let mut tasks = Vec::new();
-        if let Some(name) = args.name {
-            tasks.push(TaskFlag::new(name));
+        if let Some(id) = args.id {
+            tasks.push(TaskFlag::new(id));
+        } else if let Some(name) = args.name {
+            tasks.push(TaskFlag {
+                id: 0,
+                name,
+                mat: false,
+            });
         } else {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
@@ -43,6 +49,7 @@ impl TaskFlag {
         match ext {
             "ini" => TaskFlag::from_ini(path),
             "toml" => TaskFlag::from_toml(path),
+            "json" => TaskFlag::from_json(path),
             _ => Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 format!("Invalid file extension: {}", ext),
@@ -56,16 +63,24 @@ impl TaskFlag {
         let mut tasks = Vec::new();
 
         for section in ini.sections() {
-            let name = match ini.get(section.as_str(), "name") {
-                Some(name) => name,
-                None => {
+            let id = match ini.getint(section.as_str(), "id") {
+                Ok(id) => match id {
+                    Some(id) => id,
+                    None => {
+                        return Err(Box::new(std::io::Error::new(
+                            std::io::ErrorKind::Other,
+                            "Invalid config file, id is none",
+                        )));
+                    }
+                },
+                Err(_) => {
                     return Err(Box::new(std::io::Error::new(
                         std::io::ErrorKind::Other,
-                        "Invalid config file",
-                    )))
+                        "Invalid config file, id is error",
+                    )));
                 }
             };
-            tasks.push(TaskFlag::new(name));
+            tasks.push(TaskFlag::new(id));
         }
 
         Ok(tasks)
@@ -78,6 +93,7 @@ impl TaskFlag {
         let mut tasks = Vec::new();
         for i in toml::from_str::<Tasks>(&contents)?.task {
             tasks.push(TaskFlag {
+                id: i.id,
                 name: i.name,
                 mat: false,
             });
@@ -92,6 +108,7 @@ impl TaskFlag {
         let mut tasks = Vec::new();
         for i in Task::deserialize(&contents)? {
             tasks.push(TaskFlag {
+                id: i.id,
                 name: i.name,
                 mat: false,
             });
@@ -162,6 +179,7 @@ impl Task {
         match ext {
             "ini" => Task::from_ini(path),
             "toml" => Task::from_toml(path),
+            "json" => Task::from_json(path),
             _ => Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 format!("Invalid file extension: {}", ext),
@@ -433,7 +451,11 @@ impl Tasks {
 }
 
 impl TaskFlag {
-    pub fn new(name: String) -> Self {
-        TaskFlag { name, mat: false }
+    pub fn new(id: i64) -> Self {
+        TaskFlag {
+            id,
+            name: "".to_string(),
+            mat: false,
+        }
     }
 }

@@ -37,7 +37,7 @@ pub mod global {
 
     lazy_static! {
         static ref CACHE: Mutex<Option<String>> = Mutex::new(None);
-        static ref TASKS: Mutex<HashMap<String, TaskProcess>> = Mutex::new(HashMap::new());
+        static ref TASKS: Mutex<HashMap<i64, TaskProcess>> = Mutex::new(HashMap::new());
     }
 
     /// 设置缓存路径。
@@ -67,11 +67,11 @@ pub mod global {
         *cache = Some(path);
     }
 
-    pub async fn get_all() -> Result<HashMap<String, Task>, Box<dyn Error>> {
+    pub async fn get_all() -> Result<HashMap<i64, Task>, Box<dyn Error>> {
         let tasks = TASKS.lock().await;
-        let mut tasks_map: HashMap<String, Task> = HashMap::new();
-        for (name, tp) in tasks.iter() {
-            tasks_map.insert(name.clone(), tp.task.clone());
+        let mut tasks_map: HashMap<i64, Task> = HashMap::new();
+        for (id, tp) in tasks.iter() {
+            tasks_map.insert(*id, tp.task.clone());
         }
         Ok(tasks_map)
     }
@@ -113,7 +113,6 @@ pub mod global {
         let tasks_cache: Vec<Task> = serde_json::from_str(&std::fs::read_to_string(path).unwrap())?;
         let mut tasks = TASKS.lock().await;
         for task in tasks_cache {
-            let name = task.name.clone();
             let mut tp = TaskProcess {
                 task: task.clone(),
                 joinhandle: None,
@@ -171,7 +170,7 @@ pub mod global {
                             let res = child.wait().await.unwrap();
 
                             update(
-                                task.name,
+                                task.id,
                                 Some(None),
                                 Some(Some("stopped".to_string())),
                                 Some(res.code()),
@@ -194,26 +193,26 @@ pub mod global {
                 }
                 _ => {}
             }
-            tasks.insert(name, tp);
+            tasks.insert(task.id, tp);
         }
         Ok(())
     }
 
     pub async fn update(
-        name: String,
+        id: i64,
         pid: Option<Option<u32>>,
         status: Option<Option<String>>,
         code: Option<Option<i32>>,
         restart: Option<bool>,
     ) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        if !tasks.contains_key(&name) {
+        if !tasks.contains_key(&id) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] not exists", name),
+                format!("Task [{}] not exists", id),
             )));
         }
-        let mut tp = tasks.get_mut(&name).unwrap();
+        let mut tp = tasks.get_mut(&id).unwrap();
         if let Some(pid) = pid {
             tp.task.pid = pid;
         }
@@ -282,6 +281,15 @@ pub mod global {
     }
 
     pub async fn add(mut task: Task) -> Result<Response, Box<dyn Error>> {
+        let mut tasks = TASKS.lock().await;
+        let id = task.id;
+        if tasks.contains_key(&id) {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Task [{}] already exists", id),
+            )));
+        }
+
         if let Some(so) = &task.stdout {
             let stdout = get_with_home_path(so);
             let parent = stdout.parent().unwrap();
@@ -304,72 +312,130 @@ pub mod global {
             args[i] = get_with_home(&args[i]);
         }
         task.args = args;
-
-        let mut tasks = TASKS.lock().await;
-        let name = task.name.clone();
-        if tasks.contains_key(&name) {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Task [{}] already exists", task.name),
-            )));
-        }
+        let tn = task.name.clone();
         let tp = TaskProcess {
             task,
             joinhandle: None,
             tx: None,
         };
-        tasks.insert(name, tp);
+        tasks.insert(id, tp);
         cache().await?;
-        Ok(Response::success(None))
+        Ok(Response::success(Some(Data::String(format!(
+            "Task [{}] added",
+            tn
+        )))))
     }
 
-    pub async fn remove(tf: TaskFlag) -> Result<Response, Box<dyn Error>> {
+    pub async fn reload(task: Task) -> Result<Response, Box<dyn Error>> {
+        remove(
+            TaskFlag {
+                id: task.id,
+                name: "".to_string(),
+                mat: false,
+            },
+            false,
+        )
+        .await?;
+        add(task).await
+    }
+
+    pub async fn remove(tf: TaskFlag, to_cache: bool) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        if !tasks.contains_key(&tf.name) {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Task [{}] not exists", tf.name),
-            )));
+        if tf.id > 0 {
+            if !tasks.contains_key(&tf.id) {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("Task [{}] not exists", tf.id),
+                )));
+            }
+            let tp = tasks.get(&tf.id).unwrap();
+            if Some("running".to_string()) == tp.task.status {
+                return Ok(Response::wrong(
+                    "Task is running, please stop it first".to_string(),
+                ));
+            }
+            if let Some(removed) = tasks.remove(&tf.id) {
+                if to_cache {
+                    cache().await?;
+                }
+                Ok(Response::success(Some(Data::String(format!(
+                    "Task [{}:{}] removed",
+                    removed.task.id, removed.task.name
+                )))))
+            } else {
+                Ok(Response::wrong(format!("Task [{}:] not exists", tf.id)))
+            }
+        } else {
+            // find id by name
+            let id = tasks
+                .iter()
+                .find(|(_, tp)| tp.task.name == tf.name)
+                .map(|(id, _)| *id);
+            if id.is_none() {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("Task [{}] not exists", tf.name),
+                )));
+            }
+            if let Some(id) = id {
+                let tp = tasks.get(&id).unwrap();
+                if Some("running".to_string()) == tp.task.status {
+                    return Ok(Response::wrong(
+                        "Task is running, please stop it first".to_string(),
+                    ));
+                }
+                if let Some(removed) = tasks.remove(&id) {
+                    if to_cache {
+                        cache().await?;
+                    }
+                    Ok(Response::success(Some(Data::String(format!(
+                        "Task [{}:{}] removed",
+                        removed.task.id, removed.task.name
+                    )))))
+                } else {
+                    Ok(Response::wrong(format!(
+                        "Task [{}:{}] not exists",
+                        tf.id, tf.name
+                    )))
+                }
+            } else {
+                return Ok(Response::wrong(format!("Task [:{}] not exists", tf.name)));
+            }
         }
-        let tp = tasks.get(&tf.name).unwrap();
-        if Some("running".to_string()) == tp.task.status {
-            return Ok(Response::wrong(
-                "Task is running, please stop it first".to_string(),
-            ));
-        }
-        tasks.remove(&tf.name);
-        cache().await?;
-        Ok(Response::success(None))
     }
 
     pub async fn delete(tf: TaskFlag) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        if !tasks.contains_key(&tf.name) {
+        if !tasks.contains_key(&tf.id) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] not exists", tf.name),
+                format!("Task [{}] not exists", tf.id),
             )));
         }
-        let tp = tasks.get(&tf.name).unwrap();
+        let tp = tasks.get(&tf.id).unwrap();
         if tp.task.pid.is_some() {
             stop(tf.clone(), true).await?;
         }
         if let Some(jh) = &tp.joinhandle {
             jh.abort();
         }
-        tasks.remove(&tf.name);
-        Ok(Response::success(None))
+        let tn = tf.id.clone();
+        tasks.remove(&tf.id);
+        Ok(Response::success(Some(Data::String(format!(
+            "Task [{}] deleted",
+            tn
+        )))))
     }
 
     pub async fn start(tf: TaskFlag) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        if !tasks.contains_key(&tf.name) {
+        if !tasks.contains_key(&tf.id) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] not exists", tf.name),
+                format!("Task [{}] not exists", tf.id),
             )));
         }
-        let mut tp = tasks.get_mut(&tf.name).unwrap();
+        let mut tp = tasks.get_mut(&tf.id).unwrap();
 
         match &tp.task.task_type {
             TaskType::Async(tt) => {
@@ -377,7 +443,7 @@ pub mod global {
                 if tp.task.status == Some("running".to_string()) {
                     return Err(Box::new(std::io::Error::new(
                         std::io::ErrorKind::Other,
-                        format!("Task [{}] is running", tf.name),
+                        format!("Task [{}] is running", tf.id),
                     )));
                 }
 
@@ -391,7 +457,6 @@ pub mod global {
                     None
                 };
 
-                let task_name = tp.task.name.clone();
                 let pid = child.id();
                 let status = Some("running".to_string());
 
@@ -425,7 +490,7 @@ pub mod global {
                     };
                     if exit {
                         update(
-                            tf.name,
+                            tf.id,
                             Some(None),
                             Some(Some("stopped".to_string())),
                             Some(res.code()),
@@ -440,7 +505,7 @@ pub mod global {
                         }
                     } else {
                         update(
-                            tf.name,
+                            tf.id,
                             Some(None),
                             Some(Some("auto restart".to_string())),
                             Some(res.code()),
@@ -460,14 +525,18 @@ pub mod global {
 
                 tp.joinhandle = Some(jh);
 
+                let id = tf.id;
                 tokio::spawn(async move {
-                    update(task_name, Some(pid), Some(status), None, None)
+                    update(id, Some(pid), Some(status), None, None)
                         .await
                         .unwrap();
                 });
 
                 cache().await?;
-                Ok(Response::success(None))
+                Ok(Response::success(Some(Data::String(format!(
+                    "Task [{}] started",
+                    id
+                )))))
             }
             _ => Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
@@ -482,27 +551,32 @@ pub mod global {
     }
 
     pub async fn run(task: Task) -> Result<Response, Box<dyn Error>> {
-        let name = task.name.clone();
+        let id = task.id;
         add(task).await?;
-        start(TaskFlag { name, mat: false }).await
+        start(TaskFlag {
+            id,
+            name: "".to_string(),
+            mat: false,
+        })
+        .await
     }
 
     pub async fn stop(tf: TaskFlag, to_cache: bool) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        if !tasks.contains_key(&tf.name) {
+        if !tasks.contains_key(&tf.id) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] not exists", tf.name),
+                format!("Task [{}] not exists", tf.id),
             )));
         }
-        let tp = tasks.get_mut(&tf.name).unwrap();
+        let tp = tasks.get_mut(&tf.id).unwrap();
 
         if tp.task.status != Some("running".to_string())
             && tp.task.status != Some("auto restart".to_string())
         {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] is not running", tf.name),
+                format!("Task [{}] is not running", tf.id),
             )));
         }
 
@@ -526,26 +600,29 @@ pub mod global {
             if to_cache {
                 cache().await?;
             }
-            Ok(Response::success(None))
+            Ok(Response::success(Some(Data::String(format!(
+                "Task [{}] stopped",
+                tf.id
+            )))))
         } else {
-            Ok(Response::wrong("Task is not running".to_string()))
+            Ok(Response::wrong(format!("Task [{}] is not running", tf.id)))
         }
     }
 
     pub async fn write(tf: TaskFlag, data: String) -> Result<Response, Box<dyn Error>> {
         let mut tasks = TASKS.lock().await;
-        if !tasks.contains_key(&tf.name) {
+        if !tasks.contains_key(&tf.id) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] not exists", tf.name),
+                format!("Task [{}] not exists", tf.id),
             )));
         }
-        let tp = tasks.get_mut(&tf.name).unwrap();
+        let tp = tasks.get_mut(&tf.id).unwrap();
 
         if tp.task.status != Some("running".to_string()) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Task [{}] is not running", tf.name),
+                format!("Task [{}] is not running", tf.id),
             )));
         }
 
@@ -563,18 +640,9 @@ pub mod global {
         let mut status: Vec<Status> = Vec::new();
         match condition {
             Some(condition) => {
-                if condition.mat {
-                    for (name, tp) in tasks.iter() {
-                        let regex: Regex = Regex::new(&condition.name)?;
-                        if regex.is_match(name) {
-                            status.push(tp.task.clone().into());
-                        }
-                    }
-                    let response = Response::success(Some(Data::Status(status)));
-                    Ok(response)
-                } else {
-                    if tasks.contains_key(&condition.name) {
-                        let tp = tasks.get(&condition.name).unwrap();
+                if condition.id > 0 {
+                    if tasks.contains_key(&condition.id) {
+                        let tp = tasks.get(&condition.id).unwrap();
                         status.push(tp.task.clone().into());
                         let response = Response::success(Some(Data::Status(status)));
                         Ok(response)
@@ -582,6 +650,23 @@ pub mod global {
                         let response = Response::success(Some(Data::Status(status)));
                         Ok(response)
                     }
+                } else if condition.mat {
+                    for (_id, tp) in tasks.iter() {
+                        let regex: Regex = Regex::new(&condition.name)?;
+                        if regex.is_match(&tp.task.name) {
+                            status.push(tp.task.clone().into());
+                        }
+                    }
+                    let response = Response::success(Some(Data::Status(status)));
+                    Ok(response)
+                } else {
+                    for (_id, tp) in tasks.iter() {
+                        if tp.task.name == condition.name {
+                            status.push(tp.task.clone().into());
+                        }
+                    }
+                    let response = Response::success(Some(Data::Status(status)));
+                    Ok(response)
                 }
             }
             None => {
@@ -592,15 +677,5 @@ pub mod global {
                 Ok(response)
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    #[test]
-    fn reg() {
-        let regex: regex::Regex = regex::Regex::new("Test").unwrap();
-        assert!(regex.is_match("TestPython"));
     }
 }

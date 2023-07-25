@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Display};
 
 use serde::{Deserialize, Serialize};
 
-use crate::task::{Task, TaskType, TaskFlag};
+use crate::task::{Task, TaskFlag, TaskType};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Request {
@@ -13,6 +13,7 @@ pub struct Request {
 pub enum Command {
     Run(Task),
     Add(Task),
+    Reload(Task),
     Stop(TaskFlag),
     Start(TaskFlag),
     Restart(TaskFlag),

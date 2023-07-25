@@ -61,6 +61,7 @@ pub struct Task {
     pub stdout: Option<String>,
     pub stderr: Option<String>,
 
+    #[serde(default = "default_created_at")]
     pub created_at: u64,
     pub task_type: TaskType,
 
@@ -69,6 +70,15 @@ pub struct Task {
     #[serde(default = "default_status")]
     pub status: Option<String>,
     pub code: Option<i32>,
+}
+
+fn default_created_at() -> u64 {
+    let now = SystemTime::now();
+    let timestamp = now
+        .duration_since(UNIX_EPOCH)
+        .expect("Failed to get timestamp")
+        .as_secs();
+    timestamp
 }
 
 fn default_status() -> Option<String> {
@@ -106,6 +116,7 @@ unsafe impl Sync for Task {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskFlag {
+    pub id: i64,
     pub name: String,
     pub mat: bool,
 }
@@ -113,6 +124,7 @@ pub struct TaskFlag {
 impl Default for TaskFlag {
     fn default() -> Self {
         TaskFlag {
+            id: 0,
             name: "".to_string(),
             mat: false,
         }
