@@ -126,12 +126,24 @@ stdin = true
 stdout = "output.txt"
 stderr = "error.txt"
 task_type = { Async = { max_restart = 2, has_restart = 0, started_at = 0, stopped_at = 0 } }
+
+[[task]]
+id = 2
+name = "Periodic Task 1"
+command = "command"
+args = ["arg1", "arg2"]
+dir = "/path/to/directory"
+env = { key1 = "value1", key2 = "value2" }
+stdin = false
+stdout = "output.txt"
+stderr = "error.txt"
+task_type = { Periodic = { started_after = 0, interval = 60, last_run = 0, sync = false } }
 ```
 
 ```ini
 [Async Task]
-id = 2
-name = Async Task 2
+id = 1
+name = Async Task 1
 command = command
 args = arg1 arg2
 dir = /path/to/directory
@@ -141,13 +153,28 @@ stdout = "output.txt"
 stderr = "error.txt"
 task_type = async
 max_restart = 2
+
+[Periodic Task]
+id = 2
+name = Periodic Task 1
+command = command
+args = arg1 arg2
+dir = /path/to/directory
+env = key1=value1 key2=value2
+stdin = false
+stdout = "output.txt"
+stderr = "error.txt"
+task_type = periodic
+started_after = 0
+interval = 60
+sync = false
 ```
 
 ```json
 [
     {
-        "id": 3,
-        "name": "Async Task 3",
+        "id": 1,
+        "name": "Async Task 1",
         "command": "command",
         "args": ["arg1", "arg2"],
         "dir": "/path/to/directory",
@@ -157,6 +184,19 @@ max_restart = 2
         "stderr": "error.txt",
         "created_at": 0,
         "task_type": { "Async": { "max_restart": 2, "has_restart": 0, "started_at": 0, "stopped_at": 0 } }
+    },
+    {
+        "id": 2,
+        "name": "Periodic Task 1",
+        "command": "command",
+        "args": ["arg1", "arg2"],
+        "dir": "/path/to/directory",
+        "env": {},
+        "stdin": false,
+        "stdout": "output.txt",
+        "stderr": "error.txt",
+        "created_at": 0,
+        "task_type": { "Periodic": { "started_after": 0, "interval": 60, "last_run": 0, "sync": false } }
     }
 ]
 ```
@@ -312,6 +352,40 @@ Options:
 Remove tasks
 
 Usage: watchmen remove [OPTIONS]
+
+Options:
+  -p, --path <PATH>      Task config directory
+  -r, --regex <REGEX>    Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>  Task config file
+  -i, --id <ID>          Task id (unique)
+  -n, --name <NAME>      Task name (unique)
+  -m, --mat              Is match regex pattern by namae
+  -h, --help             Print help
+```
+
+### watchmen pause -h
+
+```shell
+Pause interval tasks
+
+Usage: watchmen pause [OPTIONS]
+
+Options:
+  -p, --path <PATH>      Task config directory
+  -r, --regex <REGEX>    Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>  Task config file
+  -i, --id <ID>          Task id (unique)
+  -n, --name <NAME>      Task name (unique)
+  -m, --mat              Is match regex pattern by namae
+  -h, --help             Print help
+```
+
+### watchmen resume -h
+
+```shell
+Resume interval tasks
+
+Usage: watchmen resume [OPTIONS]
 
 Options:
   -p, --path <PATH>      Task config directory
