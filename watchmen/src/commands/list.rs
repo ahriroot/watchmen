@@ -16,7 +16,7 @@ use crate::{
 pub async fn list(args: ListArgs, config: Config) -> Result<(), Box<dyn Error>> {
     let requests = if let Some(path) = args.path {
         let mat;
-        if let Some(matc) = args.pattern {
+        if let Some(matc) = args.regex {
             // 优先使用命令行参数
             mat = matc;
         } else if let Some(matc) = config.watchmen.mat.clone() {
@@ -148,6 +148,9 @@ pub async fn print_result(res: Vec<Response>) {
     let mut total_added = 0;
     let mut total_running = 0;
     let mut total_stopped = 0;
+    let mut total_waiting = 0;
+    let mut total_interval = 0;
+    let mut total_paused = 0;
 
     let mut column_id = Vec::new();
     column_id.push("ID".bold());
@@ -189,8 +192,19 @@ pub async fn print_result(res: Vec<Response>) {
                     column_status.push(t.red())
                 }
                 "auto restart" => column_status.push(t.truecolor(128, 128, 128)),
-                "waiting" => column_status.push(t.blue()),
-                "interval" => column_status.push(t.cyan()),
+                "waiting" => {
+                    total_waiting += 1;
+                    column_status.push(t.blue())
+                }
+                "interval" => {
+                    total_interval += 1;
+                    column_status.push(t.cyan())
+                }
+                "paused" => {
+                    total_paused += 1;
+                    column_status.push(t.yellow())
+                }
+                "executing" => column_status.push(t.green()),
                 _ => column_status.push(t.normal()),
             },
             None => column_status.push("".normal()),
@@ -251,13 +265,14 @@ pub async fn print_result(res: Vec<Response>) {
     }
     println!("{:-<max_sum$}", "", max_sum = max_sum);
     println!(
-        "{} Total: {} running, {} stopped, {} added, {} waiting, {} interval",
-        total.to_string().bold().yellow(),
+        "{} Total: {} running, {} stopped, {} added, {} waiting, {} interval, {} paused",
+        total.to_string().bold().purple(),
         total_running.to_string().green(),
         total_stopped.to_string().red(),
         total_added.to_string().magenta(),
-        0.to_string().blue(),
-        0.to_string().cyan(),
+        total_waiting.to_string().blue(),
+        total_interval.to_string().cyan(),
+        total_paused.to_string().yellow(),
     );
 }
 
@@ -285,6 +300,9 @@ pub async fn print_result_more(res: Vec<Response>) {
     let mut total_added = 0;
     let mut total_running = 0;
     let mut total_stopped = 0;
+    let mut total_waiting = 0;
+    let mut total_interval = 0;
+    let mut total_paused = 0;
 
     let mut column_id = Vec::new();
     column_id.push("ID".bold());
@@ -329,8 +347,19 @@ pub async fn print_result_more(res: Vec<Response>) {
                     column_status.push(t.red())
                 }
                 "auto restart" => column_status.push(t.truecolor(128, 128, 128)),
-                "waiting" => column_status.push(t.blue()),
-                "interval" => column_status.push(t.cyan()),
+                "waiting" => {
+                    total_waiting += 1;
+                    column_status.push(t.blue())
+                }
+                "interval" => {
+                    total_interval += 1;
+                    column_status.push(t.cyan())
+                }
+                "paused" => {
+                    total_paused += 1;
+                    column_status.push(t.yellow())
+                }
+                "executing" => column_status.push(t.green()),
                 _ => column_status.push(t.normal()),
             },
             None => column_status.push("".normal()),
@@ -396,13 +425,14 @@ pub async fn print_result_more(res: Vec<Response>) {
     }
     println!("{:-<max_sum$}", "", max_sum = max_sum);
     println!(
-        "{} Total: {} running, {} stopped, {} added, {} waiting, {} interval",
-        total.to_string().bold().yellow(),
+        "{} Total: {} running, {} stopped, {} added, {} waiting, {} interval, {} paused",
+        total.to_string().bold().purple(),
         total_running.to_string().green(),
         total_stopped.to_string().red(),
         total_added.to_string().magenta(),
-        0.to_string().blue(),
-        0.to_string().cyan(),
+        total_waiting.to_string().blue(),
+        total_interval.to_string().cyan(),
+        total_paused.to_string().yellow(),
     );
 }
 
@@ -430,6 +460,9 @@ pub async fn print_result_less(res: Vec<Response>) {
     let mut total_added = 0;
     let mut total_running = 0;
     let mut total_stopped = 0;
+    let mut total_waiting = 0;
+    let mut total_interval = 0;
+    let mut total_paused = 0;
 
     let mut column_id = Vec::new();
     column_id.push("ID".bold());
@@ -459,8 +492,19 @@ pub async fn print_result_less(res: Vec<Response>) {
                     column_status.push(t.red())
                 }
                 "auto restart" => column_status.push(t.truecolor(128, 128, 128)),
-                "waiting" => column_status.push(t.blue()),
-                "interval" => column_status.push(t.cyan()),
+                "waiting" => {
+                    total_waiting += 1;
+                    column_status.push(t.blue())
+                }
+                "interval" => {
+                    total_interval += 1;
+                    column_status.push(t.cyan())
+                }
+                "paused" => {
+                    total_paused += 1;
+                    column_status.push(t.yellow())
+                }
+                "executing" => column_status.push(t.green()),
                 _ => column_status.push(t.normal()),
             },
             None => column_status.push("".normal()),
@@ -486,12 +530,13 @@ pub async fn print_result_less(res: Vec<Response>) {
     }
     println!("{:-<max_sum$}", "", max_sum = max_sum);
     println!(
-        "{} Total: {} running, {} stopped, {} added, {} waiting, {} interval",
-        total.to_string().bold().yellow(),
+        "{} Total: {} running, {} stopped, {} added, {} waiting, {} interval, {} paused",
+        total.to_string().bold().purple(),
         total_running.to_string().green(),
         total_stopped.to_string().red(),
         total_added.to_string().magenta(),
-        0.to_string().blue(),
-        0.to_string().cyan(),
+        total_waiting.to_string().blue(),
+        total_interval.to_string().cyan(),
+        total_paused.to_string().yellow(),
     );
 }

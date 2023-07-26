@@ -17,6 +17,8 @@ pub async fn handle_exec(request: Request) -> Result<Response, Box<dyn Error>> {
         Command::Stop(tf) => global::stop(tf, true).await,
         Command::Remove(tf) => global::remove(tf, true).await,
         Command::Write(tf, data) => global::write(tf, data).await,
+        Command::Pause(tf) => global::pause(tf).await,
+        Command::Resume(tf) => global::resume(tf).await,
         Command::List(condition) => global::list(condition).await,
     };
     match r {

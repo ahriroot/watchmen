@@ -29,13 +29,29 @@ pub async fn rerun_tasks() -> Result<(), Box<dyn std::error::Error>> {
                     .expect("Failed to get timestamp")
                     .as_secs();
                 if now >= tt.started_after && now - tt.last_run >= tt.interval {
-                    info!("Run periodic task: {}", id);
-                    start(TaskFlag {
-                        id,
-                        name: "".to_string(),
-                        mat: false,
-                    })
-                    .await?;
+                    if let Some(status) = task.status {
+                        if tt.sync {
+                            if status == "interval" || status == "executing" {
+                                info!("Execute periodic task: {}", id);
+                                start(TaskFlag {
+                                    id,
+                                    name: "".to_string(),
+                                    mat: false,
+                                })
+                                .await?;
+                            }
+                        } else {
+                            if status == "interval" {
+                                info!("Execute periodic task: {}", id);
+                                start(TaskFlag {
+                                    id,
+                                    name: "".to_string(),
+                                    mat: false,
+                                })
+                                .await?;
+                            }
+                        }
+                    }
                 }
             }
             common::task::TaskType::None => {}
@@ -45,7 +61,7 @@ pub async fn rerun_tasks() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 pub async fn run_monitor() -> Result<(), Box<dyn std::error::Error>> {
-    let mut interval = time::interval(Duration::from_secs(2));
+    let mut interval = time::interval(Duration::from_secs(5));
     loop {
         match rerun_tasks().await {
             Ok(_) => {}

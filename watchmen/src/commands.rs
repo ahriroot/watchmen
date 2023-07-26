@@ -1,11 +1,11 @@
 // pub mod exit;
-// pub mod pause;
-// pub mod resume;
 pub mod add;
 pub mod list;
+pub mod pause;
 pub mod reload;
 pub mod remove;
 pub mod restart;
+pub mod resume;
 pub mod run;
 pub mod start;
 pub mod stop;
@@ -28,6 +28,8 @@ pub async fn handle_exec(commands: Commands, config: Config) -> Result<(), Box<d
         Commands::Restart(args) => self::restart::restart(args, config).await?,
         Commands::Stop(args) => self::stop::stop(args, config).await?,
         Commands::Remove(args) => self::remove::remove(args, config).await?,
+        Commands::Pause(args) => self::pause::pause(args, config).await?,
+        Commands::Resume(args) => self::resume::resume(args, config).await?,
         Commands::List(args) => self::list::list(args, config).await?,
     }
     Ok(())
@@ -39,7 +41,7 @@ pub async fn taskflag_to_request(
 ) -> Result<Vec<TaskFlag>, Box<dyn Error>> {
     let taskflags = if let Some(path) = args.path {
         let mat;
-        if let Some(matc) = args.pattern {
+        if let Some(matc) = args.regex {
             // 优先使用命令行参数
             mat = matc;
         } else if let Some(matc) = config.watchmen.mat.clone() {
@@ -120,7 +122,7 @@ pub async fn taskflag_to_request(
 pub async fn task_to_request(args: AddArgs, config: Config) -> Result<Vec<Task>, Box<dyn Error>> {
     let tasks = if let Some(path) = args.path {
         let mat;
-        if let Some(matc) = args.mat {
+        if let Some(matc) = args.regex {
             // 优先使用命令行参数
             mat = matc;
         } else if let Some(matc) = config.watchmen.mat.clone() {

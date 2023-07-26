@@ -22,10 +22,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mut config: Config = Config::init(clargs.config.clone())?;
 
-    if clargs.daemon {
-        return args::daemon(config);
-    }
-
     if let Some(commands) = clargs.commands {
         if let Some(engine) = clargs.engine {
             config.watchmen.engine = engine;

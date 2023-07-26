@@ -173,6 +173,7 @@ Usage: watchmen [OPTIONS] [COMMAND]
 Commands:
   run      Add and run tasks
   add      Add tasks
+  reload   Reload tasks
   start    Start tasks
   restart  Restart tasks
   stop     Stop tasks
@@ -184,8 +185,6 @@ Options:
   -c, --config <CONFIG>      Config file path. Default: $HOME/.watchmen/config.toml
   -g, --generate <GENERATE>  Generate config file
   -e, --engine <ENGINE>      Engine for send message [default: sock]
-  -d, --daemon               Start watchmen server
-  -w, --guard <GUARD>        Start watchmen server with guard [possible values: true, false]
   -v, --version              Print version
   -h, --help                 Print help
 ```
@@ -199,7 +198,7 @@ Usage: watchmen run [OPTIONS]
 
 Options:
   -p, --path <PATH>        Task config directory
-  -m, --mat <MAT>          Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -r, --regex <REGEX>      Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
   -f, --config <CONFIG>    Task config file
   -n, --name <NAME>        Task name (unique)
   -c, --command <COMMAND>  Task command
@@ -208,7 +207,7 @@ Options:
   -e, --env <ENV>          Task environment variables
   -i, --stdin              Task standard input
   -o, --stdout <STDOUT>    Task standard output
-  -r, --stderr <STDERR>    Task standard error
+  -w, --stderr <STDERR>    Task standard error
   -h, --help               Print help
 ```
 
@@ -221,7 +220,7 @@ Usage: watchmen add [OPTIONS]
 
 Options:
   -p, --path <PATH>        Task config directory
-  -m, --mat <MAT>          Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -r, --regex <REGEX>      Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
   -f, --config <CONFIG>    Task config file
   -n, --name <NAME>        Task name (unique)
   -c, --command <COMMAND>  Task command
@@ -230,7 +229,7 @@ Options:
   -e, --env <ENV>          Task environment variables
   -i, --stdin              Task standard input
   -o, --stdout <STDOUT>    Task standard output
-  -r, --stderr <STDERR>    Task standard error
+  -w, --stderr <STDERR>    Task standard error
   -h, --help               Print help
 ```
 
@@ -243,7 +242,7 @@ Usage: watchmen reload [OPTIONS]
 
 Options:
   -p, --path <PATH>        Task config directory
-  -m, --mat <MAT>          Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -r, --regex <REGEX>      Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
   -f, --config <CONFIG>    Task config file
   -n, --name <NAME>        Task name (unique)
   -c, --command <COMMAND>  Task command
@@ -252,7 +251,7 @@ Options:
   -e, --env <ENV>          Task environment variables
   -i, --stdin              Task standard input
   -o, --stdout <STDOUT>    Task standard output
-  -r, --stderr <STDERR>    Task standard error
+  -w, --stderr <STDERR>    Task standard error
   -h, --help               Print help
 ```
 
@@ -264,12 +263,13 @@ Start tasks
 Usage: watchmen start [OPTIONS]
 
 Options:
-  -p, --path <PATH>        Task config directory
-  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
-  -f, --config <CONFIG>    Task config file
-  -n, --name <NAME>        Task name (unique)
-  -r, --mat                Is match regex pattern by namae
-  -h, --help               Print help
+  -p, --path <PATH>      Task config directory
+  -r, --regex <REGEX>    Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>  Task config file
+  -i, --id <ID>          Task id (unique)
+  -n, --name <NAME>      Task name (unique)
+  -m, --mat              Is match regex pattern by namae
+  -h, --help             Print help
 ```
 
 ### watchmen restart -h
@@ -280,12 +280,13 @@ Restart tasks
 Usage: watchmen restart [OPTIONS]
 
 Options:
-  -p, --path <PATH>        Task config directory
-  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
-  -f, --config <CONFIG>    Task config file
-  -n, --name <NAME>        Task name (unique)
-  -r, --mat                Is match regex pattern by namae
-  -h, --help               Print help
+  -p, --path <PATH>      Task config directory
+  -r, --regex <REGEX>    Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>  Task config file
+  -i, --id <ID>          Task id (unique)
+  -n, --name <NAME>      Task name (unique)
+  -m, --mat              Is match regex pattern by namae
+  -h, --help             Print help
 ```
 
 ### watchmen stop -h
@@ -296,12 +297,13 @@ Stop tasks
 Usage: watchmen stop [OPTIONS]
 
 Options:
-  -p, --path <PATH>        Task config directory
-  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
-  -f, --config <CONFIG>    Task config file
-  -n, --name <NAME>        Task name (unique)
-  -r, --mat                Is match regex pattern by namae
-  -h, --help               Print help
+  -p, --path <PATH>      Task config directory
+  -r, --regex <REGEX>    Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>  Task config file
+  -i, --id <ID>          Task id (unique)
+  -n, --name <NAME>      Task name (unique)
+  -m, --mat              Is match regex pattern by namae
+  -h, --help             Print help
 ```
 
 ### watchmen remove -h
@@ -312,12 +314,13 @@ Remove tasks
 Usage: watchmen remove [OPTIONS]
 
 Options:
-  -p, --path <PATH>        Task config directory
-  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
-  -f, --config <CONFIG>    Task config file
-  -n, --name <NAME>        Task name (unique)
-  -r, --mat                Is match regex pattern by namae
-  -h, --help               Print help
+  -p, --path <PATH>      Task config directory
+  -r, --regex <REGEX>    Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>  Task config file
+  -i, --id <ID>          Task id (unique)
+  -n, --name <NAME>      Task name (unique)
+  -m, --mat              Is match regex pattern by namae
+  -h, --help             Print help
 ```
 
 ### watchmen list -h
@@ -328,15 +331,15 @@ Get tasks list
 Usage: watchmen list [OPTIONS]
 
 Options:
-  -p, --path <PATH>        Task config directory
-  -m, --pattern <PATTERN>  Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
-  -f, --config <CONFIG>    Task config file
-  -i, --id <ID>            Task id (unique)
-  -n, --name <NAME>        Task name (unique)
-  -r, --mat                Is match regex pattern by namae
-  -d, --more               Show more info
-  -l, --less               Show less info
-  -h, --help               Print hel
+  -p, --path <PATH>      Task config directory
+  -r, --regex <REGEX>    Task config filename regex pattern [default: ^.*\.(toml|ini|json)$]
+  -f, --config <CONFIG>  Task config file
+  -i, --id <ID>          Task id (unique)
+  -n, --name <NAME>      Task name (unique)
+  -m, --mat              Is match regex pattern by name
+  -o, --more             Show more info
+  -l, --less             Show less info
+  -h, --help             Print help
 ```
 
 ## License Apache Licence 2.0

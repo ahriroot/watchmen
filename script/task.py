@@ -8,18 +8,12 @@ def main():
     #     print('Python task are running...')
     #     data = sys.stdin.readline().rstrip()
     #     print(f'Result from python task: {data}')
-    # count = 0
-    # while True:
-    #     count += 1
-    #     print(f'Result from python task: {count}')
-    #     if count >= 5:
-    #         raise Exception('Python task error')
-    #     time.sleep(1)
+    index = int(sys.argv[1]) if len(sys.argv) > 1 else 100
     count = 0
     while True:
         count += 1
         print(f'Result from python task: {count}')
-        if count >= 100:
+        if count >= index:
             break
         time.sleep(1)
 

@@ -17,14 +17,6 @@ pub struct TaskArgs {
     #[arg(short, long, default_value = "sock")]
     pub engine: Option<String>,
 
-    /// Start watchmen server
-    #[arg(short, long)]
-    pub daemon: bool,
-
-    /// Start watchmen server with guard
-    #[arg(short = 'w', long)]
-    pub guard: Option<bool>,
-
     /// Print version
     #[arg(short, long)]
     pub version: bool,
@@ -56,6 +48,10 @@ pub enum Commands {
     Stop(FlagArgs),
     /// Remove tasks
     Remove(FlagArgs),
+    /// Pause interval tasks
+    Pause(FlagArgs),
+    /// Resume interval tasks
+    Resume(FlagArgs),
     /// Get tasks list
     List(ListArgs),
 }
@@ -67,8 +63,8 @@ pub struct ListArgs {
     pub path: Option<String>,
 
     /// Task config filename regex pattern
-    #[arg(short = 'm', long, default_value = r"^.*\.(toml|ini|json)$")]
-    pub pattern: Option<String>,
+    #[arg(short = 'r', long, default_value = r"^.*\.(toml|ini|json)$")]
+    pub regex: Option<String>,
 
     /// Task config file
     #[arg(short = 'f', long)]
@@ -82,12 +78,12 @@ pub struct ListArgs {
     #[arg(short = 'n', long)]
     pub name: Option<String>,
 
-    /// Is match regex pattern by namae
-    #[arg(short = 'r', long)]
+    /// Is match regex pattern by name
+    #[arg(short = 'm', long)]
     pub mat: bool,
 
     /// Show more info
-    #[arg(short = 'd', long, default_value = "false")]
+    #[arg(short = 'o', long, default_value = "false")]
     pub more: bool,
 
     /// Show less info
@@ -102,8 +98,8 @@ pub struct FlagArgs {
     pub path: Option<String>,
 
     /// Task config filename regex pattern
-    #[arg(short = 'm', long, default_value = r"^.*\.(toml|ini|json)$")]
-    pub pattern: Option<String>,
+    #[arg(short = 'r', long, default_value = r"^.*\.(toml|ini|json)$")]
+    pub regex: Option<String>,
 
     /// Task config file
     #[arg(short = 'f', long)]
@@ -118,7 +114,7 @@ pub struct FlagArgs {
     pub name: Option<String>,
 
     /// Is match regex pattern by namae
-    #[arg(short = 'r', long)]
+    #[arg(short = 'm', long)]
     pub mat: bool,
 }
 
@@ -129,8 +125,8 @@ pub struct AddArgs {
     pub path: Option<String>,
 
     /// Task config filename regex pattern
-    #[arg(short = 'm', long, default_value = r"^.*\.(toml|ini|json)$")]
-    pub mat: Option<String>,
+    #[arg(short = 'r', long, default_value = r"^.*\.(toml|ini|json)$")]
+    pub regex: Option<String>,
 
     /// Task config file
     #[arg(short = 'f', long)]
@@ -165,7 +161,7 @@ pub struct AddArgs {
     pub stdout: Option<String>,
 
     /// Task standard error
-    #[arg(short = 'r', long)]
+    #[arg(short = 'w', long)]
     pub stderr: Option<String>,
 }
 

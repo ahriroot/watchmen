@@ -322,6 +322,7 @@ impl Task {
                         started_after: 0,
                         interval: 60,
                         last_run: 0,
+                        sync: true,
                     };
                     if let Some(started_after) = ini.getint(section, "started_after")? {
                         if started_after < 0 {
@@ -340,6 +341,9 @@ impl Task {
                             )));
                         }
                         tt.interval = interval as u64;
+                    }
+                    if let Some(sync) = ini.getbool(section, "sync")? {
+                        tt.sync = sync;
                     }
                     TaskType::Periodic(tt)
                 }

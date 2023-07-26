@@ -27,6 +27,7 @@ pub struct PeriodicTask {
     pub started_after: u64,
     pub interval: u64,
     pub last_run: u64,
+    pub sync: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
