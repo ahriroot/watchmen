@@ -106,7 +106,7 @@ pub mod global {
         if !path.exists() || !path.is_file() {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Config file [{}] not a valid file", path.to_str().unwrap()),
+                format!("Cache file [{}] is not valid", path.to_str().unwrap()),
             )));
         }
 
@@ -599,7 +599,7 @@ pub mod global {
             }
             _ => Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                "Task is not an async task",
+                "Task type not supported",
             ))),
         }
     }
