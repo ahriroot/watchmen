@@ -119,8 +119,8 @@ pub mod global {
                 joinhandle: None,
                 tx: None,
             };
-            match tp.task.task_type {
-                TaskType::Async(_) => {
+            match &tp.task.task_type {
+                TaskType::Async(tt) => {
                     // 上次运行状态为 running 的染污加载后直接启动
                     if tp.task.status == Some("running".to_string()) {
                         let child = tp.task.start().await?;
@@ -141,8 +141,9 @@ pub mod global {
                             .duration_since(UNIX_EPOCH)
                             .expect("Failed to get timestamp")
                             .as_secs();
+
                         tp.task.task_type = TaskType::Async(AsyncTask {
-                            max_restart: 0,
+                            max_restart: tt.max_restart,
                             has_restart: 0,
                             started_at: now,
                             stopped_at: 0,
@@ -265,11 +266,15 @@ pub mod global {
             match tp.task.task_type.clone() {
                 TaskType::Async(tmp) => {
                     let has = if restart {
-                        if tmp.has_restart >= tmp.max_restart {
-                            tp.task.status = Some("stopped".to_string());
-                            tmp.has_restart
+                        if let Some(max) = tmp.max_restart {
+                            if tmp.has_restart >= max {
+                                tp.task.status = Some("stopped".to_string());
+                                tmp.has_restart
+                            } else {
+                                tmp.has_restart + 1
+                            }
                         } else {
-                            tmp.has_restart + 1
+                            0
                         }
                     } else {
                         tp.task.status = Some("stopped".to_string());
@@ -490,11 +495,15 @@ pub mod global {
 
                     let res = child.wait().await.unwrap();
                     let code = res.code();
-                    let exit = if let Some(code) = code {
-                        if code == 0 {
-                            true
+                    let exit = if let Some(max) = max {
+                        if let Some(code) = code {
+                            if code == 0 {
+                                true
+                            } else {
+                                max == 0
+                            }
                         } else {
-                            max == 0
+                            true
                         }
                     } else {
                         true

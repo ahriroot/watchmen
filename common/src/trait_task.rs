@@ -308,15 +308,19 @@ impl Task {
                     }
                     TaskType::Scheduled(tt)
                 }
-                "async" => TaskType::Async(AsyncTask {
-                    max_restart: ini
-                        .get(section, "max_restart")
-                        .unwrap_or("0".to_string())
-                        .parse::<u64>()?,
-                    has_restart: 0,
-                    started_at: 0,
-                    stopped_at: 0,
-                }),
+                "async" => {
+                    let max_restart = ini.get(section, "max_restart");
+                    TaskType::Async(AsyncTask {
+                        max_restart: if let Some(max) = max_restart {
+                            Some(max.parse::<u64>()?)
+                        } else {
+                            None
+                        },
+                        has_restart: 0,
+                        started_at: 0,
+                        stopped_at: 0,
+                    })
+                }
                 "periodic" => {
                     let mut tt = PeriodicTask {
                         started_after: 0,
