@@ -216,7 +216,7 @@ pub mod global {
                 format!("Task [{}] not exists", id),
             )));
         }
-        let mut tp = tasks.get_mut(&id).unwrap();
+        let tp = tasks.get_mut(&id).unwrap();
         if let Some(pid) = pid {
             tp.task.pid = pid;
         }
@@ -451,7 +451,7 @@ pub mod global {
                 format!("Task [{}] not exists", tf.id),
             )));
         }
-        let mut tp = tasks.get_mut(&tf.id).unwrap();
+        let tp = tasks.get_mut(&tf.id).unwrap();
 
         match &tp.task.task_type {
             TaskType::Async(tt) => {
