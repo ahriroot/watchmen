@@ -100,8 +100,8 @@ pub async fn taskflag_to_request(
         };
         let mut tfs = Vec::new();
         for tf in ts {
-            if let Some(name) = &args.name {
-                if &tf.name != name {
+            if args.name.is_some() && tf.name.is_some() {
+                if args.name.as_ref().unwrap() != tf.name.as_ref().unwrap() {
                     continue;
                 }
             }

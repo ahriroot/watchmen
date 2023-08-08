@@ -346,7 +346,8 @@ pub mod global {
         remove(
             TaskFlag {
                 id: task.id,
-                name: "".to_string(),
+                name: None,
+                group: None,
                 mat: false,
             },
             false,
@@ -381,18 +382,12 @@ pub mod global {
             } else {
                 Ok(Response::wrong(format!("Task [{}:] not exists", tf.id)))
             }
-        } else {
+        } else if let Some(name) = tf.name {
             // find id by name
             let id = tasks
                 .iter()
-                .find(|(_, tp)| tp.task.name == tf.name)
+                .find(|(_, tp)| tp.task.name == name)
                 .map(|(id, _)| *id);
-            if id.is_none() {
-                return Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("Task [{}] not exists", tf.name),
-                )));
-            }
             if let Some(id) = id {
                 let tp = tasks.get(&id).unwrap();
                 if Some("running".to_string()) == tp.task.status {
@@ -411,12 +406,51 @@ pub mod global {
                 } else {
                     Ok(Response::wrong(format!(
                         "Task [{}:{}] not exists",
-                        tf.id, tf.name
+                        tf.id, name
                     )))
                 }
             } else {
-                return Ok(Response::wrong(format!("Task [:{}] not exists", tf.name)));
+                return Ok(Response::wrong(format!("Task [:{}] not exists", name)));
             }
+        } else if let Some(group) = &tf.group {
+            let ids = tasks
+                .iter()
+                .filter(|(_, tp)| {
+                    if let Some(g) = &tp.task.group {
+                        g == group
+                    } else {
+                        false
+                    }
+                })
+                .map(|(id, _)| *id)
+                .collect::<Vec<i64>>();
+            if ids.is_empty() {
+                return Ok(Response::wrong(format!(
+                    "Task group [{}] not exists",
+                    group
+                )));
+            }
+            let mut removed = vec![];
+            for id in ids {
+                let tp = tasks.get(&id).unwrap();
+                if Some("running".to_string()) == tp.task.status {
+                    return Ok(Response::wrong(
+                        "Task is running, please stop it first".to_string(),
+                    ));
+                }
+                if let Some(r) = tasks.remove(&id) {
+                    removed.push(format!("{}:{}", r.task.id, r.task.name));
+                }
+            }
+            Ok(Response::success(Some(Data::String(format!(
+                "Task group [{}({})] removed",
+                group,
+                removed.len()
+            )))))
+        } else {
+            Ok(Response::wrong(
+                "Task id or name or group is required".to_string(),
+            ))
         }
     }
 
@@ -569,7 +603,12 @@ pub mod global {
                 let jh: JoinHandle<Option<i32>> = tokio::spawn(async move {
                     let res = child.wait().await.unwrap();
                     let code = res.code();
-                    info!("Task [{}:{}] exited with code: {:?}", id, name, code);
+                    info!(
+                        "Task [{}:{}] exited with code: {:?}",
+                        id,
+                        name.unwrap_or("".to_string()),
+                        code
+                    );
 
                     update(
                         tf.id,
@@ -623,7 +662,8 @@ pub mod global {
         add(task).await?;
         start(TaskFlag {
             id,
-            name: "".to_string(),
+            name: None,
+            group: None,
             mat: false,
         })
         .await
@@ -705,46 +745,50 @@ pub mod global {
 
     pub async fn list(condition: Option<TaskFlag>) -> Result<Response, Box<dyn Error>> {
         let tasks = TASKS.write().await;
-        let mut status: Vec<Status> = Vec::new();
-        match condition {
+
+        let res = match condition {
             Some(condition) => {
+                let mut status: Vec<Status> = Vec::new();
                 if condition.id > 0 {
                     if tasks.contains_key(&condition.id) {
                         let tp = tasks.get(&condition.id).unwrap();
                         status.push(tp.task.clone().into());
-                        let response = Response::success(Some(Data::Status(status)));
-                        Ok(response)
-                    } else {
-                        let response = Response::success(Some(Data::Status(status)));
-                        Ok(response)
                     }
                 } else if condition.mat {
+                    let name = condition.name.unwrap_or("".to_string());
                     for (_id, tp) in tasks.iter() {
-                        let regex: Regex = Regex::new(&condition.name)?;
+                        let regex: Regex = Regex::new(&name)?;
                         if regex.is_match(&tp.task.name) {
                             status.push(tp.task.clone().into());
                         }
                     }
-                    let response = Response::success(Some(Data::Status(status)));
-                    Ok(response)
                 } else {
+                    let name = condition.name.unwrap_or("".to_string());
                     for (_id, tp) in tasks.iter() {
-                        if tp.task.name == condition.name {
+                        if tp.task.name == name {
                             status.push(tp.task.clone().into());
                         }
                     }
-                    let response = Response::success(Some(Data::Status(status)));
-                    Ok(response)
+                }
+                if let Some(group) = condition.group {
+                    let status_by_group = status
+                        .into_iter()
+                        .filter(|s| s.group.is_some() && s.group.as_ref().unwrap() == &group)
+                        .collect::<Vec<Status>>();
+                    status_by_group
+                } else {
+                    status
                 }
             }
             None => {
+                let mut status: Vec<Status> = Vec::new();
                 for (_, tp) in tasks.iter() {
                     status.push(tp.task.clone().into());
                 }
-                let response = Response::success(Some(Data::Status(status)));
-                Ok(response)
+                status
             }
-        }
+        };
+        Ok(Response::success(Some(Data::Status(res))))
     }
 
     pub async fn pause(tf: TaskFlag) -> Result<Response, Box<dyn Error>> {

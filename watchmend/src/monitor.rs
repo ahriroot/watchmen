@@ -16,7 +16,8 @@ pub async fn rerun_tasks() -> Result<(), Box<dyn std::error::Error>> {
                         info!("Restart task: {}", id);
                         start(TaskFlag {
                             id,
-                            name: "".to_string(),
+                            name: None,
+                            group: None,
                             mat: false,
                         })
                         .await?;
@@ -35,7 +36,8 @@ pub async fn rerun_tasks() -> Result<(), Box<dyn std::error::Error>> {
                                 info!("Execute periodic task: {}", id);
                                 start(TaskFlag {
                                     id,
-                                    name: "".to_string(),
+                                    name: None,
+                                    group: None,
                                     mat: false,
                                 })
                                 .await?;
@@ -45,7 +47,8 @@ pub async fn rerun_tasks() -> Result<(), Box<dyn std::error::Error>> {
                                 info!("Execute periodic task: {}", id);
                                 start(TaskFlag {
                                     id,
-                                    name: "".to_string(),
+                                    name: None,
+                                    group: None,
                                     mat: false,
                                 })
                                 .await?;

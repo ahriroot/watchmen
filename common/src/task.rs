@@ -52,6 +52,9 @@ pub struct Task {
     /// Task arguments
     pub args: Vec<String>,
 
+    /// Task group
+    pub group: Option<String>,
+
     /// Task working directory
     pub dir: Option<String>,
 
@@ -98,6 +101,7 @@ impl Default for Task {
             name: "Default".to_string(),
             command: "".to_string(),
             args: vec![],
+            group: None,
             dir: None,
             env: HashMap::new(),
             stdin: None,
@@ -118,7 +122,8 @@ unsafe impl Sync for Task {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskFlag {
     pub id: i64,
-    pub name: String,
+    pub name: Option<String>,
+    pub group: Option<String>,
     pub mat: bool,
 }
 
@@ -126,7 +131,8 @@ impl Default for TaskFlag {
     fn default() -> Self {
         TaskFlag {
             id: 0,
-            name: "".to_string(),
+            name: Some("".to_string()),
+            group: None,
             mat: false,
         }
     }

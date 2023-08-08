@@ -16,7 +16,15 @@ impl TaskFlag {
         } else if let Some(name) = args.name {
             tasks.push(TaskFlag {
                 id: 0,
-                name,
+                name: Some(name),
+                group: None,
+                mat: false,
+            });
+        } else if let Some(group) = args.group {
+            tasks.push(TaskFlag {
+                id: 0,
+                name: None,
+                group: Some(group),
                 mat: false,
             });
         } else {
@@ -94,7 +102,8 @@ impl TaskFlag {
         for i in toml::from_str::<Tasks>(&contents)?.task {
             tasks.push(TaskFlag {
                 id: i.id,
-                name: i.name,
+                name: Some(i.name),
+                group: i.group,
                 mat: false,
             });
         }
@@ -109,7 +118,8 @@ impl TaskFlag {
         for i in Task::deserialize(&contents)? {
             tasks.push(TaskFlag {
                 id: i.id,
-                name: i.name,
+                name: Some(i.name),
+                group: i.group,
                 mat: false,
             });
         }
@@ -225,6 +235,7 @@ impl Task {
                 .split(" ")
                 .map(|s| s.to_string())
                 .collect();
+            task.group = ini.get(section, "group");
             task.dir = ini.get(section, "dir");
             if task.dir.is_none() {
                 task.dir = Some(std::env::current_dir()?.to_str().unwrap().to_string());
@@ -462,7 +473,8 @@ impl TaskFlag {
     pub fn new(id: i64) -> Self {
         TaskFlag {
             id,
-            name: "".to_string(),
+            name: Some("".to_string()),
+            group: None,
             mat: false,
         }
     }

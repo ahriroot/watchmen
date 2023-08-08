@@ -45,7 +45,8 @@ mod tests {
         let request = Request {
             command: Command::Start(TaskFlag {
                 id: 1,
-                name: task.name,
+                name: Some(task.name),
+                group: task.group,
                 mat: false,
             }),
         };
@@ -67,7 +68,8 @@ mod tests {
         let request = Request {
             command: Command::Stop(TaskFlag {
                 id: 1,
-                name: "Default".to_string(),
+                name: Some("Default".to_string()),
+                group: None,
                 mat: false,
             }),
         };
@@ -89,7 +91,8 @@ mod tests {
             command: Command::Write(
                 TaskFlag {
                     id: 1,
-                    name: "Default".to_string(),
+                    name: Some("Default".to_string()),
+                    group: None,
                     mat: false,
                 },
                 "{\"key\": \"value\"}\n".to_string(),

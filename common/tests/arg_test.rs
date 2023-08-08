@@ -16,6 +16,7 @@ mod tests {
             name: None,
             command: None,
             args: None,
+            group: None,
             dir: None,
             env: None,
             stdin: false,

@@ -78,6 +78,10 @@ pub struct ListArgs {
     #[arg(short = 'n', long)]
     pub name: Option<String>,
 
+    /// Task group
+    #[arg(short, long)]
+    pub group: Option<String>,
+
     /// Is match regex pattern by name
     #[arg(short = 'm', long)]
     pub mat: bool,
@@ -113,6 +117,10 @@ pub struct FlagArgs {
     #[arg(short, long)]
     pub name: Option<String>,
 
+    /// Task group
+    #[arg(short, long)]
+    pub group: Option<String>,
+
     /// Is match regex pattern by namae
     #[arg(short = 'm', long)]
     pub mat: bool,
@@ -143,6 +151,10 @@ pub struct AddArgs {
     /// Task arguments
     #[arg(short, long)]
     pub args: Option<Vec<String>>,
+
+    /// Task group
+    #[arg(short, long)]
+    pub group: Option<String>,
 
     /// Task working directory
     #[arg(short = 'd', long)]

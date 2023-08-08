@@ -94,7 +94,8 @@ pub async fn list(args: ListArgs, config: Config) -> Result<(), Box<dyn Error>> 
         let request: Request = Request {
             command: Command::List(Some(TaskFlag {
                 id,
-                name: "".to_string(),
+                name: None,
+                group: None,
                 mat: args.mat,
             })),
         };
@@ -103,7 +104,18 @@ pub async fn list(args: ListArgs, config: Config) -> Result<(), Box<dyn Error>> 
         let request: Request = Request {
             command: Command::List(Some(TaskFlag {
                 id: 0,
-                name,
+                name: Some(name),
+                group: None,
+                mat: args.mat,
+            })),
+        };
+        vec![request]
+    } else if let Some(group) = args.group {
+        let request: Request = Request {
+            command: Command::List(Some(TaskFlag {
+                id: 0,
+                name: None,
+                group: Some(group),
                 mat: args.mat,
             })),
         };
