@@ -99,7 +99,7 @@ impl Default for Task {
         Task {
             id: 0,
             name: "Default".to_string(),
-            command: "".to_string(),
+            command: String::new(),
             args: vec![],
             group: None,
             dir: None,
@@ -131,7 +131,7 @@ impl Default for TaskFlag {
     fn default() -> Self {
         TaskFlag {
             id: 0,
-            name: Some("".to_string()),
+            name: Some(String::new()),
             group: None,
             mat: false,
         }

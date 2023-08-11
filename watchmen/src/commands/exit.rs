@@ -209,7 +209,7 @@ async fn print_format(res: Vec<Task>, more: bool) {
                     .format("%Y-%m-%d %H:%M:%S")
                     .to_string()
             } else {
-                "".to_string()
+                String::new()
             };
             let started_at = if task.started_at > 0 {
                 Local
@@ -217,7 +217,7 @@ async fn print_format(res: Vec<Task>, more: bool) {
                     .format("%Y-%m-%d %H:%M:%S")
                     .to_string()
             } else {
-                "".to_string()
+                String::new()
             };
             let exited_at = if task.exited_at > 0 {
                 Local
@@ -225,7 +225,7 @@ async fn print_format(res: Vec<Task>, more: bool) {
                     .format("%Y-%m-%d %H:%M:%S")
                     .to_string()
             } else {
-                "".to_string()
+                String::new()
             };
             let stopped_at = if task.stopped_at > 0 {
                 Local
@@ -233,12 +233,12 @@ async fn print_format(res: Vec<Task>, more: bool) {
                     .format("%Y-%m-%d %H:%M:%S")
                     .to_string()
             } else {
-                "".to_string()
+                String::new()
             };
             let exit_code = if task.exit_code != 100 {
                 task.exit_code.to_string()
             } else {
-                "".to_string()
+                String::new()
             };
             println!(
                 "| {: <len_id$} | {: <len_name$} | {}{: <len_status$} | {: <len_pid$} | {: <len_created_at$} | {: <len_started_at$} | {: <len_exited_at$} | {: <len_stopped_at$} | {: <len_exit_code$} |",
@@ -302,7 +302,7 @@ async fn print_format(res: Vec<Task>, more: bool) {
                     .format("%Y-%m-%d %H:%M:%S")
                     .to_string()
             } else {
-                "".to_string()
+                String::new()
             };
             let stopped_at = if task.stopped_at > 0 {
                 Local
@@ -310,12 +310,12 @@ async fn print_format(res: Vec<Task>, more: bool) {
                     .format("%Y-%m-%d %H:%M:%S")
                     .to_string()
             } else {
-                "".to_string()
+                String::new()
             };
             let exit_code = if task.exit_code != 100 {
                 task.exit_code.to_string()
             } else {
-                "".to_string()
+                String::new()
             };
             println!(
                 "| {: <len_id$} | {: <len_name$} | {}{: <len_status$} | {: <len_pid$} | {: <len_started_at$} | {: <len_stopped_at$} | {: <len_exit_code$} |",

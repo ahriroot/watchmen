@@ -231,7 +231,7 @@ impl Task {
             };
             task.args = ini
                 .get(section, "args")
-                .unwrap_or("".to_string())
+                .unwrap_or(String::new())
                 .split(" ")
                 .map(|s| s.to_string())
                 .collect();
@@ -240,7 +240,7 @@ impl Task {
             if task.dir.is_none() {
                 task.dir = Some(std::env::current_dir()?.to_str().unwrap().to_string());
             }
-            for env in ini.get(section, "env").unwrap_or("".to_string()).split(" ") {
+            for env in ini.get(section, "env").unwrap_or(String::new()).split(" ") {
                 let kv: Vec<&str> = env.split("=").collect();
                 if kv.len() == 2 {
                     task.env.insert(kv[0].to_string(), kv[1].to_string());
@@ -473,7 +473,7 @@ impl TaskFlag {
     pub fn new(id: i64) -> Self {
         TaskFlag {
             id,
-            name: Some("".to_string()),
+            name: Some(String::new()),
             group: None,
             mat: false,
         }

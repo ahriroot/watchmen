@@ -41,13 +41,13 @@ pub mod global {
         static ref TASKS: RwLock<HashMap<i64, TaskProcess>> = RwLock::new(HashMap::new());
     }
 
-    /// 设置缓存路径。
+    /// Set cache path
     ///
-    /// # 参数
+    /// # params
     ///
-    /// - `path`: 缓存路径的字符串。
+    /// - `path`: cache file path
     ///
-    /// # 示例
+    /// # example
     ///
     /// ```
     /// use tokio::runtime::Runtime;
@@ -58,11 +58,6 @@ pub mod global {
     ///     set_cache(path).await;
     /// });
     /// ```
-    ///
-    /// # 注意事项
-    ///
-    /// - 该函数会阻塞当前的异步任务执行线程。
-    /// - 在调用该函数前，必须先初始化全局的缓存锁（CACHE）。
     pub async fn set_cache(path: String) {
         let mut cache = CACHE.write().await;
         *cache = Some(path);
@@ -606,7 +601,7 @@ pub mod global {
                     info!(
                         "Task [{}:{}] exited with code: {:?}",
                         id,
-                        name.unwrap_or("".to_string()),
+                        name.unwrap_or(String::new()),
                         code
                     );
 
@@ -755,7 +750,7 @@ pub mod global {
                         status.push(tp.task.clone().into());
                     }
                 } else if condition.mat {
-                    let name = condition.name.unwrap_or("".to_string());
+                    let name = condition.name.unwrap_or(String::new());
                     for (_id, tp) in tasks.iter() {
                         let regex: Regex = Regex::new(&name)?;
                         if regex.is_match(&tp.task.name) {
@@ -763,7 +758,7 @@ pub mod global {
                         }
                     }
                 } else {
-                    let name = condition.name.unwrap_or("".to_string());
+                    let name = condition.name.unwrap_or(String::new());
                     for (_id, tp) in tasks.iter() {
                         if tp.task.name == name {
                             status.push(tp.task.clone().into());
