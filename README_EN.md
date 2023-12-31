@@ -416,7 +416,7 @@ Options:
   -h, --help             Print help
 ```
 
-## License Apache Licence 2.0
+## Apache License 2.0
 [License](./LICENSE)
 
 ## Copyright ahriknow 2022
