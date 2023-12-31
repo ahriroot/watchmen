@@ -2,8 +2,8 @@
 id = 1
 name = "Async Task"
 command = "python"
-args = ["-u", "/home/ahriknow/project/watchmen/script/task.py"]
-dir = "/home/ahriknow/project/watchmen"
+args = ["-u", "./script/task.py"]
+dir = "."
 group = "g1"
 env = {}
 stdin = false
@@ -16,12 +16,12 @@ task_type = { Async = { max_restart = 2, has_restart = 0, started_at = 0, stoppe
 id = 2
 name = "Periodic Task"
 command = "python"
-args = ["-u", "/home/ahriknow/project/watchmen/script/task.py", "10"]
-dir = "/home/ahriknow/project/watchmen"
+args = ["-u", "./script/task.py", "10"]
+dir = "."
 group = "g2"
 env = {}
 stdin = false
 stdout = "./logs/output.txt"
 stderr = "./logs/error.txt"
 created_at = 1654345600
-task_type = { Periodic = { started_after = 0, interval = 5, last_run = 0, sync = false } }
+task_type = { Periodic = { interval = 5, last_run = 0, sync = false } }

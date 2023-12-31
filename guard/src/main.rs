@@ -44,8 +44,8 @@ async fn main() {
 async fn start_daemon(args: &[String]) -> Result<i32, Box<dyn Error>> {
     let now = chrono::Local::now().format("%Y%m%d").to_string();
     let path = Path::new(&args[1]);
-    let path_daemon_stdout = path.clone().join(format!("daemon_stdout_{}.log", now));
-    let path_daemon_stderr = path.clone().join(format!("daemon_stderr_{}.log", now));
+    let path_daemon_stdout = path.join(format!("daemon_stdout_{}.log", now));
+    let path_daemon_stderr = path.join(format!("daemon_stderr_{}.log", now));
     let file_stdout = std::fs::OpenOptions::new()
         .create(true)
         .append(true)

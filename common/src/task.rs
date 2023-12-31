@@ -4,6 +4,18 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+fn default_u64_0() -> u64 {
+    0
+}
+
+fn default_none() -> Option<u64> {
+    None
+}
+
+fn default_false() -> bool {
+    false
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScheduledTask {
     pub year: Option<u64>,
@@ -16,17 +28,24 @@ pub struct ScheduledTask {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AsyncTask {
+    #[serde(default = "default_none")]
     pub max_restart: Option<u64>,
+    #[serde(default = "default_u64_0")]
     pub has_restart: u64,
+    #[serde(default = "default_u64_0")]
     pub started_at: u64,
+    #[serde(default = "default_u64_0")]
     pub stopped_at: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PeriodicTask {
+    #[serde(default = "default_u64_0")]
     pub started_after: u64,
     pub interval: u64,
+    #[serde(default = "default_u64_0")]
     pub last_run: u64,
+    #[serde(default = "default_false")]
     pub sync: bool,
 }
 

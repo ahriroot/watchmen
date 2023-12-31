@@ -63,8 +63,9 @@ pub async fn rerun_tasks() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub async fn run_monitor() -> Result<(), Box<dyn std::error::Error>> {
-    let mut interval = time::interval(Duration::from_secs(5));
+pub async fn run_monitor(interval: Option<u64>) -> Result<(), Box<dyn std::error::Error>> {
+    let interval = interval.unwrap_or(5);
+    let mut interval = time::interval(Duration::from_secs(interval));
     loop {
         match rerun_tasks().await {
             Ok(_) => {}

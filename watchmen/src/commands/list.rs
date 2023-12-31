@@ -319,6 +319,9 @@ pub async fn print_result_more(res: Vec<Response>) {
     let mut column_id = Vec::new();
     column_id.push("ID".bold());
 
+    let mut column_group = Vec::new();
+    column_group.push("Group".bold());
+
     let mut column_name = Vec::new();
     column_name.push("Name".bold());
 
@@ -343,6 +346,11 @@ pub async fn print_result_more(res: Vec<Response>) {
     for s in status {
         total += 1;
         column_id.push(s.id.to_string().italic());
+        if s.group.is_some() {
+            column_group.push(s.group.unwrap().normal());
+        } else {
+            column_group.push("".normal());
+        }
         column_name.push(s.name.normal());
         match s.status {
             Some(t) => match t.as_str() {
@@ -394,6 +402,7 @@ pub async fn print_result_more(res: Vec<Response>) {
         }
     }
     let max_id = column_id.iter().map(|s| s.len()).max().unwrap();
+    let max_group = column_group.iter().map(|s| s.len()).max().unwrap();
     let max_name = column_name.iter().map(|s| s.len()).max().unwrap();
     let max_status = column_status.iter().map(|s| s.len()).max().unwrap();
     let max_command = column_command.iter().map(|s| s.len()).max().unwrap();
@@ -403,6 +412,7 @@ pub async fn print_result_more(res: Vec<Response>) {
     let max_type = column_type.iter().map(|s| s.len()).max().unwrap();
 
     let max_sum = max_id
+        + max_group
         + max_name
         + max_status
         + max_command
@@ -410,14 +420,15 @@ pub async fn print_result_more(res: Vec<Response>) {
         + max_pid
         + max_code
         + max_type
-        + 3 * (8 - 1)
-        + 4;
+        + 3 * (9 - 1)
+        + 5;
 
     for i in 0..column_id.len() {
         println!("{:-<max_sum$}", "", max_sum = max_sum);
         println!(
-            "| {: <max_id$} | {: <max_name$} | {: <max_status$} | {: <max_command$} | {: <max_args$} | {: <max_pid$} | {: <max_code$} | {: <max_type$} |",
+            "| {: <max_id$} | {: <max_group$}  | {: <max_name$} | {: <max_status$} | {: <max_command$} | {: <max_args$} | {: <max_pid$} | {: <max_code$} | {: <max_type$} |",
             column_id[i],
+            column_group[i],
             column_name[i],
             column_status[i],
             column_command[i],

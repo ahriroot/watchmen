@@ -70,7 +70,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     );
 
     tokio::spawn(async move {
-        let _ = run_monitor().await;
+        let _ = run_monitor(config.watchmen.interval).await;
     });
 
     engine::start(config, load).await;

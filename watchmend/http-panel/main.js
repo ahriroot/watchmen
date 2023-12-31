@@ -83,9 +83,9 @@ createApp({
             await this.stopLoading()
         })
     },
-    async _req(opera, name) {
+    async _req(opera, id) {
         await this.startLoading()
-        request({ "command": { [opera]: { name: name } } }).then(async _ => {
+        request({ "command": { [opera]: { id: id, name: null, group: null, mat: false } } }).then(async _ => {
             await this.getTasks()
         }).catch(err => {
             alert(err)
@@ -93,14 +93,26 @@ createApp({
             await this.stopLoading()
         })
     },
-    async startTask(name) {
-        await this._req('Start', name)
+    async startTask(task) {
+        let opera = 'Start'
+        if ('Async' in task.task_type) {
+            opera = 'Start'
+        } else if ('Periodic' in task.task_type) {
+            opera = 'Resume'
+        }
+        await this._req(opera, task.id)
     },
-    async stopTask(name) {
-        await this._req('Stop', name)
+    async stopTask(task) {
+        let opera = 'Stop'
+        if ('Async' in task.task_type) {
+            opera = 'Stop'
+        } else if ('Periodic' in task.task_type) {
+            opera = 'Pause'
+        }
+        await this._req(opera, task.id)
     },
-    async removeTask(name) {
-        await this._req('Remove', name)
+    async removeTask(task) {
+        await this._req('Remove', task.id)
     },
     async addTask() {
         let dir = this.task.dir == null ? null : this.task.dir.trim()

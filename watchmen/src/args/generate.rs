@@ -38,6 +38,9 @@ mat = "^.*\\.(toml|ini|json)$"
 # Tasks cache file, json format
 cache = "$HOME/.watchmen/cache.json"
 
+# Monitor interval for rerun tasks, u64: second
+interval = 5
+
 
 [sock]
 # The unix socket path of the watchmen server
