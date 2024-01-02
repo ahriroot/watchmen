@@ -410,8 +410,8 @@ Options:
   -f, --config <CONFIG>  Task config file
   -i, --id <ID>          Task id (unique)
   -n, --name <NAME>      Task name (unique)
-  -m, --mat              Is match regex pattern by name
-  -o, --more             Show more info
+  -R, --mat              Is match regex pattern by name
+  -m, --more             Show more info
   -l, --less             Show less info
   -h, --help             Print help
 ```

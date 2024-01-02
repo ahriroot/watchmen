@@ -25,3 +25,17 @@ stdout = "./logs/output.txt"
 stderr = "./logs/error.txt"
 created_at = 1654345600
 task_type = { Periodic = { interval = 5, last_run = 0, sync = false } }
+
+[[task]]
+id = 3
+name = "Scheduled Task"
+command = "sh"
+args = ["./script/task.sh"]
+dir = "."
+group = "g3"
+env = {}
+stdin = false
+stdout = "./logs/output_sh.txt"
+stderr = "./logs/error_sh.txt"
+created_at = 1654345600
+task_type = { Scheduled = { hour = 10, minute = 57, second = 0 } }

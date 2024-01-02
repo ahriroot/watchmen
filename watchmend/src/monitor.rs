@@ -1,3 +1,5 @@
+use chrono::Datelike;
+use chrono::Timelike;
 use common::task::TaskFlag;
 use std::time::{Duration, SystemTime};
 use tokio::time;
@@ -5,11 +7,48 @@ use tracing::{error, info};
 
 use crate::global::{get_all, start};
 
-pub async fn rerun_tasks() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn rerun_tasks(delay: u64) -> Result<(), Box<dyn std::error::Error>> {
     let tasks = get_all().await?;
+    let now = chrono::Local::now();
     for (id, task) in tasks {
         match task.task_type {
-            common::task::TaskType::Scheduled(_) => {}
+            common::task::TaskType::Scheduled(scheduled) => {
+                let nd = chrono::NaiveDate::from_ymd_opt(
+                    scheduled.year.unwrap_or(now.year()),
+                    scheduled.month.unwrap_or(now.month()),
+                    scheduled.day.unwrap_or(now.day()),
+                );
+                let nt = chrono::NaiveTime::from_hms_opt(
+                    scheduled.hour.unwrap_or(now.hour()),
+                    scheduled.minute.unwrap_or(now.minute()),
+                    scheduled.second.unwrap_or(now.second()),
+                );
+                match (nd, nt) {
+                    (Some(nd), Some(nt)) => {
+                        let exec = chrono::NaiveDateTime::new(nd, nt);
+                        let exec_timestamp_utc = exec.timestamp();
+                        let now_timestamp_utc = now.naive_local().timestamp();
+                        if ((exec_timestamp_utc - now_timestamp_utc).abs() as u64) < delay
+                            && exec_timestamp_utc <= now_timestamp_utc
+                        {
+                            if let Some(status) = task.status {
+                                if status == "waiting" {
+                                    start(TaskFlag {
+                                        id,
+                                        name: None,
+                                        group: None,
+                                        mat: false,
+                                    })
+                                    .await?;
+                                }
+                            }
+                        }
+                    }
+                    _ => {
+                        error!("Invalid scheduled task: {}", id);
+                    }
+                }
+            }
             common::task::TaskType::Async(_) => {
                 if let Some(status) = task.status {
                     if status == "auto restart" {
@@ -63,11 +102,11 @@ pub async fn rerun_tasks() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub async fn run_monitor(interval: Option<u64>) -> Result<(), Box<dyn std::error::Error>> {
-    let interval = interval.unwrap_or(5);
-    let mut interval = time::interval(Duration::from_secs(interval));
+pub async fn run_monitor(delay: Option<u64>) -> Result<(), Box<dyn std::error::Error>> {
+    let delay = delay.unwrap_or(5);
+    let mut interval = time::interval(Duration::from_secs(delay));
     loop {
-        match rerun_tasks().await {
+        match rerun_tasks(delay).await {
             Ok(_) => {}
             Err(e) => {
                 error!("Monitor tasks error: {}", e);

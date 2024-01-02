@@ -83,11 +83,11 @@ pub struct ListArgs {
     pub group: Option<String>,
 
     /// Is match regex pattern by name
-    #[arg(short = 'm', long)]
+    #[arg(short = 'R', long)]
     pub mat: bool,
 
     /// Show more info
-    #[arg(short = 'o', long, default_value = "false")]
+    #[arg(short = 'm', long, default_value = "false")]
     pub more: bool,
 
     /// Show less info

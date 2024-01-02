@@ -301,6 +301,15 @@ pub mod global {
             )));
         }
 
+        match task.task_type {
+            TaskType::Scheduled(_) => {
+                task.status = Some("waiting".to_string());
+            }
+            _ => {
+                task.status = Some("added".to_string());
+            }
+        }
+
         if let Some(so) = &task.stdout {
             let stdout = get_with_home_path(so);
             let parent = stdout.parent().unwrap();
@@ -483,6 +492,57 @@ pub mod global {
         let tp = tasks.get_mut(&tf.id).unwrap();
 
         match &tp.task.task_type {
+            TaskType::Scheduled(_) => {
+                let id = tf.id;
+                let name = tf.name.clone();
+
+                let mut child = tp.task.start().await?;
+                let pid = child.id();
+                let jh: JoinHandle<Option<i32>> = tokio::spawn(async move {
+                    let res = child.wait().await.unwrap();
+                    let code = res.code();
+                    info!(
+                        "Task [{}:{}] exited with code: {:?}",
+                        id,
+                        name.unwrap_or(String::new()),
+                        code
+                    );
+
+                    update(
+                        tf.id,
+                        Some(None),
+                        Some(Some("waiting".to_string())),
+                        Some(res.code()),
+                        Some(true),
+                        Some(vec!["processing"]),
+                    )
+                    .await
+                    .unwrap();
+
+                    cache().await.unwrap();
+
+                    return res.code();
+                });
+
+                tp.joinhandle = Some(jh);
+
+                tokio::spawn(async move {
+                    update(
+                        id,
+                        Some(pid),
+                        Some(Some("processing".to_string())),
+                        None,
+                        None,
+                        None,
+                    )
+                    .await
+                    .unwrap();
+                });
+                Ok(Response::success(Some(Data::String(format!(
+                    "Task [{}] started",
+                    id
+                )))))
+            }
             TaskType::Async(tt) => {
                 let max = tt.max_restart;
                 if tp.task.status == Some("running".to_string()) {
@@ -654,14 +714,20 @@ pub mod global {
 
     pub async fn run(task: Task) -> Result<Response, Box<dyn Error>> {
         let id = task.id;
-        add(task).await?;
-        start(TaskFlag {
-            id,
-            name: None,
-            group: None,
-            mat: false,
-        })
-        .await
+        let typ = task.task_type.clone();
+        let res = add(task).await?;
+        match typ {
+            TaskType::Async(_) | TaskType::Periodic(_) => {
+                start(TaskFlag {
+                    id,
+                    name: None,
+                    group: None,
+                    mat: false,
+                })
+                .await
+            }
+            _ => Ok(res),
+        }
     }
 
     pub async fn stop(tf: TaskFlag, to_cache: bool) -> Result<Response, Box<dyn Error>> {

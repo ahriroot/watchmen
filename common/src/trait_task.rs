@@ -270,7 +270,7 @@ impl Task {
                                 format!("Invalid year: {}", year),
                             )));
                         }
-                        tt.year = Some(year as u64);
+                        tt.year = Some(year as i32);
                     }
                     if let Some(month) = ini.getint(section, "month")? {
                         if month < 1 || month > 12 {
@@ -279,7 +279,7 @@ impl Task {
                                 format!("Invalid month: {}", month),
                             )));
                         }
-                        tt.month = Some(month as u64);
+                        tt.month = Some(month as u32);
                     }
                     if let Some(day) = ini.getint(section, "day")? {
                         if day < 1 || day > 31 {
@@ -288,7 +288,7 @@ impl Task {
                                 format!("Invalid day: {}", day),
                             )));
                         }
-                        tt.day = Some(day as u64);
+                        tt.day = Some(day as u32);
                     }
                     if let Some(hour) = ini.getint(section, "hour")? {
                         if hour < 0 || hour > 23 {
@@ -297,7 +297,7 @@ impl Task {
                                 format!("Invalid hour: {}", hour),
                             )));
                         }
-                        tt.hour = Some(hour as u64);
+                        tt.hour = Some(hour as u32);
                     }
                     if let Some(minute) = ini.getint(section, "minute")? {
                         if minute < 0 || minute > 59 {
@@ -306,7 +306,7 @@ impl Task {
                                 format!("Invalid minute: {}", minute),
                             )));
                         }
-                        tt.minute = Some(minute as u64);
+                        tt.minute = Some(minute as u32);
                     }
                     if let Some(second) = ini.getint(section, "second")? {
                         if second < 0 || second > 59 {
@@ -315,7 +315,7 @@ impl Task {
                                 format!("Invalid second: {}", second),
                             )));
                         }
-                        tt.second = Some(second as u64);
+                        tt.second = Some(second as u32);
                     }
                     TaskType::Scheduled(tt)
                 }

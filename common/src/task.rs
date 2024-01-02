@@ -18,12 +18,12 @@ fn default_false() -> bool {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScheduledTask {
-    pub year: Option<u64>,
-    pub month: Option<u64>,
-    pub day: Option<u64>,
-    pub hour: Option<u64>,
-    pub minute: Option<u64>,
-    pub second: Option<u64>,
+    pub year: Option<i32>,
+    pub month: Option<u32>,
+    pub day: Option<u32>,
+    pub hour: Option<u32>,
+    pub minute: Option<u32>,
+    pub second: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

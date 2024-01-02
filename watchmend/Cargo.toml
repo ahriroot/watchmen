@@ -39,9 +39,9 @@ hyper = { version = "0.14", features = ["full"] }
 lazy_static = "1.4.0"
 colored = "2"
 nanoid = "0.4.0"
-chrono = "0.4.22"
+chrono = "0.4"
 log = "0.4"
-dirs = "4"
+dirs = "5"
 regex = "1.6"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
