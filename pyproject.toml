@@ -8,10 +8,19 @@ readme = "README_EN.md"
 homepage = "https://docs.ahriknow.com/watchmen"
 repository = "https://github.com/ahriroot/watchmen.git"
 keywords = ["watchmen", "ahriknow", "daemon", "process", "manager"]
+packages = [{ include = "main.py" }]
+include = [
+    "pyproject.toml",
+    "README_EN.md",
+    "README.md",
+    "LICENSE",
+    "target/release/watchmen",
+    "target/release/watchmend",
+]
 
 [tool.poetry.scripts]
-watchmen = "target/release/watchmen"
-watchmend = "target/release/watchmend"
+watchmen = "main:watchmen"
+watchmend = "main:watchmend"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
