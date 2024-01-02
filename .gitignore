@@ -601,3 +601,5 @@ FodyWeavers.xsd
 # End of https://www.toptal.com/developers/gitignore/api/linux,windows,macos,visualstudio,jetbrains,rust
 
 **/*.profraw
+dist/*
+.python-version
