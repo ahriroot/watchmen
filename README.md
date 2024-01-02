@@ -34,6 +34,18 @@ cargo install watchmend
 cargo install watchmen
 ```
 
+# 从 npm 安装
+
+```shell
+npm install -g watchmen-rust
+```
+
+# 从 pypi 安装
+
+```shell
+pip install watchmen-rust
+```
+
 ## 开始
 
 ### 生成配置文件
