@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "watchmen-rust"
+version = "0.0.1"
+description = "Watchmen is a daemon process manager that for you manage and keep your application online 24/7"
+authors = ["ahriknow <ahriknow@ahriknow.com>"]
+license = "Apache-2.0"
+readme = "README_EN.md"
+homepage = "https://docs.ahriknow.com/watchmen"
+repository = "https://github.com/ahriroot/watchmen.git"
+keywords = ["watchmen", "ahriknow", "daemon", "process", "manager"]
+
+[tool.poetry.scripts]
+watchmen = "target/release/watchmen"
+watchmend = "target/release/watchmend"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

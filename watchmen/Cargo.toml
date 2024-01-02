@@ -10,7 +10,7 @@ homepage = "https://docs.ahriknow.com/watchmen"
 repository = "https://github.com/ahriroot/watchmen.git"
 license = "Apache-2.0"
 keywords = ["watchmen", "ahriknow", "daemon", "process", "manager"]
-categories = ["system-programming", "development-tools", "utilities", "os", "os::linux-apis"]
+categories = ["development-tools", "os", "os::linux-apis"]
 workspace = "../"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

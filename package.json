@@ -1,0 +1,35 @@
+{
+    "name": "watchmen-rust",
+    "version": "0.0.1",
+    "author": {
+        "name": "ahriknow",
+        "email": "ahriknow@ahriknow.com"
+    },
+    "license": "Apache-2.0",
+    "description": "` Watchmen is a daemon process manager that for you manage and keep your application online 24/7 `",
+    "scripts": {
+        "build": "cargo build --release"
+    },
+    "keywords": [
+        "watchmen",
+        "ahriknow",
+        "daemon",
+        "process",
+        "manager"
+    ],
+    "bin": {
+        "watchmen": "./target/release/watchmen",
+        "watchmend": "./target/release/watchmend"
+    },
+    "bugs": {
+        "url": "https://github.com/ahriroot/watchmen/issues"
+    },
+    "homepage": "https://github.com/ahriroot/watchmen/blob/dev/README.md",
+    "files": [
+        "target/release/watchmen",
+        "LICENSE",
+        "package.json",
+        "README_en.md",
+        "README.md"
+    ]
+}
