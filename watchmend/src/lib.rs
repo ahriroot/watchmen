@@ -1,4 +1,5 @@
 pub mod command;
+pub mod common;
 pub mod engine;
 pub mod monitor;
 pub mod utils;
@@ -13,7 +14,7 @@ pub mod global {
         time::{SystemTime, UNIX_EPOCH},
     };
 
-    use common::{
+    use crate::common::{
         config::{get_with_home, get_with_home_path},
         handle::{Data, Response, Status},
         task::{AsyncTask, Task, TaskFlag, TaskType},
@@ -235,12 +236,13 @@ pub mod global {
                                 .duration_since(UNIX_EPOCH)
                                 .expect("Failed to get timestamp")
                                 .as_secs();
-                            tp.task.task_type = TaskType::Periodic(common::task::PeriodicTask {
-                                interval: tmp.interval,
-                                last_run: now,
-                                started_after: tmp.started_after,
-                                sync: tmp.sync,
-                            });
+                            tp.task.task_type =
+                                TaskType::Periodic(crate::common::task::PeriodicTask {
+                                    interval: tmp.interval,
+                                    last_run: now,
+                                    started_after: tmp.started_after,
+                                    sync: tmp.sync,
+                                });
                         }
                         _ => {}
                     },

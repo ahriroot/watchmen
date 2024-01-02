@@ -1,5 +1,5 @@
 use colored::Colorize;
-use common::{
+use crate::common::{
     arg::ListArgs,
     config::Config,
     handle::{Command, Request, Response, Status},
@@ -145,9 +145,9 @@ pub async fn print_result(res: Vec<Response>) {
         }
         if let Some(data) = r.data {
             match data {
-                common::handle::Data::None => {}
-                common::handle::Data::String(_) => {}
-                common::handle::Data::Status(s) => {
+                crate::common::handle::Data::None => {}
+                crate::common::handle::Data::String(_) => {}
+                crate::common::handle::Data::Status(s) => {
                     for i in &s {
                         status.push(i.clone());
                     }
@@ -231,10 +231,10 @@ pub async fn print_result(res: Vec<Response>) {
             None => column_code.push("".normal()),
         }
         match s.task_type {
-            common::task::TaskType::Scheduled(_) => column_type.push("Scheduled".normal()),
-            common::task::TaskType::Async(_) => column_type.push("Async".normal()),
-            common::task::TaskType::Periodic(_) => column_type.push("Periodic".normal()),
-            common::task::TaskType::None => column_type.push("".normal()),
+            crate::common::task::TaskType::Scheduled(_) => column_type.push("Scheduled".normal()),
+            crate::common::task::TaskType::Async(_) => column_type.push("Async".normal()),
+            crate::common::task::TaskType::Periodic(_) => column_type.push("Periodic".normal()),
+            crate::common::task::TaskType::None => column_type.push("".normal()),
         }
     }
     let max_id = column_id.iter().map(|s| s.len()).max().unwrap();
@@ -297,9 +297,9 @@ pub async fn print_result_more(res: Vec<Response>) {
         }
         if let Some(data) = r.data {
             match data {
-                common::handle::Data::None => {}
-                common::handle::Data::String(_) => {}
-                common::handle::Data::Status(s) => {
+                crate::common::handle::Data::None => {}
+                crate::common::handle::Data::String(_) => {}
+                crate::common::handle::Data::Status(s) => {
                     for i in &s {
                         status.push(i.clone());
                     }
@@ -395,10 +395,10 @@ pub async fn print_result_more(res: Vec<Response>) {
             None => column_code.push("".normal()),
         }
         match s.task_type {
-            common::task::TaskType::Scheduled(_) => column_type.push("Scheduled".normal()),
-            common::task::TaskType::Async(_) => column_type.push("Async".normal()),
-            common::task::TaskType::Periodic(_) => column_type.push("Periodic".normal()),
-            common::task::TaskType::None => column_type.push("".normal()),
+            crate::common::task::TaskType::Scheduled(_) => column_type.push("Scheduled".normal()),
+            crate::common::task::TaskType::Async(_) => column_type.push("Async".normal()),
+            crate::common::task::TaskType::Periodic(_) => column_type.push("Periodic".normal()),
+            crate::common::task::TaskType::None => column_type.push("".normal()),
         }
     }
     let max_id = column_id.iter().map(|s| s.len()).max().unwrap();
@@ -468,9 +468,9 @@ pub async fn print_result_less(res: Vec<Response>) {
         }
         if let Some(data) = r.data {
             match data {
-                common::handle::Data::None => {}
-                common::handle::Data::String(_) => {}
-                common::handle::Data::Status(s) => {
+                crate::common::handle::Data::None => {}
+                crate::common::handle::Data::String(_) => {}
+                crate::common::handle::Data::Status(s) => {
                     for i in &s {
                         status.push(i.clone());
                     }

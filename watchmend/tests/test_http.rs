@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use common::{config::Config, handle, task::Task};
     use hyper::{Body, Method, Request};
+    use watchmend::common::{config::Config, handle, task::Task};
 
     #[tokio::test]
     async fn test_request() {

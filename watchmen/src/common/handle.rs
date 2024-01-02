@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Display};
 
 use serde::{Deserialize, Serialize};
 
-use crate::task::{Task, TaskFlag, TaskType};
+use crate::common::task::{Task, TaskFlag, TaskType};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Request {
@@ -108,8 +108,8 @@ pub struct Status {
     pub code: Option<i32>,
 }
 
-impl From<crate::task::Task> for Status {
-    fn from(task: crate::task::Task) -> Self {
+impl From<crate::common::task::Task> for Status {
+    fn from(task: crate::common::task::Task) -> Self {
         Self {
             id: task.id,
             name: task.name,

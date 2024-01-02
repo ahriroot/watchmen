@@ -1,7 +1,7 @@
 use colored::Colorize;
 use std::{env, error::Error};
 
-use common::{arg::TaskArgs, config::Config, handle::Response};
+use watchmen::common::{arg::TaskArgs, config::Config, handle::Response};
 use watchmen::{args, commands::handle_exec, utils::print_result};
 
 #[tokio::main]

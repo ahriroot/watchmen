@@ -1,4 +1,4 @@
-use common::{
+use crate::common::{
     config::Config,
     handle::{Request, Response},
 };

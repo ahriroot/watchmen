@@ -1,4 +1,4 @@
-use common::config::Config;
+use crate::common::config::Config;
 use tokio::sync::mpsc;
 use tracing::info;
 

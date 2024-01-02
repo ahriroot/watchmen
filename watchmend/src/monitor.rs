@@ -1,6 +1,6 @@
+use crate::common::task::TaskFlag;
 use chrono::Datelike;
 use chrono::Timelike;
-use common::task::TaskFlag;
 use std::time::{Duration, SystemTime};
 use tokio::time;
 use tracing::{error, info};
@@ -12,7 +12,7 @@ pub async fn rerun_tasks(delay: u64) -> Result<(), Box<dyn std::error::Error>> {
     let now = chrono::Local::now();
     for (id, task) in tasks {
         match task.task_type {
-            common::task::TaskType::Scheduled(scheduled) => {
+            crate::common::task::TaskType::Scheduled(scheduled) => {
                 let nd = chrono::NaiveDate::from_ymd_opt(
                     scheduled.year.unwrap_or(now.year()),
                     scheduled.month.unwrap_or(now.month()),
@@ -49,7 +49,7 @@ pub async fn rerun_tasks(delay: u64) -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            common::task::TaskType::Async(_) => {
+            crate::common::task::TaskType::Async(_) => {
                 if let Some(status) = task.status {
                     if status == "auto restart" {
                         info!("Restart task: {}", id);
@@ -63,7 +63,7 @@ pub async fn rerun_tasks(delay: u64) -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            common::task::TaskType::Periodic(tt) => {
+            crate::common::task::TaskType::Periodic(tt) => {
                 let now = SystemTime::now()
                     .duration_since(SystemTime::UNIX_EPOCH)
                     .expect("Failed to get timestamp")
@@ -96,7 +96,7 @@ pub async fn rerun_tasks(delay: u64) -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            common::task::TaskType::None => {}
+            crate::common::task::TaskType::None => {}
         }
     }
     Ok(())

@@ -1,6 +1,6 @@
 use std::{error::Error, io::Write, process::Stdio};
 
-use common::config::Config;
+use crate::common::config::Config;
 use tokio::process::Command;
 
 pub fn daemon(config: Config) -> Result<(), Box<dyn Error>> {

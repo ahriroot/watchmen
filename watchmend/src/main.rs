@@ -1,9 +1,8 @@
 use colored::Colorize;
-use common::{arg::DaemonArgs, config::Config};
 use std::{error::Error, path::Path};
 use tracing::{info, Level};
 use tracing_subscriber::{fmt, EnvFilter};
-
+use watchmend::common::{arg::DaemonArgs, config::Config};
 use watchmend::{engine, monitor::run_monitor};
 
 #[tokio::main]

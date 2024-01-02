@@ -1,15 +1,15 @@
 [package]
 name = "watchmen"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["ahriknow <ahriknow@ahriknow.com>"]
 edition = "2021"
 description = "Watchmen is a daemon process manager that for you manage and keep your application online 24/7"
 documentation = "https://docs.ahriknow.com/watchmen"
 readme = "README.md"
 homepage = "https://docs.ahriknow.com/watchmen"
-repository = "https://git.ahriknow.com/ahriknow/watchmen.git"
+repository = "https://github.com/ahriroot/watchmen.git"
 license = "Apache-2.0"
-keywords = ["watchmen", "ahriknow", "daemon", "process", "manager", "online", "24/7", "rust"]
+keywords = ["watchmen", "ahriknow", "daemon", "process", "manager"]
 categories = ["system-programming", "development-tools", "utilities", "os", "os::linux-apis"]
 workspace = "../"
 
@@ -30,7 +30,7 @@ serde = { version = "1.0", features = ["derive"] }
 colored = "2"
 chrono = "0.4.22"
 clap = { version = "4", features = ["derive"] }
-dirs = "4"
-configparser = "3.0.2"
+dirs = "5"
 regex = "1.6"
-common = { path = "../common", version = "*" }
+configparser = "3.0.2"
+toml = "0"

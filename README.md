@@ -1,4 +1,4 @@
-# Watchmen (0.1.0)
+# Watchmen (0.0.1)
 
 `
 Watchmen 是一个守护进程管理器，可为您全天候管理和保持应用程序在线
@@ -12,7 +12,7 @@ Watchmen 是一个守护进程管理器，可为您全天候管理和保持应�
 
 ```shell
 # 获取源码
-git clone https://git.ahriknow.com/ahriknow/watchmen.git
+git clone https://github.com/ahriroot/watchmen.git
 
 # 进入项目目录
 cd watchmen

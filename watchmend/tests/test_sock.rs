@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod tests {
-    use common::{
-        config::Config,
-        handle::{Command, Request, Response},
-        task::Task,
-    };
     use tokio::{
         io::{AsyncReadExt, AsyncWriteExt},
         net::UnixStream,
+    };
+    use watchmend::common::{
+        config::Config,
+        handle::{Command, Request, Response},
+        task::Task,
     };
 
     #[tokio::test]
