@@ -667,7 +667,7 @@ pub mod global {
                         code
                     );
 
-                    update(
+                    let _ = update(
                         tf.id,
                         Some(None),
                         Some(Some("interval".to_string())),
@@ -675,8 +675,7 @@ pub mod global {
                         Some(true),
                         Some(vec!["executing"]),
                     )
-                    .await
-                    .unwrap();
+                    .await;
 
                     cache().await.unwrap();
 
