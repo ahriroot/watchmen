@@ -4,11 +4,19 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+fn default_i64_0() -> i64 {
+    0
+}
+
 fn default_u64_0() -> u64 {
     0
 }
 
-fn default_none() -> Option<u64> {
+fn default_none_u64() -> Option<u64> {
+    None
+}
+
+fn default_none_string() -> Option<String> {
     None
 }
 
@@ -28,7 +36,7 @@ pub struct ScheduledTask {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AsyncTask {
-    #[serde(default = "default_none")]
+    #[serde(default = "default_none_u64")]
     pub max_restart: Option<u64>,
     #[serde(default = "default_u64_0")]
     pub has_restart: u64,
@@ -140,9 +148,13 @@ unsafe impl Sync for Task {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskFlag {
+    #[serde(default = "default_i64_0")]
     pub id: i64,
+    #[serde(default = "default_none_string")]
     pub name: Option<String>,
+    #[serde(default = "default_none_string")]
     pub group: Option<String>,
+    #[serde(default = "default_false")]
     pub mat: bool,
 }
 

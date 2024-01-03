@@ -1,5 +1,7 @@
 pub mod command;
-pub mod common;
+pub mod common {
+    include!("../../common.rs");
+}
 pub mod engine;
 pub mod monitor;
 pub mod utils;
@@ -727,7 +729,7 @@ pub mod global {
                 })
                 .await
             }
-            _ => Ok(res),
+            _ => return Ok(res),
         }
     }
 
@@ -824,6 +826,16 @@ pub mod global {
                             status.push(tp.task.clone().into());
                         }
                     }
+                } else if condition.group.is_some() {
+                    let group = condition.group.unwrap_or(String::new());
+                    for (_id, tp) in tasks.iter() {
+                        let regex: Regex = Regex::new(&group)?;
+                        if tp.task.group.is_some()
+                            && regex.is_match(&tp.task.group.clone().unwrap())
+                        {
+                            status.push(tp.task.clone().into());
+                        }
+                    }
                 } else {
                     let name = condition.name.unwrap_or(String::new());
                     for (_id, tp) in tasks.iter() {
@@ -832,15 +844,7 @@ pub mod global {
                         }
                     }
                 }
-                if let Some(group) = condition.group {
-                    let status_by_group = status
-                        .into_iter()
-                        .filter(|s| s.group.is_some() && s.group.as_ref().unwrap() == &group)
-                        .collect::<Vec<Status>>();
-                    status_by_group
-                } else {
-                    status
-                }
+                status
             }
             None => {
                 let mut status: Vec<Status> = Vec::new();

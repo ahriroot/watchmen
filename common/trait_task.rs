@@ -12,25 +12,30 @@ impl TaskFlag {
     pub fn from_args(args: FlagArgs) -> Result<Vec<TaskFlag>, Box<dyn Error>> {
         let mut tasks = Vec::new();
         if let Some(id) = args.id {
-            tasks.push(TaskFlag::new(id));
+            tasks.push(TaskFlag {
+                id,
+                name: None,
+                group: None,
+                mat: args.mat,
+            });
         } else if let Some(name) = args.name {
             tasks.push(TaskFlag {
                 id: 0,
                 name: Some(name),
                 group: None,
-                mat: false,
+                mat: args.mat,
             });
         } else if let Some(group) = args.group {
             tasks.push(TaskFlag {
                 id: 0,
                 name: None,
                 group: Some(group),
-                mat: false,
+                mat: args.mat,
             });
         } else {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                "Task name is none",
+                "Task is none",
             )));
         }
         Ok(tasks)
