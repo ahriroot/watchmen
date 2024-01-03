@@ -24,6 +24,14 @@ fn default_false() -> bool {
     false
 }
 
+fn default_vec_string() -> Vec<String> {
+    Vec::new()
+}
+
+fn default_map_string_string() -> HashMap<String, String> {
+    HashMap::new()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScheduledTask {
     pub year: Option<i32>,
@@ -77,6 +85,7 @@ pub struct Task {
     pub command: String,
 
     /// Task arguments
+    #[serde(default = "default_vec_string")]
     pub args: Vec<String>,
 
     /// Task group
@@ -86,6 +95,7 @@ pub struct Task {
     pub dir: Option<String>,
 
     /// Task environment variables
+    #[serde(default = "default_map_string_string")]
     pub env: HashMap<String, String>,
 
     pub stdin: Option<bool>,

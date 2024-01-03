@@ -590,11 +590,7 @@ pub mod global {
                     let code = res.code();
                     let exit = if let Some(max) = max {
                         if let Some(code) = code {
-                            if code == 0 {
-                                true
-                            } else {
-                                max == 0
-                            }
+                            code == 0 || code == -15 || max == 0
                         } else {
                             true
                         }
@@ -756,7 +752,7 @@ pub mod global {
 
         if let Some(pid) = pid {
             let mut child: Child = Command::new("kill")
-                .arg("-9")
+                .arg("-15")
                 .arg(pid.to_string())
                 .envs(std::env::vars())
                 .stdin(Stdio::null())
