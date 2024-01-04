@@ -517,7 +517,7 @@ pub mod global {
                         Some(None),
                         Some(Some("waiting".to_string())),
                         Some(res.code()),
-                        Some(true),
+                        Some(false),
                         Some(vec!["processing"]),
                     )
                     .await
@@ -670,7 +670,7 @@ pub mod global {
                         Some(None),
                         Some(Some("interval".to_string())),
                         Some(res.code()),
-                        Some(true),
+                        Some(false),
                         Some(vec!["executing"]),
                     )
                     .await;

@@ -28,18 +28,23 @@ pub async fn rerun_tasks(delay: u64) -> Result<(), Box<dyn std::error::Error>> {
                         let exec = chrono::NaiveDateTime::new(nd, nt);
                         let exec_timestamp_utc = exec.timestamp();
                         let now_timestamp_utc = now.naive_local().timestamp();
-                        if ((exec_timestamp_utc - now_timestamp_utc).abs() as u64) < delay
-                            && exec_timestamp_utc <= now_timestamp_utc
-                        {
+                        let diff = (exec_timestamp_utc - now_timestamp_utc).abs() as u64;
+                        if diff < delay && exec_timestamp_utc <= now_timestamp_utc {
                             if let Some(status) = task.status {
                                 if status == "waiting" {
-                                    start(TaskFlag {
-                                        id,
-                                        name: None,
-                                        group: None,
-                                        mat: false,
-                                    })
-                                    .await?;
+                                    tokio::spawn(async move {
+                                        info!("Execute scheduled task: {}", id);
+                                        let mut interval =
+                                            time::interval(Duration::from_secs(diff));
+                                        interval.tick().await;
+                                        let _ = start(TaskFlag {
+                                            id,
+                                            name: None,
+                                            group: None,
+                                            mat: false,
+                                        })
+                                        .await;
+                                    });
                                 }
                             }
                         }
